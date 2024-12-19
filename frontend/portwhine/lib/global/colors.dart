@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class CustomColors {
-  static const Color prime = Color(0xFFFFCC02);
-  static const Color sec = Color(0xFF9067C6);
-  static const Color secDark = Color(0xFF242038);
-  static const Color secLight = Color(0xFF8D86C9);
-  static const Color secLighter = Color(0xFFCAC4CE);
-  static const Color selected = Color(0xFF363050);
+  static const Color prime = Color(0xFFed1b48);
+  static const Color sec = Color(0xFF1bedc4);
+  static const Color secDark = Color(0xFF0f6b5e);
+  static const Color secLight = Color(0xFF8df5e0);
+  static const Color secLighter = Color(0xFFc4f9f0);
+  static const Color selected = Color(0xFF0f6b5e);
 
   static const Color textDark = Color(0xFF16141B);
   static const Color textLight = Color(0xFF6A637C);
