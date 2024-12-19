@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/global/colors.dart';
 import 'package:frontend/global/text_style.dart';
-import 'package:frontend/pages/workflows/sections/overview/bar_chart_widget.dart';
+import 'package:frontend/pages/pipelines/sections/overview/bar_chart_widget.dart';
 import 'package:frontend/widgets/spacer.dart';
 
-class NumberOfWorkflows extends StatelessWidget {
-  const NumberOfWorkflows({super.key});
+class NumberOfPipelines extends StatelessWidget {
+  const NumberOfPipelines({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class NumberOfWorkflows extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Number of Workflows',
+              'Number of Pipelines',
               style: style(
                 size: 14,
                 color: CustomColors.textDark,

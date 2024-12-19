@@ -7,8 +7,8 @@ import 'package:frontend/pages/workflows/sections/list/line_chart.dart';
 import 'package:frontend/router/router.dart';
 import 'package:frontend/widgets/spacer.dart';
 
-class WorkflowItem extends StatelessWidget {
-  const WorkflowItem(this.model, {super.key});
+class PipelineItem extends StatelessWidget {
+  const PipelineItem(this.model, {super.key});
 
   final WorkflowModel model;
 

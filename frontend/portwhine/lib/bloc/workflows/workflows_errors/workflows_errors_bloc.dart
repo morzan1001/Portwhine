@@ -5,9 +5,9 @@ import 'package:frontend/repos/workflows/workflows_repo.dart';
 part 'workflows_errors_event.dart';
 part 'workflows_errors_state.dart';
 
-class WorkflowsErrorsBloc
+class PipelinesErrorsBloc
     extends Bloc<WorkflowsErrorsEvent, WorkflowsErrorsState> {
-  WorkflowsErrorsBloc() : super(WorkflowsErrorsInitial()) {
+  PipelinesErrorsBloc() : super(WorkflowsErrorsInitial()) {
     on<GetWorkflowsErrors>(
       (event, emit) async {
         try {

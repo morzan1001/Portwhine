@@ -7,4 +7,4 @@ abstract class WorkflowsListEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class GetWorkflowsList extends WorkflowsListEvent {}
+class GetPipelinesList extends WorkflowsListEvent {}

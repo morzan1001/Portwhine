@@ -8,8 +8,8 @@ import 'package:frontend/widgets/spacer.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 
-class WorkflowsErrors extends StatelessWidget {
-  const WorkflowsErrors({super.key});
+class PipelinesErrors extends StatelessWidget {
+  const PipelinesErrors({super.key});
 
   @override
   Widget build(BuildContext context) {

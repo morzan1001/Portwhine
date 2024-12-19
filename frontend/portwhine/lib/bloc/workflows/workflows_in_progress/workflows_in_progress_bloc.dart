@@ -5,9 +5,9 @@ import 'package:frontend/repos/workflows/workflows_repo.dart';
 part 'workflows_in_progress_event.dart';
 part 'workflows_in_progress_state.dart';
 
-class WorkflowsInProgressBloc
+class PipelinesInProgressBloc
     extends Bloc<WorkflowsInProgressEvent, WorkflowsInProgressState> {
-  WorkflowsInProgressBloc() : super(WorkflowsInProgressInitial()) {
+  PipelinesInProgressBloc() : super(WorkflowsInProgressInitial()) {
     on<GetWorkflowsInProgress>(
       (event, emit) async {
         try {

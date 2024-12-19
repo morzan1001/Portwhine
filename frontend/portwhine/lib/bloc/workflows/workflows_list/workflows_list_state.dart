@@ -1,24 +1,24 @@
 part of 'workflows_list_bloc.dart';
 
-abstract class WorkflowsListState extends Equatable {
-  const WorkflowsListState();
+abstract class PipelinesListState extends Equatable {
+  const PipelinesListState();
 
   @override
   List<Object> get props => [];
 }
 
-class WorkflowsListInitial extends WorkflowsListState {}
+class PipelinesListInitial extends PipelinesListState {}
 
-class WorkflowsListLoading extends WorkflowsListState {}
+class PipelinesListLoading extends PipelinesListState {}
 
-class WorkflowsListLoaded extends WorkflowsListState {
+class PipelinesListLoaded extends PipelinesListState {
   final List<WorkflowModel> workflows;
 
-  const WorkflowsListLoaded(this.workflows);
+  const PipelinesListLoaded(this.workflows);
 }
 
-class WorkflowsListFailed extends WorkflowsListState {
+class PipelinesListFailed extends PipelinesListState {
   final String error;
 
-  const WorkflowsListFailed(this.error);
+  const PipelinesListFailed(this.error);
 }
