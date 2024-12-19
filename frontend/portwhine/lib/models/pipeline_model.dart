@@ -1,6 +1,6 @@
-import 'package:frontend/models/node_model.dart';
+import 'package:portwhine/models/node_model.dart';
 
-class WorkflowModel {
+class PipelineModel {
   String name;
   String? status;
   List<NodeModel> nodes;
@@ -11,7 +11,7 @@ class WorkflowModel {
   int errors;
   bool completed;
 
-  WorkflowModel({
+  PipelineModel({
     this.name = 'Test Workflow',
     this.status,
     this.nodes = const [],
@@ -41,8 +41,8 @@ class WorkflowModel {
     };
   }
 
-  static WorkflowModel fromMap(Map<String, dynamic> map) {
-    return WorkflowModel(
+  static PipelineModel fromMap(Map<String, dynamic> map) {
+    return PipelineModel(
       name: map['name'],
       status: map['status'],
       nodes: List<NodeModel>.from(
@@ -58,7 +58,7 @@ class WorkflowModel {
     );
   }
 
-  WorkflowModel copyWith({
+  PipelineModel copyWith({
     String? name,
     String? status,
     List<NodeModel>? nodes,
@@ -71,7 +71,7 @@ class WorkflowModel {
     int? errors,
     bool? completed,
   }) {
-    return WorkflowModel(
+    return PipelineModel(
       name: name ?? this.name,
       status: status ?? this.status,
       nodes: nodes ?? this.nodes,

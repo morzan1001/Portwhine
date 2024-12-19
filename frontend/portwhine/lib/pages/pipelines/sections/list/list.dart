@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:frontend/blocs/workflows/workflows_list/workflows_list_bloc.dart';
-import 'package:frontend/global/colors.dart';
-import 'package:frontend/global/text_style.dart';
-import 'package:frontend/pages/workflows/sections/list/workflow_item.dart';
-import 'package:frontend/widgets/button.dart';
-import 'package:frontend/widgets/loading_indicator.dart';
-import 'package:frontend/widgets/spacer.dart';
+import 'package:portwhine/bloc/pipelines/pipeline_list/pipeline_list_bloc.dart';
+import 'package:portwhine/global/colors.dart';
+import 'package:portwhine/global/text_style.dart';
+import 'package:portwhine/pages/pipelines/sections/list/pipeline_item.dart';
+import 'package:portwhine/widgets/button.dart';
+import 'package:portwhine/widgets/loading_indicator.dart';
+import 'package:portwhine/widgets/spacer.dart';
 import 'package:shimmer/shimmer.dart';
 
 class PipelinesList extends StatelessWidget {

@@ -1,7 +1,6 @@
 import 'package:auto_route/auto_route.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:frontend/pages/pipelines/pipelines.dart';
-import 'package:frontend/pages/pipelines/sections/list/pipeline_item.dart';
+import 'package:portwhine/pages/pipelines/pipelines.dart';
+import 'package:portwhine/pages/pipelines/sections/list/pipeline_item.dart';
 
 part 'router.gr.dart';
 
