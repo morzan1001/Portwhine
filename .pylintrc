@@ -1,0 +1,12 @@
+[MASTER]
+ignore=tests
+
+[MESSAGES CONTROL]
+disable=C0111  # Missing docstring
+        C0304  # Final newline missing
+
+[REPORTS]
+output-format=colorized
+
+[FORMAT]
+max-line-length=120

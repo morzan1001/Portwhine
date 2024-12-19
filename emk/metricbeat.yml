@@ -1,0 +1,34 @@
+metricbeat.modules:
+- module: docker
+  metricsets:
+    - "container"
+    - "cpu"
+    - "diskio"
+    - "event"
+    - "healthcheck"
+    - "info"
+    - "memory"
+    - "network"  
+  hosts: ["unix:///var/run/docker.sock"]
+  period: 10s
+  enabled: true
+
+setup.kibana:
+  host: "https://kibana:5601"
+  ssl:
+    certificate_authorities: ["/usr/share/metricbeat/certs/selfsigned-ca.crt"] 
+    verification_mode: full  
+
+output.elasticsearch:
+  hosts: ["https://elasticsearch:9200"]
+  username: "${ELASTIC_USERNAME}"
+  password: "${ELASTIC_PASSWORD}"
+  ssl:
+    enabled: true
+    certificate_authorities: ["/usr/share/metricbeat/certs/selfsigned-ca.crt"]  
+    verification_mode: full 
+  bulk_max_size: 50
+  worker: 1
+  retry.enabled: true
+  retry.initial: 1s
+  retry.max: 60s

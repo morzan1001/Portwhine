@@ -1,0 +1,19 @@
+# Base image
+FROM base:1.0
+
+# Metadata
+LABEL maintainer="Morzan <morzan1001@gmail.com>"
+LABEL version="1.0"
+LABEL description="Dockerfile for the Certstream client module of Portwhine"
+
+# Copy the Certstream client module to the working directory
+COPY src/modules/certstream_client /src/certstream_client
+
+# Set the working directory
+WORKDIR /src
+
+# Install dependencies with Poetry
+RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-interaction --no-ansi --with certstream --without dev
+
+# Start the Certstream client module
+CMD ["python", "-m", "certstream_client.main"]

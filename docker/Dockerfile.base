@@ -1,0 +1,25 @@
+# Use the official Python image as the base image
+FROM python:3.12-alpine
+
+# Metadata
+LABEL maintainer="Morzan <morzan1001@gmail.com>"
+LABEL version="1.0"
+LABEL description="Base Dockerfile for Portwhine modules"
+
+# Set environment variables
+ENV DATABASE_HOST=http://elasticsearch:9200
+ENV DATABASE_USER=elastic
+ENV DATABASE_PASSWORD=changeme
+
+# Install Poetry
+RUN pip install "poetry" --root-user-action=ignore
+
+# Set the working directory
+WORKDIR /src
+
+# Copy necessary files to the working directory
+COPY poetry.lock pyproject.toml README.md /src/
+COPY src/utils /src/utils
+
+# Install dependencies with Poetry
+RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-interaction --no-ansi --without dev

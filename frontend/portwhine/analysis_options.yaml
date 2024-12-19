@@ -1,0 +1,15 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_null_aware_method_calls: true
+    directives_ordering: false
+    prefer_single_quotes: true
+    always_use_package_imports: true
+    package_names: false
+    sort_pub_dependencies: true
+    secure_pubspec_urls: true
+    library_private_types_in_public_api: false
+    use_build_context_synchronously: false
+
+

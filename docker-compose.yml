@@ -1,0 +1,168 @@
+services:
+  setup:
+    image: appropriate/curl
+    container_name: setup
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      ELASTIC_USERNAME: $ELASTIC_USERNAME
+      ELASTIC_PASSWORD: $ELASTIC_PASSWORD
+      APP_DB_USER: $APP_DB_USER
+      APP_DB_PASSWORD: $APP_DB_PASSWORD
+      MINIO_ROOT_USER: $MINIO_ROOT_USER
+      MINIO_ROOT_PASSWORD: $MINIO_ROOT_PASSWORD
+      APP_MINIO_USER: $APP_MINIO_USER
+      APP_MINIO_PASSWORD: $APP_MINIO_PASSWORD
+    volumes:
+      - ./setup/setup.sh:/setup.sh
+      - ./emk/kibana.yml:/kibana.yml
+      - ./certs:/certs:ro
+    entrypoint: ["sh", "/setup.sh"]
+    networks:
+      - portwhine
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
+    container_name: elasticsearch
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./certs:/usr/share/elasticsearch/config/certs:ro
+      - ./emk/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    ports:
+      - "9200:9200"
+    environment:
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      ELASTIC_USERNAME: $ELASTIC_USERNAME
+      ELASTIC_PASSWORD: $ELASTIC_PASSWORD
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL --cacert /usr/share/elasticsearch/config/certs/selfsigned-ca.crt -u ${ELASTIC_USERNAME}:${ELASTIC_PASSWORD} https://localhost:9200 | grep -q 'You Know, for Search'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - portwhine
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.17.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    volumes:
+      - ./certs:/usr/share/kibana/config/certs:ro
+      - ./emk/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    restart: always
+    networks:
+      - portwhine
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL --cacert /usr/share/kibana/config/certs/selfsigned-ca.crt https://localhost:5601/api/status | grep -q '\"level\":\"available\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:8.17.0
+    container_name: metricbeat
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./emk/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - ./certs:/usr/share/metricbeat/certs:ro
+    entrypoint: >
+      sh -c "
+      metricbeat setup -e --strict.perms=false  &&
+      metricbeat -e --strict.perms=false
+      "
+    environment:
+      ELASTIC_USERNAME: "${ELASTIC_USERNAME}"
+      ELASTIC_PASSWORD: "${ELASTIC_PASSWORD}"
+    networks:
+      - portwhine
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+    restart: always
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    image: api:1.0
+    container_name: api
+    ports:
+      - "8000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./certs:/certs:ro
+    restart: always
+    environment:
+      DATABASE_HOST: http://elasticsearch:9200
+      DATABASE_USER: $APP_DB_USER
+      DATABASE_PASSWORD: $APP_DB_PASSWORD
+    networks:
+      - portwhine
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: $MINIO_ROOT_USER
+      MINIO_ROOT_PASSWORD: $MINIO_ROOT_PASSWORD
+    volumes:
+      - minio_data:/data
+      - ./certs:/root/.minio/certs:ro
+    command: server /data --console-address ":9001"
+    networks:
+      - portwhine
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    image: frontend:1.0
+    container_name: frontend
+    ports:
+      - "8080:8080"
+    restart: always
+    networks:
+      - portwhine
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/health || exit 1"]
+
+volumes:
+  elasticsearch_data:
+  minio_data:
+
+networks:
+  portwhine:
+    external: true

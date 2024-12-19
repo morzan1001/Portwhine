@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "portwhine"
+version = "0.1.0"
+license = "MIT"
+description = "Portwhine is a customizable software for monitoring and automated checking of IT assets."
+repository = "https://github.com/morzan1001/Portwhine"
+authors = ["Morzan <morzan1001@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.12"
+elasticsearch = "^8.16.0"
+
+[tool.poetry.group.api]
+optional = true
+
+[tool.poetry.group.api.dependencies]
+fastapi = "^0.115.6"
+uvicorn = "^0.32.1 "
+docker = "^7.1.0"
+
+[tool.poetry.group.certstream]
+optional = true
+
+[tool.poetry.group.certstream.dependencies]
+certstream = "^1.12"
+requests = "^2.32.3"
+
+[tool.poetry.group.nmap]
+optional = true
+
+[tool.poetry.group.nmap.dependencies]
+python-nmap = "^0.7.1"
+
+[tool.poetry.group.webappanalyzer]
+optional = true
+
+[tool.poetry.group.webappanalyzer.dependencies]
+requests = "^2.32.3"
+
+[tool.poetry.group.screenshot]
+optional = true
+
+[tool.poetry.group.screenshot.dependencies]
+selenium = "^4.27.1"
+boto3 = "^1.35.81"
+botocore = "^1.35.81"
+
+[tool.poetry.group.dev.dependencies]
+pylint = "^3.3.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

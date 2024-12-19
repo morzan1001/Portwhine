@@ -1,0 +1,23 @@
+# Base image
+FROM base:1.0
+
+# Metadata
+LABEL maintainer="Morzan <morzan1001@gmail.com>"
+LABEL version="1.0"
+LABEL description="Dockerfile for the humble module of Portwhine"
+
+# Copy the humble module to the working directory
+COPY src/modules/humble /src/humble
+COPY src/utils /src/utils
+
+# Install git
+RUN apk add --no-cache git
+
+# Set the working directory
+WORKDIR /src
+
+RUN git clone https://github.com/rfc-st/humble.git --branch master /humble && \
+    pip install -r /humble/requirements.txt --root-user-action=ignore --no-cache-dir
+
+# Start the Certstream client module
+CMD ["python", "-m", "humble.main"]

@@ -1,0 +1,22 @@
+# Base image
+FROM base:1.0
+
+# Metadata
+LABEL maintainer="Morzan <morzan1001@gmail.com>"
+LABEL version="1.0"
+LABEL description="Dockerfile for the Nmap helper module of Portwhine"
+
+# Copy the Nmap helper module to the working directory
+COPY src/modules/nmap /src/nmap
+
+# Install Nmap
+RUN apk add --no-cache nmap
+
+# Set the working directory
+WORKDIR /src
+
+# Install dependencies with Poetry
+RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-interaction --no-ansi --with nmap --without dev
+
+# Start the Nmap helper module
+CMD ["python", "-m", "nmap_helper.main"]

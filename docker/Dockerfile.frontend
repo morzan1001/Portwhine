@@ -1,0 +1,38 @@
+# Environemnt to install flutter and build web
+FROM harbor.runforest.run/library/ubuntu:24.04 AS build-env
+
+USER root
+
+ARG flutter_version=stable
+
+ENV FLUTTER_HOME=${HOME}/sdks/flutter \
+    FLUTTER_VERSION=$flutter_version
+ENV FLUTTER_ROOT=$FLUTTER_HOME
+
+ENV PATH ${PATH}:${FLUTTER_HOME}/bin:${FLUTTER_HOME}/bin/cache/dart-sdk/bin
+
+RUN apt-get update && apt-get install -y curl git unzip && apt-get clean
+RUN git clone --depth 1 --branch ${FLUTTER_VERSION} https://github.com/flutter/flutter.git ${FLUTTER_HOME}
+
+RUN yes | flutter doctor --android-licenses \
+    && flutter doctor \
+    && chown -R root:root ${FLUTTER_HOME}
+
+ARG APP=/app/
+RUN mkdir "$APP"
+COPY /frontend/portwhine/ $APP
+WORKDIR $APP
+
+RUN flutter clean
+RUN flutter pub get
+RUN flutter build web --release --csp --web-renderer=canvaskit
+
+FROM harbor.runforest.run/library/nginx:alpine
+LABEL authors="Matthias Duve"
+
+COPY --from=build-env /app/build/web /usr/share/nginx/html
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
+HEALTHCHECK --interval=5s --timeout=3s CMD wget -O /dev/null http://localhost || exit 1
