@@ -3,10 +3,10 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:frontend/blocs/workflows/workflows_number/workflows_number_bloc.dart';
-import 'package:frontend/global/colors.dart';
-import 'package:frontend/global/text_style.dart';
-import 'package:frontend/widgets/loading_indicator.dart';
+import 'package:portwhine/bloc/workflows/workflows_number/workflows_number_bloc.dart';
+import 'package:portwhine/global/colors.dart';
+import 'package:portwhine/global/text_style.dart';
+import 'package:portwhine/widgets/loading_indicator.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 

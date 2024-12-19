@@ -1,24 +1,24 @@
 part of 'workflows_errors_bloc.dart';
 
-abstract class WorkflowsErrorsState extends Equatable {
-  const WorkflowsErrorsState();
+abstract class PipelinesErrorsState extends Equatable {
+  const PipelinesErrorsState();
 
   @override
   List<Object> get props => [];
 }
 
-class WorkflowsErrorsInitial extends WorkflowsErrorsState {}
+class PipelinesErrorsInitial extends PipelinesErrorsState {}
 
-class WorkflowsErrorsLoading extends WorkflowsErrorsState {}
+class PipelinesErrorsLoading extends PipelinesErrorsState {}
 
-class WorkflowsErrorsLoaded extends WorkflowsErrorsState {
+class PipelinesErrorsLoaded extends PipelinesErrorsState {
   final List<String> errors;
 
-  const WorkflowsErrorsLoaded(this.errors);
+  const PipelinesErrorsLoaded(this.errors);
 }
 
-class WorkflowsErrorsFailed extends WorkflowsErrorsState {
+class PipelinesErrorsFailed extends PipelinesErrorsState {
   final String error;
 
-  const WorkflowsErrorsFailed(this.error);
+  const PipelinesErrorsFailed(this.error);
 }

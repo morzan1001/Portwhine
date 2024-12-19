@@ -6,8 +6,8 @@ import 'package:frontend/repos/workflows/workflows_repo.dart';
 part 'workflows_list_event.dart';
 part 'workflows_list_state.dart';
 
-class WorkflowsListBloc extends Bloc<WorkflowsListEvent, WorkflowsListState> {
-  WorkflowsListBloc() : super(WorkflowsListInitial()) {
+class PipelinesListBloc extends Bloc<WorkflowsListEvent, WorkflowsListState> {
+  PipelinesListBloc() : super(WorkflowsListInitial()) {
     on<GetWorkflowsList>(
       (event, emit) async {
         try {

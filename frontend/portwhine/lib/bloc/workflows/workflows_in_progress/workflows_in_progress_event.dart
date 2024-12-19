@@ -1,10 +1,10 @@
 part of 'workflows_in_progress_bloc.dart';
 
-abstract class WorkflowsInProgressEvent extends Equatable {
-  const WorkflowsInProgressEvent();
+abstract class PipelinesInProgressEvent extends Equatable {
+  const PipelinesInProgressEvent();
 
   @override
   List<Object> get props => [];
 }
 
-class GetWorkflowsInProgress extends WorkflowsInProgressEvent {}
+class GetPipelinesInProgress extends PipelinesInProgressEvent {}

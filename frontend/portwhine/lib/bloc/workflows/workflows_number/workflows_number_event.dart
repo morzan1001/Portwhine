@@ -1,10 +1,10 @@
 part of 'workflows_number_bloc.dart';
 
-abstract class WorkflowsNumberEvent extends Equatable {
-  const WorkflowsNumberEvent();
+abstract class PipelinesNumberEvent extends Equatable {
+  const PipelinesNumberEvent();
 
   @override
   List<Object> get props => [];
 }
 
-class GetWorkflowsNumber extends WorkflowsNumberEvent {}
+class GetPipelinesNumber extends PipelinesNumberEvent {}

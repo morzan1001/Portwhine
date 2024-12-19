@@ -1,24 +1,24 @@
 part of 'workflows_in_progress_bloc.dart';
 
-abstract class WorkflowsInProgressState extends Equatable {
-  const WorkflowsInProgressState();
+abstract class PipelinesInProgressState extends Equatable {
+  const PipelinesInProgressState();
 
   @override
   List<Object> get props => [];
 }
 
-class WorkflowsInProgressInitial extends WorkflowsInProgressState {}
+class PipelinesInProgressInitial extends PipelinesInProgressState {}
 
-class WorkflowsInProgressLoading extends WorkflowsInProgressState {}
+class PipelinesInProgressLoading extends PipelinesInProgressState {}
 
-class WorkflowsInProgressLoaded extends WorkflowsInProgressState {
+class PipelinesInProgressLoaded extends PipelinesInProgressState {
   final int number;
 
-  const WorkflowsInProgressLoaded(this.number);
+  const PipelinesInProgressLoaded(this.number);
 }
 
-class WorkflowsInProgressFailed extends WorkflowsInProgressState {
+class PipelinesInProgressFailed extends PipelinesInProgressState {
   final String error;
 
-  const WorkflowsInProgressFailed(this.error);
+  const PipelinesInProgressFailed(this.error);
 }

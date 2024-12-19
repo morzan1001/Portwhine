@@ -7,8 +7,8 @@ import 'package:frontend/widgets/loading_indicator.dart';
 import 'package:frontend/widgets/spacer.dart';
 import 'package:shimmer/shimmer.dart';
 
-class WorkflowsInProgress extends StatelessWidget {
-  const WorkflowsInProgress({super.key});
+class PipelinesInProgress extends StatelessWidget {
+  const PipelinesInProgress({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +26,7 @@ class WorkflowsInProgress extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Workflows in progress',
+              'Pipelines in progress',
               style: style(
                 size: 14,
                 color: CustomColors.textDark,

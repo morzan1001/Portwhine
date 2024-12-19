@@ -5,9 +5,9 @@ import 'package:frontend/repos/workflows/workflows_repo.dart';
 part 'workflows_number_event.dart';
 part 'workflows_number_state.dart';
 
-class WorkflowsNumberBloc
+class PipelinesNumberBloc
     extends Bloc<WorkflowsNumberEvent, WorkflowsNumberState> {
-  WorkflowsNumberBloc() : super(WorkflowsNumberInitial()) {
+  PipelinesNumberBloc() : super(WorkflowsNumberInitial()) {
     on<GetWorkflowsNumber>(
       (event, emit) async {
         try {

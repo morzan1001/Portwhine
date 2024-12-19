@@ -9,8 +9,8 @@ import 'package:frontend/widgets/loading_indicator.dart';
 import 'package:frontend/widgets/spacer.dart';
 import 'package:shimmer/shimmer.dart';
 
-class WorkflowsList extends StatelessWidget {
-  const WorkflowsList({super.key});
+class PipelinesList extends StatelessWidget {
+  const PipelinesList({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +31,7 @@ class WorkflowsList extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Workflows',
+                  'Pipelines',
                   style: style(
                     size: 24,
                     weight: FontWeight.w600,

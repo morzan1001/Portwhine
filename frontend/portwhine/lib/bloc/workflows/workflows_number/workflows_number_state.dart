@@ -1,24 +1,24 @@
 part of 'workflows_number_bloc.dart';
 
-abstract class WorkflowsNumberState extends Equatable {
-  const WorkflowsNumberState();
+abstract class PipelinesNumberState extends Equatable {
+  const PipelinesNumberState();
 
   @override
   List<Object> get props => [];
 }
 
-class WorkflowsNumberInitial extends WorkflowsNumberState {}
+class PipelinesNumberInitial extends PipelinesNumberState {}
 
-class WorkflowsNumberLoading extends WorkflowsNumberState {}
+class PipelinesNumberLoading extends PipelinesNumberState {}
 
-class WorkflowsNumberLoaded extends WorkflowsNumberState {
+class PipelinesNumberLoaded extends PipelinesNumberState {
   final Map<DateTime, int> numbers;
 
-  const WorkflowsNumberLoaded(this.numbers);
+  const PipelinesNumberLoaded(this.numbers);
 }
 
-class WorkflowsNumberFailed extends WorkflowsNumberState {
+class PipelinesNumberFailed extends PipelinesNumberState {
   final String error;
 
-  const WorkflowsNumberFailed(this.error);
+  const PipelinesNumberFailed(this.error);
 }
