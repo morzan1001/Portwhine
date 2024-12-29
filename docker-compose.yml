@@ -184,10 +184,16 @@ services:
     ports:
       - "8443:443"
     restart: always
+    depends_on:
+      api:
+        condition: service_healthy
     networks:
       - portwhine
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider -q https://127.0.0.1 || exit 1"]
+      test: ["CMD-SHELL", "curl --cacert /etc/ssl/certs/selfsigned-ca.crt -s -f https://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   elasticsearch_data:
