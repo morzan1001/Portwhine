@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import os
-from logger import LoggingModule
+from utils.logger import LoggingModule
 from typing import Optional
 from elasticsearch import Elasticsearch
 
 # Logger initializing
-logger = LoggingModule()
+logger = LoggingModule.get_logger()
 
 def get_elasticsearch_connection() -> Optional[Elasticsearch]:
     """Returns an Elasticsearch connection or None if an error occurs"""

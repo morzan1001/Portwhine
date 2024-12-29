@@ -20,13 +20,19 @@ if ! command -v mc &> /dev/null; then
     chmod +x /usr/local/bin/mc
 fi
 
+# Check if openssl is installed, if not install it
+if ! command -v openssl &> /dev/null; then
+    echo "Installing openssl..."
+    apk add --no-cache openssl
+fi
+
 # Create app role first
 echo "Creating application role..."
 curl -u "$ELASTIC_USERNAME":"$ELASTIC_PASSWORD" -X POST "https://elasticsearch:9200/_security/role/app_role" -H 'Content-Type: application/json' -d '{
   "cluster": ["monitor"],
   "indices": [{
-    "names": ["urls*"],
-    "privileges": ["read", "write", "view_index_metadata"],
+    "names": ["*"],
+    "privileges": ["read", "write", "view_index_metadata", "create_index"],
     "allow_restricted_indices": false
   }]
 }'
@@ -79,3 +85,21 @@ else
     echo "Error: Failed to create MinIO user"
     exit 1
 fi
+
+# Create Redis user with no initial permissions
+echo "Creating Redis user..."
+echo -e "AUTH $REDIS_DEFAULT_PW\r\nACL SETUSER $REDIS_USER on >$REDIS_PASSWORD resetkeys resetchannels\r\nQUIT\r\n" | openssl s_client -connect redis:6379 -quiet -ign_eof
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to create Redis user"
+    exit 1
+fi
+
+# Grant permissions to Redis user for specific databases
+echo "Granting permissions to Redis user for databases 0 and 1..."
+echo -e "AUTH $REDIS_DEFAULT_PW\r\nACL SETUSER $REDIS_USER on >$REDIS_PASSWORD ~* +@read +@write +select +ping &0 &1\r\nQUIT\r\n" | openssl s_client -connect redis:6379 -quiet -ign_eof
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to grant permissions to Redis user for databases 0 and 1"
+    exit 1
+fi
+
+echo "Setup completed successfully."

@@ -2,14 +2,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api.queue import start_queue_thread
 from utils.logger import LoggingModule
-from .routers import config, trigger
+from .routers import trigger, pipeline, handler, worker
+from api.docs.main_docs import app_metadata, tags_metadata
 
 # Logger initializing
-logger = LoggingModule()
+logger = LoggingModule.get_logger()
 
-# FastAPI app
-app = FastAPI()
+# FastAPI app with metadata
+app = FastAPI(
+    title=app_metadata["title"],
+    description=app_metadata["description"],
+    version=app_metadata["version"],
+    license_info=app_metadata["license_info"],
+    openapi_tags=tags_metadata
+)
 
 # CORS settings
 origins = [
@@ -26,10 +34,14 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(config.router, prefix="/api/v1")
-app.include_router(trigger.router, prefix="/api/v1")
+app.include_router(trigger.router, prefix="/api/v1", tags=["Triggers"])
+app.include_router(pipeline.router, prefix="/api/v1", tags=["Pipelines"])
+app.include_router(handler.router, prefix="/api/v1", tags=["Handlers"])
+app.include_router(worker.router, prefix="/api/v1", tags=["Workers"])
+
+queue_thread = start_queue_thread()
 
 # Health check endpoint
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 async def health_check():
     return {"status": "healthy"}

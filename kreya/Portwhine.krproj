@@ -1,0 +1,18 @@
+{
+  "id": "a21b0a59-4181-4e94-97d5-615ddf09dfab",
+  "importStreams": [
+    {
+      "id": "0c975de2-f0fd-42b5-8ef5-985661eebae3",
+      "name": "OpenAPI",
+      "importerName": "OpenApiUrlImporter",
+      "createMissingOperations": true,
+      "options": {
+        "url": "https://localhost:8000/docs",
+        "disableAutoRedirect": false,
+        "disableServerCertificateValidation": true
+      }
+    }
+  ],
+  "authConfigs": [],
+  "certificates": []
+}

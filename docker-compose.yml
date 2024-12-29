@@ -7,6 +7,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       ELASTIC_USERNAME: $ELASTIC_USERNAME
       ELASTIC_PASSWORD: $ELASTIC_PASSWORD
@@ -16,9 +18,13 @@ services:
       MINIO_ROOT_PASSWORD: $MINIO_ROOT_PASSWORD
       APP_MINIO_USER: $APP_MINIO_USER
       APP_MINIO_PASSWORD: $APP_MINIO_PASSWORD
+      REDIS_DEFAULT_PW: $REDIS_DEFAULT_PW
+      REDIS_PASSWORD: $REDIS_PASSWORD
+      REDIS_USER: $REDIS_USER
     volumes:
       - ./setup/setup.sh:/setup.sh
       - ./emk/kibana.yml:/kibana.yml
+      - ./redis/redis.conf:/redis.conf
       - ./certs:/certs:ro
     entrypoint: ["sh", "/setup.sh"]
     networks:
@@ -107,13 +113,19 @@ services:
       - ./certs:/certs:ro
     restart: always
     environment:
-      DATABASE_HOST: http://elasticsearch:9200
+      DATABASE_HOST: https://elasticsearch:9200
       DATABASE_USER: $APP_DB_USER
       DATABASE_PASSWORD: $APP_DB_PASSWORD
+      REDIS_HOST: redis
+      REDIS_USER: $REDIS_USER
+      REDIS_PASSWORD: $REDIS_PASSWORD
+      LOG_LEVEL: DEBUG
     networks:
       - portwhine
     depends_on:
       elasticsearch:
+        condition: service_healthy
+      redis: 
         condition: service_healthy
       setup:
         condition: service_completed_successfully
@@ -145,6 +157,24 @@ services:
       retries: 3
     restart: always
 
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./certs:/certs:ro
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf", "--requirepass", "$REDIS_DEFAULT_PW"]
+    restart: always
+    networks:
+      - portwhine
+    healthcheck:
+      test: ["CMD", "redis-cli", "--tls", "--cacert", "/certs/selfsigned-ca.crt", "-h", "127.0.0.1", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   frontend:
     build:
       context: .
@@ -152,12 +182,12 @@ services:
     image: frontend:1.0
     container_name: frontend
     ports:
-      - "8080:8080"
+      - "8443:443"
     restart: always
     networks:
       - portwhine
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/health || exit 1"]
+      test: ["CMD-SHELL", "wget --spider -q https://127.0.0.1 || exit 1"]
 
 volumes:
   elasticsearch_data:

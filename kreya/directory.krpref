@@ -1,0 +1,13 @@
+{
+  "settings": [
+    {
+      "options": {
+        "rest": {
+          "endpoint": "https://localhost:8000/api/v1/",
+          "pathParams": [],
+          "disableServerCertificateValidation": true
+        }
+      }
+    }
+  ]
+}

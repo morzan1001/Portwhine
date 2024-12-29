@@ -1,0 +1,15 @@
+{
+  "details": {
+    "path": "/pipeline/41a9208b-8875-4581-ab33-744af7c03fba",
+    "method": "GET",
+    "pathParams": []
+  },
+  "requests": [
+    {
+      "contentType": "none"
+    }
+  ],
+  "operationType": "unary",
+  "invokerName": "rest",
+  "typeHint": "GET"
+}

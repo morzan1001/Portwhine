@@ -1,4 +1,3 @@
-import 'package:portwhine/global/constants.dart';
 import 'package:portwhine/models/node_output_model.dart';
 import 'package:portwhine/models/node_position.dart';
 
@@ -19,7 +18,7 @@ class NodeModel {
     this.inputs = const {},
     this.outputs = const {},
     this.inputNodes = const {},
-    this.result = nodeResult,
+    this.result = '',
     this.code,
     this.nodeOutputs,
     this.position,
@@ -78,31 +77,5 @@ class NodeModel {
       nodeOutputs: nodeOutputs ?? this.nodeOutputs,
       position: position ?? this.position,
     );
-  }
-
-  // Method to save node configuration
-  Map<String, dynamic> saveConfiguration() {
-    return toMap();
-  }
-
-  // Method to load node configuration
-  static NodeModel loadConfiguration(Map<String, dynamic> map) {
-    return fromMap(map);
-  }
-
-  // Method to validate connections between nodes
-  bool validateConnections() {
-    // Add logic to validate connections
-    return true;
-  }
-
-  // Method to undo an action
-  void undo() {
-    // Add logic to undo an action
-  }
-
-  // Method to redo an action
-  void redo() {
-    // Add logic to redo an action
   }
 }

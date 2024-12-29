@@ -22,14 +22,27 @@ class LoggingModule:
         log_level = getattr(logging, log_level, logging.INFO)
 
         root_logger = logging.getLogger()
-        handler = logging.handlers.RotatingFileHandler(filename, 'a', 10**6, 10)
-        formatter = logging.Formatter(fmt=log_format, datefmt=date_format)
-        handler.setFormatter(formatter)
-        root_logger.addHandler(handler)
+        root_logger.setLevel(log_level)
 
-        logger = logging.getLogger('portwhine')
-        logger.setLevel(log_level)
-        logger.info('Logging started (level=%s, filename=%s)',
-                    logging.getLevelName(logger.getEffectiveLevel()), filename)
+        # File handler
+        file_handler = logging.handlers.RotatingFileHandler(filename, 'a', 10**6, 10)
+        file_formatter = logging.Formatter(fmt=log_format, datefmt=date_format)
+        file_handler.setFormatter(file_formatter)
+        root_logger.addHandler(file_handler)
+
+        # Stream handler for stdout
+        stream_handler = logging.StreamHandler()
+        stream_formatter = logging.Formatter(fmt=log_format, datefmt=date_format)
+        stream_handler.setFormatter(stream_formatter)
+        root_logger.addHandler(stream_handler)
+
+        self.logger = logging.getLogger('portwhine')
+        self.logger.setLevel(log_level)
+        self.logger.info('Logging started (level=%s, filename=%s)', logging.getLevelName(self.logger.getEffectiveLevel()), filename)
 
         print(f'See logfile for details: {os.path.join(os.getcwd(), filename)}')
+
+    @classmethod
+    def get_logger(cls):
+        instance = cls()
+        return instance.logger

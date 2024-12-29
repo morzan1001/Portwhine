@@ -1,0 +1,16 @@
+{
+  "details": {
+    "path": "/worker/NmapWorker",
+    "method": "GET",
+    "headers": [],
+    "pathParams": []
+  },
+  "requests": [
+    {
+      "contentType": "none"
+    }
+  ],
+  "operationType": "unary",
+  "invokerName": "rest",
+  "typeHint": "GET"
+}

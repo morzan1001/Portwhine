@@ -19,4 +19,4 @@ WORKDIR /src
 RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-interaction --no-ansi --with nmap --without dev
 
 # Start the Nmap helper module
-CMD ["python", "-m", "nmap_helper.main"]
+CMD ["python", "-m", "nmap.main"]

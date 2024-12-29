@@ -1,0 +1,15 @@
+{
+  "details": {
+    "path": "/trigger/CertstreamTrigger",
+    "method": "GET",
+    "pathParams": []
+  },
+  "requests": [
+    {
+      "contentType": "none"
+    }
+  ],
+  "operationType": "unary",
+  "invokerName": "rest",
+  "typeHint": "GET"
+}

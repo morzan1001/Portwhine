@@ -12,7 +12,7 @@ class PipelineModel {
   bool completed;
 
   PipelineModel({
-    this.name = 'Test Workflow',
+    this.name = 'Test Pipeline',
     this.status,
     this.nodes = const [],
     this.totalNodes = 0,

@@ -22,3 +22,4 @@ subjectAltName = @alt_names
 DNS.1   = localhost
 DNS.2   = elasticsearch
 DNS.3   = kibana
+DNS.4   = redis

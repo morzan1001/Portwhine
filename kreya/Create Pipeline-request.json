@@ -1,0 +1,25 @@
+{
+  "name": "Testpipeline Resolver Bund",
+  "trigger": {
+    "CertstreamTrigger": {
+      "regex": "^([a-zA-Z0-9-]+\\.)?bund\\.de$"
+    }
+  },
+  "worker": [
+    {
+      "ResolverWorker": {
+        "children": [
+          {
+            "NmapWorker": {
+              "children": [
+                {
+                  "FFUFWorker": {}
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

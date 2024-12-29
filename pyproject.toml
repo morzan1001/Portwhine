@@ -11,6 +11,7 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.12"
 elasticsearch = "^8.16.0"
+requests = "^2.32.3"
 
 [tool.poetry.group.api]
 optional = true
@@ -19,25 +20,20 @@ optional = true
 fastapi = "^0.115.6"
 uvicorn = "^0.32.1 "
 docker = "^7.1.0"
+pydantic = "^2.10.4"
+redis = "^5.2.1"
 
 [tool.poetry.group.certstream]
 optional = true
 
 [tool.poetry.group.certstream.dependencies]
 certstream = "^1.12"
-requests = "^2.32.3"
 
 [tool.poetry.group.nmap]
 optional = true
 
 [tool.poetry.group.nmap.dependencies]
-python-nmap = "^0.7.1"
-
-[tool.poetry.group.webappanalyzer]
-optional = true
-
-[tool.poetry.group.webappanalyzer.dependencies]
-requests = "^2.32.3"
+xmltodict = "^0.14.2"
 
 [tool.poetry.group.screenshot]
 optional = true

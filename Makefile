@@ -4,7 +4,7 @@ build-container:
 	docker build -f docker/Dockerfile.base -t base:1.0 .
 	# Build the API image without using cache
 	docker build --no-cache -f docker/Dockerfile.api -t api:1.0 .
-	# Build the certstream image without using cache
+	# Build the certstream_client image without using cache
 	docker build --no-cache -f docker/Dockerfile.certstream -t certstream:1.0 .
 	# Build the nmap image without using cache
 	docker build --no-cache -f docker/Dockerfile.nmap -t nmap:1.0 .
@@ -18,6 +18,10 @@ build-container:
 	docker build --no-cache -f docker/Dockerfile.webappanalyzer -t webappanalyzer:1.0 .
 	# Build the screenshot image without using cache
 	docker build --no-cache -f docker/Dockerfile.screenshot -t screenshot:1.0 .
+	# Build the resolver image without using cache
+	docker build --no-cache -f docker/Dockerfile.resolver -t resolver:1.0 .
+	# Build the frontend image without using cache
+	docker build --no-cache -f docker/Dockerfile.frontend -t frontend:1.0 .
 
 # Create docker network if it doesn't exist
 create-docker-network:
@@ -62,3 +66,13 @@ generate-certs:
 
 	# Clean up CSR and serial files
 	rm -f certs/selfsigned-server.csr certs/selfsigned-ca.srl
+
+run-build-runner-frontend:
+	cd frontend/portwhine && dart run build_runner build --delete-conflicting-outputs
+
+sort-frontend:
+	cd frontend/portwhine && dart run import_sorter:main
+
+genSplashAndIcon:
+	cd frontend/portwhine && dart run flutter_launcher_icons:main -f flutter_launcher_icons.yaml
+	cd frontend/portwhine && dart run flutter_native_splash:create --path=flutter_native_splash.yaml

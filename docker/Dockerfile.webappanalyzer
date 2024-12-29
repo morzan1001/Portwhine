@@ -12,8 +12,5 @@ COPY src/modules/webappanalyzer /src/webappanalyzer
 # Set the working directory
 WORKDIR /src
 
-# Install dependencies with Poetry
-RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-interaction --no-ansi --with webappanalyzer --without dev
-
 # Start the Certstream client module
 CMD ["python", "-m", "webappanalyzer.main"]

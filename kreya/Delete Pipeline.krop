@@ -1,0 +1,15 @@
+{
+  "details": {
+    "path": "/pipeline/ae50f112-2e63-428f-bff3-e2a6ec9cea60",
+    "method": "DELETE",
+    "pathParams": []
+  },
+  "requests": [
+    {
+      "contentType": "none"
+    }
+  ],
+  "operationType": "unary",
+  "invokerName": "rest",
+  "typeHint": "DELETE"
+}

@@ -1,15 +1,15 @@
 # Environemnt to install flutter and build web
-FROM harbor.runforest.run/library/ubuntu:24.04 AS build-env
+FROM ubuntu:24.04 AS build-env
 
 USER root
 
 ARG flutter_version=stable
 
-ENV FLUTTER_HOME=${HOME}/sdks/flutter \
+ENV FLUTTER_HOME="/sdks/flutter" \
     FLUTTER_VERSION=$flutter_version
 ENV FLUTTER_ROOT=$FLUTTER_HOME
 
-ENV PATH ${PATH}:${FLUTTER_HOME}/bin:${FLUTTER_HOME}/bin/cache/dart-sdk/bin
+ENV PATH=${PATH}:${FLUTTER_HOME}/bin:${FLUTTER_HOME}/bin/cache/dart-sdk/bin
 
 RUN apt-get update && apt-get install -y curl git unzip && apt-get clean
 RUN git clone --depth 1 --branch ${FLUTTER_VERSION} https://github.com/flutter/flutter.git ${FLUTTER_HOME}
@@ -25,14 +25,34 @@ WORKDIR $APP
 
 RUN flutter clean
 RUN flutter pub get
-RUN flutter build web --release --csp --web-renderer=canvaskit
+RUN flutter build web --release --csp --no-web-resources-cdn --dart-define=USE_LOCAL_CANVASKIT=true
 
-FROM harbor.runforest.run/library/nginx:alpine
-LABEL authors="Matthias Duve"
+FROM openresty/openresty:alpine
 
-COPY --from=build-env /app/build/web /usr/share/nginx/html
+# Ensure the CA certificates directory exists
+RUN mkdir -p /usr/local/share/ca-certificates
+# Copy the CA certificate to the trusted certificates directory
+COPY /certs/selfsigned-ca.crt /usr/local/share/ca-certificates/
+RUN chmod 644 /usr/local/share/ca-certificates/selfsigned-ca.crt
+# Update the CA certificates
+RUN update-ca-certificates
+
+# Metadata
+LABEL maintainer="Morzan <morzan1001@gmail.com>"
+LABEL version="1.0"
+LABEL description="Dockerfile for the frontend module of Portwhine"
+
+COPY certs/selfsigned-server.crt /etc/nginx/certs/selfsigned-server.crt
+COPY certs/selfsigned-server.key /etc/nginx/certs/selfsigned-server.key
+
+COPY nginx/50x.html /usr/local/openresty/nginx/html/50x.html
+COPY nginx/404.html /usr/local/openresty/nginx/html/404.html
+COPY nginx/nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
+
+COPY --from=build-env /app/build/web /usr/local/openresty/nginx/html
 
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 443
+CMD ["openresty", "-g", "daemon off;"]
 
-HEALTHCHECK --interval=5s --timeout=3s CMD wget -O /dev/null http://localhost || exit 1
+HEALTHCHECK --interval=5s --timeout=3s CMD wget -O /dev/null https://localhost || exit 1

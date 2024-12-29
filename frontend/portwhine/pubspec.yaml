@@ -18,7 +18,8 @@ dependencies:
   google_fonts: ^6.1.0
   intl: ^0.20.1
   shimmer: ^3.0.0
-  uuid: ^4.3.3
+
+  fluttertoast: ^8.2.10
 
 dev_dependencies:
   auto_route_generator: ^9.0.0
@@ -32,3 +33,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/fonts/Inter/
+    - assets/fonts/Poppins/

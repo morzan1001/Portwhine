@@ -7,7 +7,7 @@ from typing import Optional
 from botocore.client import BaseClient
 
 # Logger initializing
-logger = LoggingModule()
+logger = LoggingModule.get_logger()
 
 def get_minio_client() -> Optional[BaseClient]:
     """Returns a MinIO client or None if an error occurs"""

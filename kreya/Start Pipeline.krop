@@ -1,0 +1,15 @@
+{
+  "details": {
+    "path": "/pipeline/start/92c474c8-d307-4a03-a488-a8f40d6593d0",
+    "method": "POST",
+    "pathParams": []
+  },
+  "requests": [
+    {
+      "contentType": "none"
+    }
+  ],
+  "operationType": "unary",
+  "invokerName": "rest",
+  "typeHint": "POST"
+}
