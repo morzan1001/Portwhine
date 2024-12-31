@@ -11,8 +11,12 @@ app_metadata = {
 
 tags_metadata = [
     {
-        "name": "Triggers",
+        "name": "Trigger",
         "description": "Operations with triggers."
+    },
+    {
+        "name": "Worker",
+        "description": "Operations with workers."
     },
     {
         "name": "Pipelines",

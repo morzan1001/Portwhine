@@ -5,7 +5,7 @@ from api.models.pipeline import Pipeline
 from api.pipeline_handler import PipelineHandler
 from utils.elasticsearch import get_elasticsearch_connection
 from utils.logger import LoggingModule
-from api.docs.pipeline_docs import pipeline_responses, pipeline_summaries, pipeline_descriptions
+from api.docs.pipeline_docs import pipeline_summaries, pipeline_descriptions
 
 router = APIRouter()
 logger = LoggingModule.get_logger()
@@ -17,7 +17,6 @@ pipeline_handler = PipelineHandler()
     response_model=Pipeline,
     summary=pipeline_summaries["create_pipeline"],
     description=pipeline_descriptions["create_pipeline"],
-    responses=pipeline_responses
 )
 async def create_pipeline(pipeline: Pipeline):
     if not es_client:
@@ -34,7 +33,6 @@ async def create_pipeline(pipeline: Pipeline):
     response_model=Pipeline,
     summary=pipeline_summaries["get_pipeline"],
     description=pipeline_descriptions["get_pipeline"],
-    responses=pipeline_responses
 )
 async def get_pipeline(pipeline_id: str):
     if not es_client:
@@ -51,7 +49,6 @@ async def get_pipeline(pipeline_id: str):
     response_model=List[Dict[str, str]],
     summary=pipeline_summaries["get_all_pipelines"],
     description=pipeline_descriptions["get_all_pipelines"],
-    responses=pipeline_responses
 )
 async def get_all_pipelines(size: int = Query(10, ge=1), page: int = Query(1, ge=1)):
     if not es_client:
@@ -68,6 +65,8 @@ async def get_all_pipelines(size: int = Query(10, ge=1), page: int = Query(1, ge
         
         pipelines = [{"id": hit["_id"], "name": hit["_source"]["name"]} for hit in result["hits"]["hits"]]
         return pipelines
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
         logger.error(f"Error retrieving pipelines: {e}")
         raise HTTPException(status_code=500, detail="Error retrieving pipelines")
@@ -77,7 +76,6 @@ async def get_all_pipelines(size: int = Query(10, ge=1), page: int = Query(1, ge
     response_model=Pipeline,
     summary=pipeline_summaries["update_pipeline"],
     description=pipeline_descriptions["update_pipeline"],
-    responses=pipeline_responses
 )
 async def update_pipeline(pipeline_id: str, pipeline: Pipeline):
     if not es_client:
@@ -94,7 +92,6 @@ async def update_pipeline(pipeline_id: str, pipeline: Pipeline):
     response_model=dict,
     summary=pipeline_summaries["delete_pipeline"],
     description=pipeline_descriptions["delete_pipeline"],
-    responses=pipeline_responses
 )
 async def delete_pipeline(pipeline_id: str):
     if not es_client:
@@ -110,7 +107,6 @@ async def delete_pipeline(pipeline_id: str):
     "/pipeline/start/{pipeline_id}",
     summary=pipeline_summaries["start_pipeline"],
     description=pipeline_descriptions["start_pipeline"],
-    responses=pipeline_responses
 )
 async def start_pipeline(pipeline_id: str):
     pipeline_handler.handle_pipeline_start(pipeline_id)
@@ -120,7 +116,6 @@ async def start_pipeline(pipeline_id: str):
     "/pipeline/stop/{pipeline_id}",
     summary=pipeline_summaries["stop_pipeline"],
     description=pipeline_descriptions["stop_pipeline"],
-    responses=pipeline_responses
 )
 async def stop_pipeline(pipeline_id: str):
     pipeline_handler.handle_pipeline_stop(pipeline_id)

@@ -2,14 +2,14 @@ from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException
 from api.models.worker import FFUFWorker, HumbleWorker, ScreenshotWorker, TestSSLWorker, WebAppAnalyzerWorker, NmapWorker, ResolverWorker, WorkerConfig
 from utils.logger import LoggingModule
-from api.docs.worker_docs import worker_responses, worker_summaries, worker_descriptions
+from api.docs.worker_docs import worker_summaries, worker_descriptions
 
 router = APIRouter()
 logger = LoggingModule.get_logger()
 
 worker_classes = [FFUFWorker, HumbleWorker, ScreenshotWorker, TestSSLWorker, WebAppAnalyzerWorker, NmapWorker, ResolverWorker]
 
-@router.get("/worker", response_model=List[str], summary=worker_summaries["get_workers"], description=worker_descriptions["get_workers"], tags=["Workers"])
+@router.get("/worker", response_model=List[str], summary=worker_summaries["get_workers"], description=worker_descriptions["get_workers"])
 async def get_workers():
     return [cls.__name__ for cls in worker_classes]
 
@@ -18,8 +18,6 @@ async def get_workers():
     response_model=Dict[str, Any],
     summary=worker_summaries["get_worker_config"],
     description=worker_descriptions["get_worker_config"],
-    responses=worker_responses,
-    tags=["Workers"]
 )
 async def get_worker_config(name: str):
     for cls in worker_classes:

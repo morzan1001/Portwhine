@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.queue import start_queue_thread
@@ -23,6 +23,7 @@ app = FastAPI(
 origins = [
     "http://localhost",
     "http://localhost:8000",
+    "*"
 ]
 
 app.add_middleware(
@@ -33,11 +34,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def set_secure_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains, preload"
+    return response
+
+
 # Include routers
-app.include_router(trigger.router, prefix="/api/v1", tags=["Triggers"])
+app.include_router(trigger.router, prefix="/api/v1", tags=["Trigger"])
 app.include_router(pipeline.router, prefix="/api/v1", tags=["Pipelines"])
 app.include_router(handler.router, prefix="/api/v1", tags=["Handlers"])
-app.include_router(worker.router, prefix="/api/v1", tags=["Workers"])
+app.include_router(worker.router, prefix="/api/v1", tags=["Worker"])
 
 queue_thread = start_queue_thread()
 

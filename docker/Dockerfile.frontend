@@ -34,8 +34,14 @@ LABEL maintainer="Morzan <morzan1001@gmail.com>"
 LABEL version="1.0"
 LABEL description="Dockerfile for the frontend module of Portwhine"
 
-COPY /certs/selfsigned-ca.crt /etc/ssl/certs/selfsigned-ca.crt
-RUN apk add --no-cache curl
+# Ensure the CA certificates directory exists
+RUN mkdir -p /usr/local/share/ca-certificates
+# Copy the CA certificate to the trusted certificates directory
+COPY /certs/selfsigned-ca.crt /usr/local/share/ca-certificates/
+RUN chmod 644 /usr/local/share/ca-certificates/selfsigned-ca.crt
+# Update the CA certificates
+RUN apk add --no-cache ca-certificates
+RUN update-ca-certificates
 
 COPY certs/selfsigned-server.crt /etc/nginx/certs/selfsigned-server.crt
 COPY certs/selfsigned-server.key /etc/nginx/certs/selfsigned-server.key

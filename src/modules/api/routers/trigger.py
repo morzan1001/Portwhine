@@ -2,7 +2,7 @@ from typing import List, Dict, Any
 from fastapi import APIRouter
 from api.models.trigger import IPAddressTrigger, CertstreamTrigger, TriggerConfig
 from utils.logger import LoggingModule
-from api.docs.trigger_docs import trigger_responses, trigger_summaries, trigger_descriptions
+from api.docs.trigger_docs import trigger_summaries, trigger_descriptions
 
 router = APIRouter()
 logger = LoggingModule.get_logger()
@@ -20,7 +20,6 @@ async def get_triggers():
     response_model=Dict[str, Any],
     summary=trigger_summaries["get_trigger_config"],
     description=trigger_descriptions["get_trigger_config"],
-    responses=trigger_responses
 )
 async def get_trigger_config(name: str):
     for cls in trigger_classes:
