@@ -1,28 +1,32 @@
 #!/usr/bin/env python3
 import uuid
 from pydantic import BaseModel, Field, model_serializer, model_validator
-from typing import Any, ClassVar, List, Set
+from typing import Any, ClassVar, List, Optional, Set
 from api.models.types import InputOutputType
 
 class WorkerConfig(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    children: List['WorkerConfig'] = []
+    children: Optional[List['WorkerConfig']] = None
     
     @model_serializer
     def ser_model(self) -> dict[str, Any]:
-        data = {self.__class__.__name__: self.__dict__}
-        data[self.__class__.__name__]['input'] = self.__class__.input
-        data[self.__class__.__name__]['output'] = self.__class__.output
-        return data
+        data = {
+            "id": str(self.id),
+            "children": [child.ser_model() for child in self.children] if self.children else None,
+            "input": [input_type.value for input_type in self.__class__.input],
+            "output": [output_type.value for output_type in self.__class__.output]
+        }
+        return {self.__class__.__name__: data}
     
     @model_validator(mode="after")
     def validate_worker_hierarchy(cls, values):
         children = values.children
-        parent_output_set: Set[InputOutputType] = set(values.output)
-        for child in children:
-            child_input_set: Set[InputOutputType] = set(child.input)
-            if not parent_output_set & child_input_set:
-                raise ValueError(f"Worker {values.id} output does not match any child {child.id} input")
+        if children:
+            parent_output_set: Set[InputOutputType] = set(values.output)
+            for child in children:
+                child_input_set: Set[InputOutputType] = set(child.input)
+                if not parent_output_set & child_input_set:
+                    raise ValueError(f"Worker {values.id} output does not match any child {child.id} input")
         return values
 
 class FFUFWorker(WorkerConfig):

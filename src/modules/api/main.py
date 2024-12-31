@@ -44,7 +44,6 @@ async def set_secure_headers(request: Request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains, preload"
     return response
 
-
 # Include routers
 app.include_router(trigger.router, prefix="/api/v1", tags=["Trigger"])
 app.include_router(pipeline.router, prefix="/api/v1", tags=["Pipelines"])

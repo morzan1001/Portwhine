@@ -22,7 +22,7 @@ async def create_pipeline(pipeline: Pipeline):
     if not es_client:
         raise HTTPException(status_code=500, detail="Could not connect to Elasticsearch")
     try:
-        es_client.index(index="pipelines", id=str(pipeline.id), body=pipeline.ser_model())
+        es_client.index(index="pipelines", id=str(pipeline.id), body=pipeline.model_dump())
         return pipeline
     except Exception as e:
         logger.error(f"Error creating pipeline: {e}")
@@ -81,7 +81,7 @@ async def update_pipeline(pipeline_id: str, pipeline: Pipeline):
     if not es_client:
         raise HTTPException(status_code=500, detail="Could not connect to Elasticsearch")
     try:
-        es_client.index(index="pipelines", id=pipeline_id, body=pipeline.ser_model())
+        es_client.index(index="pipelines", id=pipeline_id, body=pipeline.model_dump())
         return pipeline
     except Exception as e:
         logger.error(f"Error updating pipeline: {e}")
