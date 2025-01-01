@@ -1,6 +1,11 @@
 {
   "name": "Testpipeline Resolver Bund", 
-  "trigger": {},
+  "trigger": {
+    "CertstreamTrigger":
+    {
+      "regex": ""
+    }
+  },
   "worker": [
     {
       "ResolverWorker": {}
