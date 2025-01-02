@@ -23,4 +23,5 @@ DNS.1   = localhost
 DNS.2   = elasticsearch
 DNS.3   = kibana
 DNS.4   = redis
-IP.1   = 127.0.0.1
+IP.1    = 127.0.0.1
+IP.2    = 37.27.179.252
