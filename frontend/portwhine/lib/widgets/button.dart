@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:portwhine/global/colors.dart';
 import 'package:portwhine/global/text_style.dart';
+import 'package:portwhine/widgets/loading_indicator.dart';
 import 'package:portwhine/widgets/spacer.dart';
 
 class Button extends StatelessWidget {
   final String text;
-  final void Function()? onPressed;
+  final void Function()? onTap;
   final Color buttonColor, textColor;
   final Color? borderColor;
   final double height, width, borderRadius, padding, textSize;
-  final bool showAddIcon;
+  final bool showAddIcon, showLoading;
   final IconData? icon;
 
   const Button(
     this.text, {
     super.key,
-    this.onPressed,
-    this.buttonColor = CustomColors.prime,
+    this.onTap,
+    this.buttonColor = MyColors.prime,
+    this.textColor = MyColors.white,
     this.borderColor,
-    this.textColor = CustomColors.white,
-    this.height = 56,
-    this.borderRadius = 8,
-    this.padding = 4,
-    this.textSize = 14,
+    this.height = 48,
+    this.borderRadius = 12,
+    this.padding = 24,
+    this.textSize = 15,
     this.width = 0,
     this.showAddIcon = false,
+    this.showLoading = false,
     this.icon,
   });
 
@@ -32,54 +34,63 @@ class Button extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(
-          borderRadius,
-        ),
-        border: Border.all(color: borderColor ?? buttonColor),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: borderColor != null
+            ? Border.all(color: borderColor!, width: 0.5)
+            : null,
       ),
-      child: MaterialButton(
-        hoverElevation: 0,
-        highlightElevation: 0,
-        elevation: 0,
+      child: SizedBox(
         height: height,
-        minWidth: width,
-        onPressed: onPressed ?? () {},
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-            borderRadius,
+        child: MaterialButton(
+          hoverElevation: 0,
+          highlightElevation: 0,
+          elevation: 0,
+          height: height,
+          minWidth: width,
+          onPressed: !showLoading ? onTap : () {},
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
           ),
-        ),
-        color: buttonColor,
-        child: Padding(
           padding: EdgeInsets.symmetric(horizontal: padding),
+          color: !showLoading ? buttonColor : buttonColor.withOpacity(0.8),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (showAddIcon)
+              if (!showLoading && showAddIcon)
                 Icon(
                   Icons.add,
-                  size: 20,
-                  color: textColor,
+                  size: 18,
+                  color: borderColor ?? textColor,
                 ),
-              if (icon != null)
+              if (!showLoading && icon != null)
                 Icon(
-                  icon,
+                  icon!,
                   size: 20,
                   color: textColor,
                 ),
-              HorizontalSpacer(showAddIcon || icon != null ? 6 : 0),
-              Flexible(
-                child: Text(
-                  text,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  style: style(
-                    color: textColor,
-                    size: textSize,
-                    weight: FontWeight.w600,
+              if (showLoading)
+                LoadingIndicator(
+                  color: borderColor ?? textColor,
+                  small: true,
+                ),
+              HorizontalSpacer(
+                showAddIcon || showLoading || (icon != null && text != '')
+                    ? 6
+                    : 0,
+              ),
+              if (!showLoading)
+                Flexible(
+                  child: Text(
+                    text,
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: style(
+                      color: borderColor ?? textColor,
+                      size: textSize,
+                      weight: FontWeight.w600,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

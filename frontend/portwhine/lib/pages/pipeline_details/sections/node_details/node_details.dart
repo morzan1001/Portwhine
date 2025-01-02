@@ -15,7 +15,7 @@ class NodeDetails extends StatelessWidget {
       width: 500,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: CustomColors.greyDark.withOpacity(0.1),
+        color: MyColors.darkGrey.withOpacity(0.1),
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(16),
         ),
@@ -27,7 +27,7 @@ class NodeDetails extends StatelessWidget {
           Text(
             model.name,
             style: style(
-              color: CustomColors.black,
+              color: MyColors.black,
               size: 20,
               weight: FontWeight.w600,
             ),
@@ -36,7 +36,7 @@ class NodeDetails extends StatelessWidget {
           Text(
             'Settings',
             style: style(
-              color: CustomColors.black,
+              color: MyColors.black,
               size: 18,
               weight: FontWeight.w500,
             ),
@@ -52,7 +52,7 @@ class NodeDetails extends StatelessWidget {
                     Text(
                       'Inputs',
                       style: style(
-                        color: CustomColors.black,
+                        color: MyColors.black,
                         size: 18,
                         weight: FontWeight.w500,
                       ),
@@ -64,7 +64,7 @@ class NodeDetails extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           margin: const EdgeInsets.only(top: 12),
                           decoration: BoxDecoration(
-                            color: CustomColors.blue.withOpacity(0.1),
+                            color: MyColors.black.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
@@ -87,7 +87,7 @@ class NodeDetails extends StatelessWidget {
                     Text(
                       'Outputs',
                       style: style(
-                        color: CustomColors.black,
+                        color: MyColors.black,
                         size: 18,
                         weight: FontWeight.w500,
                       ),
@@ -99,7 +99,7 @@ class NodeDetails extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           margin: const EdgeInsets.only(top: 12),
                           decoration: BoxDecoration(
-                            color: CustomColors.blue.withOpacity(0.1),
+                            color: MyColors.black.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(

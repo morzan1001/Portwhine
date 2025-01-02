@@ -54,7 +54,7 @@ class _PipelineCanvasWrapperState extends State<PipelineCanvasWrapper>
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    child: Container(color: CustomColors.greyLighter),
+                    child: Container(color: MyColors.lightGrey),
                   ),
 
                   // main

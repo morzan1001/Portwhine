@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:portwhine/blocs/single_pipeline/pipeline_cubit.dart';
 import 'package:portwhine/models/pipeline_model.dart';
 import 'package:portwhine/pages/pipeline_details/sections/canvas/pipeline_canvas_wrapper.dart';
-import 'package:portwhine/pages/pipeline_details/sections/status/pipeline_status.dart';
 
 @RoutePage()
 class PipelineDetailsPage extends StatefulWidget {
@@ -41,7 +40,6 @@ class _PipelineDetailsPageState extends State<PipelineDetailsPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        endDrawer: const PipelineDetails(),
         body: BlocBuilder<PipelineCubit, PipelineModel>(
           builder: (context, state) {
             return const Column(

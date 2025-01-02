@@ -1,44 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:portwhine/global/colors.dart';
+import 'package:portwhine/widgets/loading_indicator.dart';
 
-class CustomIconButton extends StatelessWidget {
+class MyIconButton extends StatelessWidget {
   final IconData icon;
-  final void Function()? onPressed;
-  final Color? buttonColor, iconColor;
-  final double height, width, borderRadius, padding, iconSize;
+  final void Function()? onTap;
+  final Color buttonColor, iconColor;
+  final double size, borderRadius, padding, iconSize;
+  final bool showLoading;
 
-  const CustomIconButton(
+  const MyIconButton(
     this.icon, {
     super.key,
-    this.onPressed,
-    this.buttonColor,
-    this.iconColor,
-    this.height = 52,
-    this.borderRadius = 8,
+    this.onTap,
+    this.buttonColor = MyColors.lightGrey,
+    this.iconColor = MyColors.black,
+    this.size = 44,
+    this.borderRadius = 12,
     this.padding = 4,
-    this.iconSize = 18,
-    this.width = 48,
+    this.iconSize = 22,
+    this.showLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return MaterialButton(
-      hoverElevation: 0,
-      highlightElevation: 0,
-      elevation: 0,
-      height: height,
-      minWidth: width,
-      onPressed: onPressed ?? () {},
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(
-          borderRadius,
+    return InkWell(
+      onTap: !showLoading ? onTap : () {},
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: Container(
+        decoration: BoxDecoration(
+          color: buttonColor,
+          borderRadius: BorderRadius.circular(borderRadius),
         ),
-      ),
-      color: buttonColor ?? CustomColors.prime,
-      child: Icon(
-        icon,
-        color: iconColor ?? Colors.white,
-        size: iconSize,
+        height: size,
+        width: size,
+        child: Center(
+          child: showLoading
+              ? LoadingIndicator(color: iconColor, small: true)
+              : Icon(icon, color: iconColor, size: iconSize),
+        ),
       ),
     );
   }

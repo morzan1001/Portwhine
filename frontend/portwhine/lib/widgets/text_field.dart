@@ -1,33 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// import 'package:portwhine/blocs/password/obscure_password_cubit.dart';
 import 'package:portwhine/global/colors.dart';
 import 'package:portwhine/global/text_style.dart';
 import 'package:portwhine/widgets/spacer.dart';
 
 class MyTextField extends StatelessWidget {
-  final String label, hint;
-  final TextEditingController controller;
+  final String hint;
+  final String? label;
+  final TextEditingController? controller;
   final TextInputType type;
   final int lines;
   final bool password;
   final bool expanded;
   final bool absorb;
+  final bool isWhite;
   final List<TextInputFormatter>? inputFormatters;
-  final Widget? icon;
+  final ValueChanged<String>? onChanged;
+  final Widget? prefixWidget, suffixWidget;
+  final double radius;
 
   const MyTextField({
     super.key,
-    required this.label,
+    this.label,
     required this.hint,
-    required this.controller,
+    this.controller,
     this.password = false,
     this.expanded = false,
     this.absorb = false,
+    this.isWhite = false,
     this.type = TextInputType.text,
     this.lines = 1,
     this.inputFormatters,
-    this.icon,
+    this.prefixWidget,
+    this.suffixWidget,
+    this.onChanged,
+    this.radius = 12,
   });
 
   @override
@@ -35,41 +42,59 @@ class MyTextField extends StatelessWidget {
     final widget = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: style(
-            size: 14,
-            weight: FontWeight.w500,
+        if (label != null)
+          Text(
+            label!,
+            overflow: TextOverflow.ellipsis,
+            style: style(),
           ),
-        ),
-        const VerticalSpacer(6),
+        if (label != null) const VerticalSpacer(6),
         Container(
           decoration: BoxDecoration(
-            color: CustomColors.greyLight,
-            borderRadius: BorderRadius.circular(8),
+            color: MyColors.grey,
+            borderRadius: BorderRadius.circular(radius),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 2),
           child: AbsorbPointer(
             absorbing: absorb,
             child: TextField(
+              onChanged: onChanged,
               textCapitalization: TextCapitalization.sentences,
-              obscureText: password,
               controller: controller,
               keyboardType: type,
-              style: const TextStyle(fontSize: 14),
+              style: style(
+                size: 16,
+                color: MyColors.black,
+                weight: FontWeight.w500,
+              ),
               inputFormatters: inputFormatters,
               maxLines: lines,
-              cursorColor: CustomColors.secDark,
+              cursorColor: MyColors.black,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 14,
+                  horizontal: 18,
+                  vertical: 12,
                 ),
                 hintText: hint,
-                hintStyle: const TextStyle(
-                  fontSize: 14,
-                ),
+                hintStyle: style(size: 15),
+                prefixIcon: prefixWidget != null
+                    ? Padding(
+                        padding: const EdgeInsets.only(right: 12, left: 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [prefixWidget!],
+                        ),
+                      )
+                    : null,
+                suffixIcon: suffixWidget != null
+                    ? Padding(
+                        padding: const EdgeInsets.only(right: 12, left: 16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [suffixWidget!],
+                        ),
+                      )
+                    : null,
               ),
             ),
           ),

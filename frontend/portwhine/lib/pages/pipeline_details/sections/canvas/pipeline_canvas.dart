@@ -71,13 +71,13 @@ class _PipelineCanvasState extends State<PipelineCanvas> {
                         ),
                         DragTarget<NodeModel>(
                           builder: (a, b, c) => Container(),
-                          onWillAccept: (NodeModel? data) => data != null,
+                          // removed onWillAccept
                           onAcceptWithDetails: (details) {
                             final canvas =
                                 BlocProvider.of<CanvasCubit>(context).state;
 
                             final node = details.data.copyWith(
-                              id: "Test",
+                              id: "ID",
                               position: NodePosition(
                                 x: (details.offset.dx - canvas.position.x) /
                                     canvas.zoom,

@@ -22,14 +22,14 @@ class _NodesListState extends State<NodesList> {
         horizontal: 20,
       ),
       decoration: BoxDecoration(
-        color: CustomColors.grey.withOpacity(0.3),
+        color: MyColors.darkGrey.withOpacity(0.3),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CustomColors.grey, width: 0.5),
+        border: Border.all(color: MyColors.darkGrey, width: 0.5),
         boxShadow: [
           BoxShadow(
             blurRadius: 6,
             spreadRadius: 1,
-            color: CustomColors.black.withOpacity(0.04),
+            color: MyColors.black.withOpacity(0.04),
           ),
         ],
       ),
@@ -48,7 +48,7 @@ class _NodesListState extends State<NodesList> {
                   'NODES',
                   style: style(
                     spacing: 4,
-                    color: CustomColors.textLight,
+                    color: MyColors.textLightGrey,
                     size: 12,
                   ),
                 ),
@@ -57,7 +57,7 @@ class _NodesListState extends State<NodesList> {
                 children: [
                   const Icon(
                     Icons.add,
-                    color: CustomColors.black,
+                    color: MyColors.black,
                     size: 20,
                   ),
                   const HorizontalSpacer(2),
@@ -106,14 +106,14 @@ class NodeSelectionItem extends StatelessWidget {
           vertical: 12,
         ),
         decoration: BoxDecoration(
-          color: CustomColors.white,
+          color: MyColors.white,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Row(
           children: [
             const Icon(
               Icons.drag_indicator,
-              color: CustomColors.black,
+              color: MyColors.black,
               size: 20,
             ),
             const HorizontalSpacer(4),

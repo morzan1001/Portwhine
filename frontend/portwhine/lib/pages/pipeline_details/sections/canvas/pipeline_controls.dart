@@ -25,19 +25,19 @@ class PipelineControls extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: CustomColors.white,
+                color: MyColors.white,
                 boxShadow: [
                   BoxShadow(
                     blurRadius: 6,
                     spreadRadius: 1,
-                    color: CustomColors.black.withOpacity(0.04),
+                    color: MyColors.black.withOpacity(0.04),
                   ),
                 ],
               ),
               child: InkWell(
                 child: const Icon(
                   Icons.arrow_back,
-                  color: CustomColors.black,
+                  color: MyColors.black,
                   size: 20,
                 ),
                 onTap: () => pop(context),
@@ -51,12 +51,12 @@ class PipelineControls extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 32),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: CustomColors.white,
+                color: MyColors.white,
                 boxShadow: [
                   BoxShadow(
                     blurRadius: 6,
                     spreadRadius: 1,
-                    color: CustomColors.black.withOpacity(0.04),
+                    color: MyColors.black.withOpacity(0.04),
                   ),
                 ],
               ),
@@ -64,7 +64,7 @@ class PipelineControls extends StatelessWidget {
                 child: Text(
                   'View Results',
                   style: style(
-                    color: CustomColors.textDark,
+                    color: MyColors.textDarkGrey,
                     weight: FontWeight.w600,
                   ),
                 ),
@@ -76,12 +76,12 @@ class PipelineControls extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 32),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: CustomColors.white,
+                color: MyColors.white,
                 boxShadow: [
                   BoxShadow(
                     blurRadius: 6,
                     spreadRadius: 1,
-                    color: CustomColors.black.withOpacity(0.04),
+                    color: MyColors.black.withOpacity(0.04),
                   ),
                 ],
               ),
@@ -89,7 +89,7 @@ class PipelineControls extends StatelessWidget {
                 child: Text(
                   'Save',
                   style: style(
-                    color: CustomColors.textDark,
+                    color: MyColors.textDarkGrey,
                     weight: FontWeight.w600,
                   ),
                 ),
@@ -105,12 +105,12 @@ class PipelineControls extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: CustomColors.white,
+                    color: MyColors.white,
                     boxShadow: [
                       BoxShadow(
                         blurRadius: 6,
                         spreadRadius: 1,
-                        color: CustomColors.black.withOpacity(0.04),
+                        color: MyColors.black.withOpacity(0.04),
                       ),
                     ],
                   ),
@@ -118,26 +118,26 @@ class PipelineControls extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.pause_outlined,
-                        color: CustomColors.black,
+                        color: MyColors.black,
                         size: 20,
                       ),
                       const HorizontalSpacer(20),
                       const Icon(
                         Icons.play_arrow_outlined,
-                        color: CustomColors.black,
+                        color: MyColors.black,
                         size: 20,
                       ),
                       const HorizontalSpacer(20),
                       Container(
                         height: 32,
                         width: 1,
-                        color: CustomColors.grey,
+                        color: MyColors.darkGrey,
                       ),
                       const HorizontalSpacer(20),
                       InkWell(
                         child: const Icon(
                           Icons.info_outline,
-                          color: CustomColors.black,
+                          color: MyColors.black,
                           size: 20,
                         ),
                         onTap: () {

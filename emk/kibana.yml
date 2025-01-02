@@ -1,7 +1,7 @@
 server.name: kibana
 server.host: "0.0.0.0"
 elasticsearch.hosts: ["https://elasticsearch:9200"]
-elasticsearch.serviceAccountToken: AAEAAWVsYXN0aWMva2liYW5hL3Rva2VuX215aE1JcFFCS0h3MDJyQmRBYmlROlljdHhWaGlBVGQyMjJ0RTY2NVZCZUE
+elasticsearch.serviceAccountToken: AAEAAWVsYXN0aWMva2liYW5hL3Rva2VuX0g5R2lLSlFCUFNQUXIxdDJFWU9TOmZXeWJzd3YtUVEyLTQtelU3OE4xWHc
 elasticsearch.requestTimeout: 90000
 elasticsearch.shardTimeout: 90000
 

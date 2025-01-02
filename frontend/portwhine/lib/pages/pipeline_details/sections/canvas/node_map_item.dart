@@ -76,7 +76,7 @@ class NodeMapItem extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: CustomColors.white,
+              color: MyColors.white,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,7 +84,7 @@ class NodeMapItem extends StatelessWidget {
                 Text(
                   model.name,
                   style: style(
-                    color: CustomColors.black,
+                    color: MyColors.black,
                     weight: FontWeight.w600,
                   ),
                 ),
@@ -157,7 +157,7 @@ class ConnectorWidget extends StatelessWidget {
         height: size,
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
-          color: CustomColors.white,
+          color: MyColors.white,
         ),
         child: Center(
           child: Container(
@@ -165,7 +165,7 @@ class ConnectorWidget extends StatelessWidget {
             height: innerSize,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: CustomColors.greyDark,
+              color: MyColors.darkGrey,
             ),
           ),
         ),
@@ -185,7 +185,7 @@ class NodeInput extends StatelessWidget {
       cursor: SystemMouseCursors.grabbing,
       child: DragTarget<Map>(
         builder: (a, b, c) => const ConnectorWidget(),
-        onWillAccept: (Map? data) => data != null,
+        // removed onWillAccept
         onAcceptWithDetails: (details) {
           final outputNode = details.data['node'];
           final inputNode = model;
@@ -254,7 +254,7 @@ class InputOutputItem extends StatelessWidget {
           style: style(
             size: 12,
             spacing: 2,
-            color: CustomColors.textLight,
+            color: MyColors.textLightGrey,
           ),
         ),
         const VerticalSpacer(2),
@@ -262,7 +262,7 @@ class InputOutputItem extends StatelessWidget {
           '${entry.value}',
           style: style(
             size: 14,
-            color: CustomColors.blue,
+            color: MyColors.black,
             weight: FontWeight.w600,
           ),
         ),

@@ -9,7 +9,7 @@ class NodesCubit extends Cubit<List<NodeModel>> {
       : super(
           [
             NodeModel(
-              id: "Test",
+              id: "ID",
               name: 'Domain',
               inputs: {'Input 1': int, 'Input 2': int},
               outputs: {'Output': int},

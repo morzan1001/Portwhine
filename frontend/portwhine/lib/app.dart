@@ -29,11 +29,11 @@ class _PortWhineAppState extends State<PortWhineApp> {
 
   buildMaterialApp() {
     return MaterialApp.router(
-      title: 'Processus',
+      title: 'PortWhine',
       debugShowCheckedModeBanner: false,
       scrollBehavior: AppScrollBehavior(),
       theme: ThemeData(
-        fontFamily: GoogleFonts.poppins().fontFamily,
+        fontFamily: GoogleFonts.inter().fontFamily,
       ),
       routerConfig: appRouter.config(),
     );

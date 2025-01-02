@@ -1,14 +1,15 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:portwhine/blocs/pipelines/pipelines_list/pipelines_list_bloc.dart';
+import 'package:portwhine/blocs/bloc_listeners.dart';
+import 'package:portwhine/blocs/pipelines/get_all_pipelines/get_all_pipelines_bloc.dart';
 import 'package:portwhine/global/colors.dart';
-import 'package:portwhine/global/text_style.dart';
 import 'package:portwhine/pages/pipelines/pipeline_item.dart';
+import 'package:portwhine/pages/write_pipeline/write_pipeline.dart';
 import 'package:portwhine/widgets/button.dart';
-import 'package:portwhine/widgets/loading_indicator.dart';
 import 'package:portwhine/widgets/spacer.dart';
 import 'package:portwhine/widgets/svg_icon.dart';
+import 'package:portwhine/widgets/text.dart';
 import 'package:shimmer/shimmer.dart';
 
 @RoutePage()
@@ -17,93 +18,90 @@ class PipelinesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: CustomColors.greyVar,
-      body: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 16,
-        ),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // logo
-            const SvgIcon(icon: 'logo', size: 72),
-            const VerticalSpacer(24),
-
-            // heading and add button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return MultiBlocListener(
+      listeners: BlocListeners.pipelinesListener,
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor: MyColors.lightGrey,
+          body: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 16,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Pipelines',
-                  style: style(
-                    size: 24,
-                    weight: FontWeight.w600,
-                    color: CustomColors.textDark,
-                  ),
+                // logo
+                const SvgIcon(icon: 'logo', size: 72),
+                const VerticalSpacer(24),
+
+                // heading and add button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Heading('Pipelines', size: 24, bold: true),
+                    Button(
+                      'Add new',
+                      height: 44,
+                      icon: Icons.add,
+                      onTap: () => showWritePipelineDialog(context),
+                    ),
+                  ],
                 ),
-                Button(
-                  'Add new',
-                  height: 44,
-                  icon: Icons.add,
-                  onPressed: () {},
+                const VerticalSpacer(24),
+
+                // list of pipelines
+                BlocBuilder<GetAllPipelinesBloc, GetAllPipelinesState>(
+                  builder: (context, state) {
+                    if (state is GetAllPipelinesLoading) {
+                      return Shimmer.fromColors(
+                        baseColor: MyColors.grey,
+                        highlightColor: MyColors.darkGrey,
+                        child: Column(
+                          children: [
+                            ...List.generate(
+                              3,
+                              (i) => Container(
+                                margin: const EdgeInsets.symmetric(vertical: 6),
+                                height: 40,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: MyColors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    if (state is GetAllPipelinesFailed) {
+                      return Text(state.error);
+                    }
+
+                    if (state is GetAllPipelinesLoaded) {
+                      final pipelines = state.pipelines;
+
+                      return ListView.separated(
+                        separatorBuilder: (a, b) => const VerticalSpacer(12),
+                        itemCount: pipelines.length,
+                        shrinkWrap: true,
+                        itemBuilder: (_, i) {
+                          return PipelineItem(pipelines[i]);
+                        },
+                      );
+                    }
+
+                    return const SizedBox.shrink();
+                  },
                 ),
               ],
             ),
-            const VerticalSpacer(24),
-
-            // list of pipelines
-            BlocBuilder<PipelinesListBloc, PipelinesListState>(
-              builder: (context, state) {
-                if (state is PipelinesListLoading) {
-                  return Shimmer.fromColors(
-                    baseColor: CustomColors.greyVar,
-                    highlightColor: CustomColors.grey,
-                    child: Column(
-                      children: [
-                        ...List.generate(
-                          3,
-                          (i) => Container(
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            height: 40,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              color: CustomColors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                if (state is PipelinesListFailed) {
-                  return Text(state.error);
-                }
-
-                if (state is PipelinesListLoaded) {
-                  final otherPipelines =
-                      state.pipelines.where((e) => !e.completed).toList();
-
-                  return ListView.separated(
-                    separatorBuilder: (a, b) => const VerticalSpacer(12),
-                    itemCount: otherPipelines.length,
-                    shrinkWrap: true,
-                    itemBuilder: (_, i) {
-                      return PipelineItem(otherPipelines[i]);
-                    },
-                  );
-                }
-
-                return const LoadingIndicator();
-              },
-            ),
-          ],
+          ),
         ),
       ),
     );

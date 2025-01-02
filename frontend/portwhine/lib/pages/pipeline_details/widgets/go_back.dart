@@ -6,7 +6,7 @@ import 'package:portwhine/widgets/spacer.dart';
 class GoBackButton extends StatelessWidget {
   const GoBackButton({
     this.onTap,
-    this.color = CustomColors.white,
+    this.color = MyColors.white,
     super.key,
   });
 

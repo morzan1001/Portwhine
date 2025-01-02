@@ -1,30 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:portwhine/global/colors.dart';
+import 'package:portwhine/global/text_style.dart';
 
 class MyTextButton extends StatelessWidget {
   const MyTextButton(
     this.text, {
-    this.color,
+    this.color = MyColors.prime,
     this.onTap,
     super.key,
   });
 
   final String text;
-  final Color? color;
+  final Color color;
   final void Function()? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return InkWell(
       onTap: onTap,
       child: Text(
         text,
-        style: TextStyle(
-          fontSize: 16,
-          color: color ?? theme.colorScheme.secondary.withOpacity(0.75),
-          decoration: TextDecoration.underline,
-        ),
+        style: style(size: 16, color: color),
       ),
     );
   }

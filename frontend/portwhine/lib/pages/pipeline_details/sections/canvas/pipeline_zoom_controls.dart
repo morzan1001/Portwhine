@@ -18,12 +18,12 @@ class PipelineZoomControls extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: CustomColors.white,
+            color: MyColors.white,
             boxShadow: [
               BoxShadow(
                 blurRadius: 6,
                 spreadRadius: 1,
-                color: CustomColors.black.withOpacity(0.04),
+                color: MyColors.black.withOpacity(0.04),
               ),
             ],
           ),
@@ -35,7 +35,7 @@ class PipelineZoomControls extends StatelessWidget {
                 },
                 child: const Icon(
                   Icons.remove,
-                  color: CustomColors.black,
+                  color: MyColors.black,
                   size: 20,
                 ),
               ),
@@ -43,7 +43,7 @@ class PipelineZoomControls extends StatelessWidget {
               Text(
                 '${(state.zoom * 100).toStringAsFixed(0)}%',
                 style: style(
-                  color: CustomColors.textDark,
+                  color: MyColors.textDarkGrey,
                   weight: FontWeight.w600,
                 ),
               ),
@@ -54,7 +54,7 @@ class PipelineZoomControls extends StatelessWidget {
                 },
                 child: const Icon(
                   Icons.add,
-                  color: CustomColors.black,
+                  color: MyColors.black,
                   size: 20,
                 ),
               ),

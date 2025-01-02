@@ -22,7 +22,7 @@ class BezierPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = CustomColors.greyDark
+      ..color = MyColors.darkGrey
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 

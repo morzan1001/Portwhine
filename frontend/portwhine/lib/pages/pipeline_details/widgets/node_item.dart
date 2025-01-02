@@ -10,7 +10,7 @@ class ResultNodeItem extends StatelessWidget {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border.all(color: CustomColors.grey, width: 0.5),
+        border: Border.all(color: MyColors.darkGrey, width: 0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Theme(
@@ -25,14 +25,14 @@ class ResultNodeItem extends StatelessWidget {
           title: Text(
             'Domain',
             style: style(
-              color: CustomColors.textDark,
+              color: MyColors.textDarkGrey,
               weight: FontWeight.w600,
             ),
           ),
           childrenPadding: EdgeInsets.zero,
           children: [
             Container(
-              color: CustomColors.greyLighter,
+              color: MyColors.lightGrey,
               padding: const EdgeInsets.symmetric(
                 horizontal: 20,
                 vertical: 8,
@@ -42,25 +42,25 @@ class ResultNodeItem extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'OUTPUTS',
-                      style: style(color: CustomColors.textLight),
+                      style: style(color: MyColors.textLightGrey),
                     ),
                   ),
                   Expanded(
                     child: Text(
                       'NAME',
-                      style: style(color: CustomColors.textLight),
+                      style: style(color: MyColors.textLightGrey),
                     ),
                   ),
                   Expanded(
                     child: Text(
                       'TYPE',
-                      style: style(color: CustomColors.textLight),
+                      style: style(color: MyColors.textLightGrey),
                     ),
                   ),
                   Expanded(
                     child: Text(
                       'VALUE',
-                      style: style(color: CustomColors.textLight),
+                      style: style(color: MyColors.textLightGrey),
                     ),
                   ),
                 ],
@@ -70,7 +70,7 @@ class ResultNodeItem extends StatelessWidget {
               separatorBuilder: (a, b) => const Divider(
                 height: 0.5,
                 thickness: 0.5,
-                color: CustomColors.grey,
+                color: MyColors.darkGrey,
               ),
               itemCount: 4,
               shrinkWrap: true,
@@ -85,25 +85,25 @@ class ResultNodeItem extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'DNS Ports',
-                          style: style(color: CustomColors.black),
+                          style: style(color: MyColors.black),
                         ),
                       ),
                       Expanded(
                         child: Text(
                           'Open DNS Port',
-                          style: style(color: CustomColors.black),
+                          style: style(color: MyColors.black),
                         ),
                       ),
                       Expanded(
                         child: Text(
                           'UDP Port',
-                          style: style(color: CustomColors.black),
+                          style: style(color: MyColors.black),
                         ),
                       ),
                       Expanded(
                         child: Text(
                           '53',
-                          style: style(color: CustomColors.black),
+                          style: style(color: MyColors.black),
                         ),
                       ),
                     ],

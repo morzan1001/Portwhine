@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:portwhine/global/colors.dart';
+import 'package:portwhine/global/text_style.dart';
 
 void showToast(BuildContext context, String text, {Color? color}) {
   final toast = FToast().init(context);
 
-  color = color ?? CustomColors.secDark;
+  color = color ?? MyColors.prime;
 
   toast.showToast(
     positionedToastBuilder: (context, child, _) => Positioned(
@@ -25,11 +26,7 @@ void showToast(BuildContext context, String text, {Color? color}) {
         color: color,
         child: Text(
           text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-          ),
+          style: style(color: Colors.white),
         ),
       ),
     ),
