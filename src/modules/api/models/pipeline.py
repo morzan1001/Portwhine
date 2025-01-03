@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import uuid
-from pydantic import BaseModel, PrivateAttr, SerializeAsAny, model_serializer, model_validator
 from typing import Any, Dict, List, Optional, Set
+from pydantic import BaseModel, PrivateAttr, SerializeAsAny, model_serializer, model_validator
 from api.models.trigger import TriggerConfig, CertstreamTrigger, IPAddressTrigger
 from api.models.worker import ResolverWorker, WorkerConfig, FFUFWorker, HumbleWorker, ScreenshotWorker, TestSSLWorker, WebAppAnalyzerWorker, NmapWorker
 from api.models.types import InputOutputType, NodeStatus
@@ -17,7 +17,7 @@ class Pipeline(BaseModel):
         super().__init__(**data)
         if 'id' in data:
             self._id = uuid.UUID(data['id'])
-        if 'status' in data: 
+        if 'status' in data:
             self._status = NodeStatus(data['status'])
 
     @model_serializer
@@ -64,27 +64,27 @@ class Pipeline(BaseModel):
                         worker_instance = wcls(**worker_dict)
                         if children_data:
                             worker_instance.children = [validate_worker(child) for child in children_data]
-                        
+
                         return worker_instance
                 raise ValueError("Invalid worker type")
 
             validated_workers = [validate_worker(worker_data) for worker_data in workers_data]
             values["worker"] = validated_workers
         return values
-    
+
     @model_validator(mode="after")
     def validate_pipeline(cls, pipeline: 'Pipeline'):
         trigger_data = pipeline.trigger
         workers_data = pipeline.worker
-        
+
         # Check whether both trigger and worker do not exist
         if not trigger_data and not workers_data:
             return pipeline
-        
+
         # Check whether workers exist, but no trigger is present
         if workers_data and not trigger_data:
             raise ValueError("Workers cannot exist without a trigger")
-        
+
         # Check whether the output of the trigger matches the input of the worker
         if trigger_data:
             trigger_output_set: Set[InputOutputType] = set(trigger_data.output)
@@ -92,5 +92,5 @@ class Pipeline(BaseModel):
                 worker_input_set: Set[InputOutputType] = set(worker.input)
                 if not trigger_output_set & worker_input_set:
                     raise ValueError(f"Trigger {trigger_data.id} output does not match any worker {worker.id} input")
-        
+
         return pipeline

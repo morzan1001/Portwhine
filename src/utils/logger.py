@@ -38,7 +38,8 @@ class LoggingModule:
 
         self.logger = logging.getLogger('portwhine')
         self.logger.setLevel(log_level)
-        self.logger.info('Logging started (level=%s, filename=%s)', logging.getLevelName(self.logger.getEffectiveLevel()), filename)
+        self.logger.info('Logging started (level=%s, filename=%s)',
+                         logging.getLevelName(self.logger.getEffectiveLevel()), filename)
 
         print(f'See logfile for details: {os.path.join(os.getcwd(), filename)}')
 

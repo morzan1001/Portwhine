@@ -38,6 +38,9 @@ def process_queue():
             logger.info(f"Stopping container {container_name}")
             docker_manager.stop_container(container_name)
             PipelineHandler.update_status(pipeline_id=pipeline_id, node_id=container_name, status=NodeStatus.STOPPED)
+        elif action == "cleanup":
+            logger.info(f"Cleaning up containers for container {container_name}")
+            docker_manager.cleanup_containers(container_name)
 
         time.sleep(1)  # Optional: Sleep to prevent tight loop
 

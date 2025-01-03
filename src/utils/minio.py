@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import os
-import boto3
-from logger import LoggingModule
-from botocore.exceptions import BotoCoreError, NoCredentialsError
 from typing import Optional
+from logger import LoggingModule
+import boto3
+from botocore.exceptions import BotoCoreError, NoCredentialsError
 from botocore.client import BaseClient
 
 # Logger initializing

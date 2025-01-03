@@ -13,29 +13,23 @@ class WorkerHandler:
         self.logger = LoggingModule.get_logger()
 
     def start_worker(self, pipeline_id: str, worker: WorkerConfig, job_payload: JobPayload):
-        worker_id = str(worker.id)
         input_fields = worker.input
 
         try:
-            # Convert JobPayload to dict
             payload_json = job_payload.model_dump_json()
-            payload_dict = json.loads(payload_json)
+            worker_id = str(worker._id)
+            payload_key = f"worker:{worker_id}:payloads"
 
-            # Check if a worker with the same ID and payload already exists
-            existing_payloads = self.redis_block_client.lrange(f"worker:{worker_id}:payloads", 0, -1)
-            for existing_payload_json in existing_payloads:
-                existing_payload = json.loads(existing_payload_json)
-                self.logger.debug(f"Payload JSON: {payload_json}")
-                self.logger.debug(f"Existing payload: {existing_payload}")
-                if all(field is not None and payload_dict.get(field) == existing_payload.get(field) for field in input_fields):
-                    self.logger.info(f"Worker {worker_id} with the same payload already running. Skipping start.")
-                    return
 
-            # Save Worker ID and JOB_Payload to Redis with a TTL of 24 hours
-            self.redis_block_client.rpush(f"worker:{worker_id}:payloads", payload_json)
-            self.redis_block_client.expire(f"worker:{worker_id}:payloads", 86400)
-            self.logger.info(f"Saved JOB_Payload for worker {worker_id} to Redis with a TTL of 24 hours")
+            # Check if the payload already exists in the Redis set
+            if self.redis_block_client.sismember(payload_key, payload_json):
+                self.logger.info(f"Payload for worker {worker_id} already exists in Redis.")
+                return
 
+            # Save Worker ID and JOB_Payload to Redis set with a TTL of 24 hours
+            self.redis_block_client.sadd(payload_key, payload_json)
+            self.redis_block_client.expire(payload_key, 86400)
+            self.logger.info(f"Saved JOB_Payload for worker {worker_id} to Redis set with a TTL of 24 hours")
             # Count the number of already started instances
             instance_key = f"worker:{worker_id}:instances"
             existing_instances = int(self.redis_queue_client.get(instance_key) or 0)
@@ -46,6 +40,7 @@ class WorkerHandler:
 
             # Start the worker container
             task = {
+                "pipeline_id": pipeline_id,
                 "action": "start",
                 "container_name": container_name,
                 "image_name": worker.image_name,
@@ -62,11 +57,12 @@ class WorkerHandler:
             self.logger.error(f"Error starting worker {worker_id}: {e}")
             raise
 
-    def stop_worker(self, worker_id: str):
+    def stop_worker(self, pipeline_id: str, worker_id: str):
         try:
             # Stop the worker container
             container_name = f"{worker_id}_instance"
             task = {
+                "pipeline_id": pipeline_id,
                 "action": "stop",
                 "container_name": container_name
             }

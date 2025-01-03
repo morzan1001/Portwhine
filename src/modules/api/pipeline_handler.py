@@ -87,13 +87,13 @@ class PipelineHandler:
             logger.debug(f"Updating status for node {node_id} in pipeline {pipeline_id} to {status}")
 
             if node_id == str(pipeline.trigger._id):
-                    pipeline.trigger._status = status
+                pipeline.trigger._status = status
             else:
                 for worker in pipeline.worker:
                     if node_id == str(worker._id):
                         worker._status = status
                         break
-            
+
             # Check if any trigger or worker is in error state
             is_any_error = (
                 pipeline.trigger._status == NodeStatus.ERROR or
@@ -123,3 +123,16 @@ class PipelineHandler:
             logger = LoggingModule.get_logger()
             logger.error(f"Error updating status: {e}")
             raise HTTPException(status_code=500, detail=f"Error updating status: {str(e)}")
+        
+    def cleanup_containers(self, node_id: str):
+        try:
+            self.logger.debug(f"Cleaning up all containers for worker {node_id}")
+            task = {
+                    "container_name": node_id,
+                    "action": "cleanup",
+                }
+            self.redis_client.rpush("container_queue", json.dumps(task))
+            self.logger.info(f"All containers for node {node_id} have been removed.")
+        except Exception as e:
+            self.logger.error(f"Error cleaning up containers for node {node_id}: {e}")
+            raise

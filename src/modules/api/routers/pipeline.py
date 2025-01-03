@@ -2,10 +2,11 @@
 from elasticsearch import NotFoundError
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict
-from api.models.pipeline import Pipeline
-from api.pipeline_handler import PipelineHandler
 from utils.elasticsearch import get_elasticsearch_connection
 from utils.logger import LoggingModule
+from api.models.pipeline import Pipeline
+from api.pipeline_handler import PipelineHandler
+from api.models.types import NodeStatus
 from api.docs.pipeline_docs import pipeline_summaries, pipeline_descriptions
 
 router = APIRouter()
@@ -65,7 +66,7 @@ async def get_all_pipelines(size: int = Query(10, ge=1), page: int = Query(1, ge
         
         if result["hits"]["total"]["value"] == 0:
             raise HTTPException(status_code=404, detail="No pipelines found")
-        
+
         pipelines = [{"id": hit["_id"], "name": hit["_source"]["name"], "status": hit["_source"].get("status", "Unknown")} for hit in result["hits"]["hits"]]
         return pipelines
     except HTTPException as http_exc:
@@ -127,3 +128,29 @@ async def start_pipeline(pipeline_id: str):
 async def stop_pipeline(pipeline_id: str):
     pipeline_handler.handle_pipeline_stop(pipeline_id)
     return {"message": f"Pipeline {pipeline_id} stopped successfully."}
+
+@router.post(
+    "/pipeline/cleanup/{pipeline_id}",
+    summary=pipeline_summaries["cleanup_pipeline"],
+    description=pipeline_descriptions["cleanup_pipeline"],
+)
+async def cleanup_containers(pipeline_id: str):
+    if not es_client:
+        raise HTTPException(status_code=500, detail="Could not connect to Elasticsearch")
+    try:
+        result = es_client.get(index="pipelines", id=pipeline_id)
+        pipeline = Pipeline(**result["_source"])
+        if pipeline._status == NodeStatus.STOPPED:
+            pipeline_handler.cleanup_containers(str(pipeline.trigger._id))
+            for worker in pipeline.worker:
+                pipeline_handler.cleanup_containers(str(worker._id))
+            return {"message": "Containers cleaned up successfully"}
+        else:
+            raise HTTPException(status_code=400, detail="Pipeline is not stopped")
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"Error deleting pipeline: {e}")
+        raise HTTPException(status_code=500, detail=f"Error deleting pipeline: {str(e)}")

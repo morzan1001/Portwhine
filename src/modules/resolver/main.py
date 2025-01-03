@@ -15,17 +15,18 @@ from utils.logger import LoggingModule
 logger = LoggingModule.get_logger()
 
 class Resolver:
-    def __init__(self, pipeline_id: str, worker_id: str):
+    def __init__(self, pipeline_id: str, worker_id: str, use_internal: bool):
         # Elasticsearch connection
         self.es = get_elasticsearch_connection()
         self.pipeline_id = pipeline_id
         self.worker_id = worker_id
+        self.use_internal = use_internal
 
     def resolve_domain(self, domain: str) -> Optional[str]:
         """Resolves a domain to an IP address"""
         try:
             ip_address = socket.gethostbyname(domain)
-            if is_private_ip(ip_address):
+            if not self.use_internal and is_private_ip(ip_address):
                 logger.error(f"Resolved IP address for {domain} is private: {ip_address}")
                 return None
             return ip_address
@@ -52,7 +53,7 @@ class Resolver:
         """Notifies the handler with the resolved IP"""
         try:
             endpoint = f"/job/{self.pipeline_id}/{self.worker_id}"
-            url = f"http://api:8000/api/v1{endpoint}"
+            url = f"https://api:8000/api/v1{endpoint}"
             payload = {"http": [{"domain": domain}],"ip": [ip_address]}
             headers = {'Content-Type': 'application/json'}
             response = requests.post(url, json=payload, headers=headers)
@@ -71,18 +72,39 @@ def main():
     else:
         payload = json.loads(payload)
         logger.debug(f"Payload: {payload}")
-    
     pipeline_id = os.getenv("PIPELINE_ID")
+
     if not pipeline_id:
         logger.error("PIPELINE_ID environment variable not set.")
         return
-    
+
     worker_id = os.getenv("WORKER_ID")
     if not worker_id:
         logger.error("WORKER_ID environment variable not set.")
         return
 
-    resolver = Resolver(pipeline_id, worker_id)
+    # Retrieve pipeline configuration from Elasticsearch
+    es = get_elasticsearch_connection()
+    pipeline = es.get(index="pipelines", id=pipeline_id)["_source"]
+
+    # Find the worker configuration in the pipeline
+    worker_config = None
+    for worker in pipeline.get("worker", []):
+        for worker_type, config in worker.items():
+            if config["id"] == worker_id:
+                worker_config = config
+                break
+        if worker_config:
+            break
+
+    if not worker_config:
+        logger.error(f"Worker configuration for worker ID {worker_id} not found in pipeline {pipeline_id}.")
+        return
+
+    # Extract the use_internal field for ResolverWorker
+    use_internal = worker_config.get("use_internal", False)
+
+    resolver = Resolver(pipeline_id, worker_id, use_internal)
     http_entries = payload.get('http', [])
 
     for entry in http_entries:

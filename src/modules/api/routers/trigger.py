@@ -9,9 +9,9 @@ logger = LoggingModule.get_logger()
 
 trigger_classes = [IPAddressTrigger, CertstreamTrigger]
 
-@router.get("/trigger", 
-            response_model=List[str], 
-            summary=trigger_summaries["get_triggers"], 
+@router.get("/trigger",
+            response_model=List[str],
+            summary=trigger_summaries["get_triggers"],
             description=trigger_descriptions["get_triggers"])
 async def get_triggers():
     return [cls.__name__ for cls in trigger_classes]

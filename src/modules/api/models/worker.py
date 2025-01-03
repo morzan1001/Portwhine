@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import uuid
-from pydantic import BaseModel, PrivateAttr, model_serializer, model_validator
+from pydantic import BaseModel, Field, PrivateAttr, model_serializer, model_validator
 from typing import Any, ClassVar, List, Optional, Set
 from api.models.types import InputOutputType, NodeStatus
 
@@ -13,7 +13,7 @@ class WorkerConfig(BaseModel):
         super().__init__(**data)
         if 'id' in data:
             self._id = uuid.UUID(data['id'])
-        if 'status' in data: 
+        if 'status' in data:
             self._status = NodeStatus(data['status'])
 
     @model_serializer
@@ -24,7 +24,7 @@ class WorkerConfig(BaseModel):
         data[self.__class__.__name__]['input'] = self.__class__.input
         data[self.__class__.__name__]['output'] = self.__class__.output
         return data
-    
+
     @model_validator(mode="after")
     def validate_worker_hierarchy(cls, values):
         children = values.children
@@ -91,3 +91,4 @@ class ResolverWorker(WorkerConfig):
     input: ClassVar[List[InputOutputType]] = [InputOutputType.HTTP]
     output: ClassVar[List[InputOutputType]] = [InputOutputType.IP]
     image_name: ClassVar[str] = "resolver:1.0"
+    use_internal: bool = Field(default=False)

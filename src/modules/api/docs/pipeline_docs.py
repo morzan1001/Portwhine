@@ -5,7 +5,8 @@ pipeline_summaries = {
     "update_pipeline": "Update a pipeline configuration",
     "delete_pipeline": "Delete a pipeline configuration",
     "start_pipeline": "Start a pipeline",
-    "stop_pipeline": "Stop a pipeline"
+    "stop_pipeline": "Stop a pipeline",
+    "cleanup_pipeline": "Cleanup all containers for a pipeline"
 }
 
 pipeline_descriptions = {
@@ -15,5 +16,6 @@ pipeline_descriptions = {
     "update_pipeline": "Update the configuration of a specific pipeline by pipeline ID.",
     "delete_pipeline": "Delete a specific pipeline by pipeline ID.",
     "start_pipeline": "Start a specific pipeline by pipeline ID.",
-    "stop_pipeline": "Stop a specific pipeline by pipeline ID."
+    "stop_pipeline": "Stop a specific pipeline by pipeline ID.",
+    "cleanup_pipeline": "Cleanup all containers for a specific pipeline by pipeline ID."
 }

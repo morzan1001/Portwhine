@@ -2,11 +2,15 @@
 ignore=tests
 
 [MESSAGES CONTROL]
-disable=C0111  # Missing docstring
-        C0304  # Final newline missing
+disable=C0111,  # Missing docstring
+        C0304,  # Final newline missing
+        F0401  # Unable to import
 
 [REPORTS]
 output-format=colorized
 
 [FORMAT]
 max-line-length=120
+
+[LOGGING]
+logging-format-style=new

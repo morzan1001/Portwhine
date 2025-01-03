@@ -1,11 +1,17 @@
 {
-  "name": "Testpipeline Resolver Bund Test", 
+  "name": "Testpipeline Resolver AWS", 
   "trigger": {
     "CertstreamTrigger":
     {
-      "regex": ""
+      "regex": "\\.amazonaws\\.com"
     }
   },
   "worker": [
+    {
+      "ResolverWorker": {
+        "use_internal": true,
+        "children": []
+      }
+    }
   ]
 }

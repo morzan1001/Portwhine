@@ -85,10 +85,12 @@ class CertstreamScanner:
         """Notifies the handler with the matched URL"""
         try:
             endpoint = f"/job/{self.pipeline_id}/{self.job_id}"
-            url = f"http://api:8000/api/v1{endpoint}"
+            url = f"https://api:8000/api/v1{endpoint}"
             payload = {"http": [{"domain": matched_url}]}
             headers = {'Content-Type': 'application/json'}
-            response = requests.post(url, json=payload, headers=headers)
+            response = requests.post(url, json=payload, headers=headers, verify='/usr/local/share/ca-certificates/selfsigned-ca.crt')
+            print(response.status_code)
+            print(response.text)
             if response.status_code == 200:
                 logger.info(f"Successfully notified handler for pipeline {self.pipeline_id}")
             else:

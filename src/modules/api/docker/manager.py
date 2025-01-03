@@ -24,10 +24,10 @@ class DockerManager:
             kwargs['network'] = network_name
 
             container = self.client.containers.run(
-                image_name, 
-                name=container_name, 
-                command=command, 
-                detach=True, 
+                image_name,
+                name=container_name,
+                command=command,
+                detach=True,
                 **kwargs
             )
             self.logger.info(f"Started container {container_name} using image {image_name} with command '{command}' in network '{network_name}'.")
@@ -50,3 +50,24 @@ class DockerManager:
             self.logger.warning(f"{container_name} container not found.")
         except docker.errors.APIError as e:
             self.logger.error(f"Error stopping container {container_name}: {e}")
+
+    def remove_container(self, container_name):
+        try:
+            self.logger.debug("Attempting to remove container: %s", container_name)
+            container = self.client.containers.get(container_name)
+            container.remove(force=True)
+            self.logger.info("Removed container %s.", container_name)
+        except docker.errors.NotFound:
+            self.logger.warning("Container %s not found.", container_name)
+        except docker.errors.APIError as e:
+            self.logger.error("Error removing container %s: %s", container_name, e)
+
+    def cleanup_containers(self, node_id: str):
+        try:
+            self.logger.debug("Attempting to clean up containers for node: %s", node_id)
+            containers = self.client.containers.list(all=True, filters={"name": node_id})
+            for container in containers:
+                container.remove(force=True)
+                self.logger.info("Removed container %s for worker %s.", container.name, node_id)
+        except docker.errors.APIError as e:
+            self.logger.error("Error cleaning up containers for worker %s: %s", node_id, e)

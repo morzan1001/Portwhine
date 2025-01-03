@@ -1,8 +1,10 @@
 from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException
-from api.models.worker import FFUFWorker, HumbleWorker, ScreenshotWorker, TestSSLWorker, WebAppAnalyzerWorker, NmapWorker, ResolverWorker, WorkerConfig
+from utils.elasticsearch import get_elasticsearch_connection
 from utils.logger import LoggingModule
+from api.models.worker import FFUFWorker, HumbleWorker, ScreenshotWorker, TestSSLWorker, WebAppAnalyzerWorker, NmapWorker, ResolverWorker
 from api.docs.worker_docs import worker_summaries, worker_descriptions
+from api.worker_handler import WorkerHandler
 
 router = APIRouter()
 logger = LoggingModule.get_logger()

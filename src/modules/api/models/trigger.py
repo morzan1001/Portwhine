@@ -12,9 +12,9 @@ class TriggerConfig(BaseModel):
         super().__init__(**data)
         if 'id' in data:
             self._id = uuid.UUID(data['id'])
-        if 'status' in data: 
+        if 'status' in data:
             self._status = NodeStatus(data['status'])
-    
+
     @model_serializer
     def ser_model(self) -> dict[str, Any]:
         data = {self.__class__.__name__: self.__dict__}

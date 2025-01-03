@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import os
-from utils.logger import LoggingModule
 from typing import Optional
 from elasticsearch import Elasticsearch
+from utils.logger import LoggingModule
 
 # Logger initializing
 logger = LoggingModule.get_logger()
