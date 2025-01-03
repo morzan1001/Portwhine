@@ -17,7 +17,12 @@ class GetAllPipelinesBloc
       (event, emit) async {
         try {
           emit(GetAllPipelinesLoading());
-          pipelines = await repo.getGetAllPipelines();
+          final newPipelines = await repo.getAllPipelines(
+            page: event.page,
+            size: event.size,
+          );
+          pipelines.clear();
+          pipelines.addAll(newPipelines);
           emit(GetAllPipelinesLoaded(pipelines));
         } catch (e) {
           emit(GetAllPipelinesFailed(e.toString()));
@@ -27,6 +32,7 @@ class GetAllPipelinesBloc
 
     on<DeletePipelineFromList>(
       (event, emit) {
+        emit(GetAllPipelinesLoading());
         pipelines.removeWhere((e) => e.id == event.id);
         emit(GetAllPipelinesLoaded(List.from(pipelines)));
       },

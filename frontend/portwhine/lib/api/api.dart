@@ -7,8 +7,11 @@ class Api {
 
   static init() async => service = await ApiService.create();
 
-  static Future<List<PipelineModel>> getAllPipelines() async {
-    final result = await service.getAllPipelines();
+  static Future<List<PipelineModel>> getAllPipelines({
+    int size = 10,
+    int page = 1,
+  }) async {
+    final result = await service.getAllPipelines(page: page, size: size);
     return (result.body ?? []).map(PipelineModel.fromMap).toList();
   }
 

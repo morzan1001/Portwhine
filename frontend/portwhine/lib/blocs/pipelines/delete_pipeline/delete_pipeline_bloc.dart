@@ -21,7 +21,6 @@ class DeletePipelineBloc
             emit(const DeletePipelineFailed('Error occurred'));
           }
         } catch (e) {
-          print(e);
           emit(DeletePipelineFailed(e.toString()));
         }
       },

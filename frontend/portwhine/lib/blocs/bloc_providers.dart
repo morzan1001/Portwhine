@@ -7,17 +7,22 @@ import 'package:portwhine/blocs/single_pipeline/node_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/nodes_connection_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/pipeline_cubit.dart';
 
+import 'pipelines/pipeline_page/pipeline_page_cubit.dart';
+
 class BlocProviders {
   static final List<BlocProvider> providers = [
     // pipelines
     BlocProvider<GetAllPipelinesBloc>(
-      create: (context) => GetAllPipelinesBloc()..add(GetAllPipelines()),
+      create: (context) => GetAllPipelinesBloc()..add(const GetAllPipelines()),
     ),
     BlocProvider<CreatePipelineBloc>(
       create: (context) => CreatePipelineBloc(),
     ),
     BlocProvider<DeletePipelineBloc>(
       create: (context) => DeletePipelineBloc(),
+    ),
+    BlocProvider<PipelinePageCubit>(
+      create: (context) => PipelinePageCubit(),
     ),
 
     // single pipeline

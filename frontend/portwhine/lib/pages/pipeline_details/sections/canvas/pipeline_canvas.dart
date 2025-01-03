@@ -76,7 +76,6 @@ class _PipelineCanvasState extends State<PipelineCanvas> {
                                 BlocProvider.of<CanvasCubit>(context).state;
 
                             final node = details.data.copyWith(
-                              id: "ID",
                               position: NodePosition(
                                 x: (details.offset.dx - canvas.position.x) /
                                     canvas.zoom,

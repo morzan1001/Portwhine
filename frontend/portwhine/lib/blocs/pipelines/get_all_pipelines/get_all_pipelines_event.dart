@@ -7,7 +7,12 @@ abstract class GetAllPipelinesEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class GetAllPipelines extends GetAllPipelinesEvent {}
+class GetAllPipelines extends GetAllPipelinesEvent {
+  final int page;
+  final int size;
+
+  const GetAllPipelines({this.page = 1, this.size = 10});
+}
 
 class DeletePipelineFromList extends GetAllPipelinesEvent {
   final String id;

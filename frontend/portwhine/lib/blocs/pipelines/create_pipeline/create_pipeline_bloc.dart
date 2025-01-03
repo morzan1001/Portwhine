@@ -18,7 +18,6 @@ class CreatePipelineBloc
           final pipeline = await repo.createPipeline(event.name);
           emit(CreatePipelineCompleted(pipeline));
         } catch (e) {
-          print(e);
           emit(CreatePipelineFailed(e.toString()));
         }
       },

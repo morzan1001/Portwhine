@@ -17,7 +17,7 @@ class WritePipelineDialog extends StatefulWidget {
 }
 
 class _WritePipelineDialogState extends State<WritePipelineDialog> {
-  final nameController = TextEditingController();
+  final nameController = TextEditingController(text: 'PW-Test');
 
   @override
   Widget build(BuildContext context) {

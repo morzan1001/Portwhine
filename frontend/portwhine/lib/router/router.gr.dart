@@ -7,16 +7,21 @@
 // ignore_for_file: type=lint
 // coverage:ignore-file
 
-part of 'router.dart';
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+import 'package:auto_route/auto_route.dart' as _i3;
+import 'package:flutter/material.dart' as _i5;
+import 'package:portwhine/models/pipeline_model.dart' as _i4;
+import 'package:portwhine/pages/pipeline_details/pipeline_details.dart' as _i1;
+import 'package:portwhine/pages/pipelines/pipelines.dart' as _i2;
 
 /// generated route for
-/// [PipelineDetailsPage]
-class PipelineDetailsRoute extends PageRouteInfo<PipelineDetailsRouteArgs> {
+/// [_i1.PipelineDetailsPage]
+class PipelineDetailsRoute extends _i3.PageRouteInfo<PipelineDetailsRouteArgs> {
   PipelineDetailsRoute({
     required String id,
-    PipelineModel? model,
-    Key? key,
-    List<PageRouteInfo>? children,
+    _i4.PipelineModel? model,
+    _i5.Key? key,
+    List<_i3.PageRouteInfo>? children,
   }) : super(
           PipelineDetailsRoute.name,
           args: PipelineDetailsRouteArgs(
@@ -30,14 +35,14 @@ class PipelineDetailsRoute extends PageRouteInfo<PipelineDetailsRouteArgs> {
 
   static const String name = 'PipelineDetailsRoute';
 
-  static PageInfo page = PageInfo(
+  static _i3.PageInfo page = _i3.PageInfo(
     name,
     builder: (data) {
       final pathParams = data.inheritedPathParams;
       final args = data.argsAs<PipelineDetailsRouteArgs>(
           orElse: () =>
               PipelineDetailsRouteArgs(id: pathParams.getString('id')));
-      return PipelineDetailsPage(
+      return _i1.PipelineDetailsPage(
         id: args.id,
         model: args.model,
         key: args.key,
@@ -55,9 +60,9 @@ class PipelineDetailsRouteArgs {
 
   final String id;
 
-  final PipelineModel? model;
+  final _i4.PipelineModel? model;
 
-  final Key? key;
+  final _i5.Key? key;
 
   @override
   String toString() {
@@ -66,9 +71,9 @@ class PipelineDetailsRouteArgs {
 }
 
 /// generated route for
-/// [PipelinesPage]
-class PipelinesRoute extends PageRouteInfo<void> {
-  const PipelinesRoute({List<PageRouteInfo>? children})
+/// [_i2.PipelinesPage]
+class PipelinesRoute extends _i3.PageRouteInfo<void> {
+  const PipelinesRoute({List<_i3.PageRouteInfo>? children})
       : super(
           PipelinesRoute.name,
           initialChildren: children,
@@ -76,10 +81,10 @@ class PipelinesRoute extends PageRouteInfo<void> {
 
   static const String name = 'PipelinesRoute';
 
-  static PageInfo page = PageInfo(
+  static _i3.PageInfo page = _i3.PageInfo(
     name,
     builder: (data) {
-      return const PipelinesPage();
+      return const _i2.PipelinesPage();
     },
   );
 }
