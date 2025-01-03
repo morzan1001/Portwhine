@@ -66,7 +66,7 @@ async def get_all_pipelines(size: int = Query(10, ge=1), page: int = Query(1, ge
         if result["hits"]["total"]["value"] == 0:
             raise HTTPException(status_code=404, detail="No pipelines found")
         
-        pipelines = [{"id": hit["_id"], "name": hit["_source"]["name"]} for hit in result["hits"]["hits"]]
+        pipelines = [{"id": hit["_id"], "name": hit["_source"]["name"], "status": hit["_source"].get("status", "Unknown")} for hit in result["hits"]["hits"]]
         return pipelines
     except HTTPException as http_exc:
         raise http_exc
