@@ -1,5 +1,4 @@
 import 'package:bloc/bloc.dart';
-import 'package:portwhine/global/constants.dart';
 import 'package:portwhine/models/line_model.dart';
 import 'package:portwhine/models/node_model.dart';
 import 'package:portwhine/models/node_position.dart';

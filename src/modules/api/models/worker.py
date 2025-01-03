@@ -1,22 +1,29 @@
 #!/usr/bin/env python3
 import uuid
-from pydantic import BaseModel, Field, model_serializer, model_validator
+from pydantic import BaseModel, PrivateAttr, model_serializer, model_validator
 from typing import Any, ClassVar, List, Optional, Set
-from api.models.types import InputOutputType
+from api.models.types import InputOutputType, NodeStatus
 
 class WorkerConfig(BaseModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    _id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
+    _status: str = PrivateAttr(default=NodeStatus.STOPPED)
     children: Optional[List['WorkerConfig']] = None
-    
+
+    def __init__(self, **data: Any):
+        super().__init__(**data)
+        if 'id' in data:
+            self._id = uuid.UUID(data['id'])
+        if 'status' in data: 
+            self._status = NodeStatus(data['status'])
+
     @model_serializer
     def ser_model(self) -> dict[str, Any]:
-        data = {
-            "id": str(self.id),
-            "children": [child.ser_model() for child in self.children] if self.children else None,
-            "input": [input_type.value for input_type in self.__class__.input],
-            "output": [output_type.value for output_type in self.__class__.output]
-        }
-        return {self.__class__.__name__: data}
+        data = {self.__class__.__name__: self.__dict__}
+        data[self.__class__.__name__]['id'] = str(self._id)
+        data[self.__class__.__name__]['status'] = self._status
+        data[self.__class__.__name__]['input'] = self.__class__.input
+        data[self.__class__.__name__]['output'] = self.__class__.output
+        return data
     
     @model_validator(mode="after")
     def validate_worker_hierarchy(cls, values):

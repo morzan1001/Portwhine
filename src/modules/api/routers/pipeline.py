@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from elasticsearch import NotFoundError
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict
 from api.models.pipeline import Pipeline
@@ -22,7 +23,7 @@ async def create_pipeline(pipeline: Pipeline):
     if not es_client:
         raise HTTPException(status_code=500, detail="Could not connect to Elasticsearch")
     try:
-        es_client.index(index="pipelines", id=str(pipeline.id), body=pipeline.model_dump())
+        es_client.index(index="pipelines", id=str(pipeline._id), body=pipeline.ser_model())
         return pipeline
     except Exception as e:
         logger.error(f"Error creating pipeline: {e}")
@@ -40,9 +41,11 @@ async def get_pipeline(pipeline_id: str):
     try:
         result = es_client.get(index="pipelines", id=pipeline_id)
         return result["_source"]
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
     except Exception as e:
         logger.error(f"Error retrieving pipeline: {e}")
-        raise HTTPException(status_code=404, detail="Pipeline not found")
+        raise HTTPException(status_code=500, detail=f"Error fetching pipeline: {str(e)}")
 
 @router.get(
     "/pipelines",
@@ -81,8 +84,10 @@ async def update_pipeline(pipeline_id: str, pipeline: Pipeline):
     if not es_client:
         raise HTTPException(status_code=500, detail="Could not connect to Elasticsearch")
     try:
-        es_client.index(index="pipelines", id=pipeline_id, body=pipeline.model_dump())
+        es_client.index(index="pipelines", id=pipeline_id, body=pipeline.ser_model())
         return pipeline
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
     except Exception as e:
         logger.error(f"Error updating pipeline: {e}")
         raise HTTPException(status_code=500, detail=f"Error updating pipeline: {str(e)}")
@@ -99,10 +104,12 @@ async def delete_pipeline(pipeline_id: str):
     try:
         es_client.delete(index="pipelines", id=pipeline_id)
         return {"message": "Pipeline deleted successfully"}
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Pipeline not found")
     except Exception as e:
         logger.error(f"Error deleting pipeline: {e}")
         raise HTTPException(status_code=500, detail=f"Error deleting pipeline: {str(e)}")
-    
+
 @router.post(
     "/pipeline/start/{pipeline_id}",
     summary=pipeline_summaries["start_pipeline"],

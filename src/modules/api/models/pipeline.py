@@ -1,25 +1,35 @@
 #!/usr/bin/env python3
 import uuid
-from pydantic import BaseModel, Field, SerializeAsAny, model_serializer, model_validator
+from pydantic import BaseModel, PrivateAttr, SerializeAsAny, model_serializer, model_validator
 from typing import Any, Dict, List, Optional, Set
 from api.models.trigger import TriggerConfig, CertstreamTrigger, IPAddressTrigger
 from api.models.worker import ResolverWorker, WorkerConfig, FFUFWorker, HumbleWorker, ScreenshotWorker, TestSSLWorker, WebAppAnalyzerWorker, NmapWorker
-from api.models.types import InputOutputType
+from api.models.types import InputOutputType, NodeStatus
 
 class Pipeline(BaseModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    _id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
+    _status: str = PrivateAttr(default=NodeStatus.STOPPED)
     name: str
     trigger: Optional[SerializeAsAny[TriggerConfig]]
     worker: Optional[List[SerializeAsAny[WorkerConfig]]]
-    
-    #@model_serializer
-    #def ser_model(self) -> dict[str, Any]:
-    #    return {
-    #        "id": str(self.id),
-    #        "name": self.name,
-    #        "trigger": self.trigger.ser_model() if self.trigger else None,
-    #        "worker": [workers_data.ser_model() for workers_data in self.worker] if self.worker else []
-    #    }
+
+    def __init__(self, **data: Any):
+        super().__init__(**data)
+        if 'id' in data:
+            self._id = uuid.UUID(data['id'])
+        if 'status' in data: 
+            self._status = NodeStatus(data['status'])
+
+    @model_serializer
+    def ser_model(self) -> dict[str, Any]:
+        data = {
+            "id": str(self._id),
+            "status": self._status,
+            "name": self.name,
+            "trigger": self.trigger.ser_model() if self.trigger else None,
+            "worker": [workers_data.ser_model() for workers_data in self.worker] if self.worker else []
+        }
+        return data
 
     @model_validator(mode="before")
     def validate_trigger(cls, values: Dict[str, Any]) -> Dict[str, Any]:

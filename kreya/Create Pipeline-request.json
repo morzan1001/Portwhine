@@ -1,5 +1,5 @@
 {
-  "name": "Testpipeline Resolver Bund", 
+  "name": "Testpipeline Resolver Bund Test", 
   "trigger": {
     "CertstreamTrigger":
     {
@@ -7,8 +7,5 @@
     }
   },
   "worker": [
-    {
-      "ResolverWorker": {}
-    }
   ]
 }

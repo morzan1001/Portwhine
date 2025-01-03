@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:portwhine/blocs/single_pipeline/canvas_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/nodes_connection_cubit.dart';
-import 'package:portwhine/global/constants.dart';
 import 'package:portwhine/models/canvas_model.dart';
 import 'package:portwhine/models/line_model.dart';
 import 'package:portwhine/models/node_model.dart';
