@@ -4,8 +4,10 @@ build-container:
 	docker build -f docker/Dockerfile.base -t base:1.0 .
 	# Build the API image without using cache
 	docker build --no-cache -f docker/Dockerfile.api -t api:1.0 .
-	# Build the certstream_client image without using cache
+	# Build the certstream_trigger image without using cache
 	docker build --no-cache -f docker/Dockerfile.certstream -t certstream:1.0 .
+	# Build the ip_address_tritter image without using cache
+	docker build --no-cache -f docker/Dockerfile.ipaddress -t ipaddress:1.0 .
 	# Build the nmap image without using cache
 	docker build --no-cache -f docker/Dockerfile.nmap -t nmap:1.0 .
 	# Build the ffuf image without using cache

@@ -8,6 +8,15 @@
           "disableServerCertificateValidation": true
         }
       }
+    },
+    {
+      "environmentId": "6859d347-88ec-46df-9d3e-811250b6323d",
+      "options": {
+        "rest": {
+          "endpoint": "https://37.27.179.252:8000/api/v1",
+          "pathParams": []
+        }
+      }
     }
   ]
 }

@@ -1,17 +1,17 @@
 {
-  "name": "Testpipeline Resolver AWS", 
+  "name": "Testpipeline IPAddressTrigger", 
   "trigger": {
-    "CertstreamTrigger":
+    "IPAddressTrigger":
     {
-      "regex": "\\.amazonaws\\.com"
+      "ip_addresses": [
+        "192.168.15.2",
+        "192.168.11.1"
+      ]
     }
   },
   "worker": [
     {
-      "ResolverWorker": {
-        "use_internal": true,
-        "children": []
-      }
+      "NmapWorker": {}
     }
   ]
 }

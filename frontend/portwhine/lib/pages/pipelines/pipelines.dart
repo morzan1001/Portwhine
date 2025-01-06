@@ -105,7 +105,7 @@ class PipelinesPage extends StatelessWidget {
                 const VerticalSpacer(24),
 
                 // change page
-                const ChangePageSection(),
+                const PaginationSection(),
               ],
             ),
           ),

@@ -75,7 +75,7 @@ async def get_all_pipelines(size: int = Query(10, ge=1), page: int = Query(1, ge
         logger.error(f"Error retrieving pipelines: {e}")
         raise HTTPException(status_code=500, detail="Error retrieving pipelines")
 
-@router.put(
+@router.patch(
     "/pipeline/{pipeline_id}",
     response_model=Pipeline,
     summary=pipeline_summaries["update_pipeline"],

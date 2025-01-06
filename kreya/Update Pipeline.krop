@@ -1,0 +1,22 @@
+{
+  "details": {
+    "path": "/pipeline/9c035946-b7ff-4e00-8484-14791acc6e7c",
+    "method": "PATCH",
+    "headers": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      }
+    ],
+    "pathParams": []
+  },
+  "requests": [
+    {
+      "location": "Update Pipeline-request.json",
+      "contentType": "json"
+    }
+  ],
+  "operationType": "unary",
+  "invokerName": "rest",
+  "typeHint": "PATCH"
+}

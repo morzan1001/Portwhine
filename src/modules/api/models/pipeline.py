@@ -10,8 +10,8 @@ class Pipeline(BaseModel):
     _id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
     _status: str = PrivateAttr(default=NodeStatus.STOPPED)
     name: str
-    trigger: Optional[SerializeAsAny[TriggerConfig]]
-    worker: Optional[List[SerializeAsAny[WorkerConfig]]]
+    trigger: Optional[SerializeAsAny[TriggerConfig]] = None
+    worker: Optional[List[SerializeAsAny[WorkerConfig]]] = None
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -91,6 +91,6 @@ class Pipeline(BaseModel):
             for worker in workers_data:
                 worker_input_set: Set[InputOutputType] = set(worker.input)
                 if not trigger_output_set & worker_input_set:
-                    raise ValueError(f"Trigger {trigger_data.id} output does not match any worker {worker.id} input")
+                    raise ValueError(f"Trigger {trigger_data._id} output does not match any worker {worker._id} input")
 
         return pipeline

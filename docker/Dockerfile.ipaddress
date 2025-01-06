@@ -1,0 +1,16 @@
+# Base image
+FROM base:1.0
+
+# Metadata
+LABEL maintainer="Morzan <morzan1001@gmail.com>"
+LABEL version="1.0"
+LABEL description="Dockerfile for the IP-Address trigger module of Portwhine"
+
+# Copy the IP-Address trigger module to the working directory
+COPY src/modules/ip_address_trigger /src/ip_address_trigger
+
+# Set the working directory
+WORKDIR /src
+
+# Start the Certstream client module
+CMD ["python", "-m", "ip_address_trigger.main"]

@@ -99,7 +99,7 @@ class CertstreamScanner:
             logger.error(f"Error notifying handler for pipeline {self.pipeline_id}: {e}")
 
     def certstream_callback(self, message: Dict, context: Optional[Dict] = None):
-        """Callback function for certstream_client messages"""
+        """Callback function for certstream_trigger messages"""
         if message['message_type'] == "certificate_update":
             results = self.analyze_cert(message)
             if results:

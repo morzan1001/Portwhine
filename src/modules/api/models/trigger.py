@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import uuid
-from pydantic import BaseModel, PrivateAttr, model_serializer, IPvAnyAddress
-from typing import Any, List, ClassVar
+from pydantic import BaseModel, PrivateAttr, model_serializer, IPvAnyAddress, IPvAnyNetwork
+from typing import Any, List, ClassVar, Optional, Union
 from api.models.types import InputOutputType, NodeStatus
 
 class TriggerConfig(BaseModel):
@@ -25,15 +25,20 @@ class TriggerConfig(BaseModel):
 
 class IPAddressTrigger(TriggerConfig):
     """
-    Trigger that accepts a list of IP addresses.
+    Trigger that accepts a list of IP addresses, single IP address, a list of networks, or single network. The repetition (seconds) defines if the trigger should start a scan repetitively.
     """
-    ip_addresses: List[IPvAnyAddress]
-    image_name: ClassVar[str] = ""
+    ip_addresses: Union[IPvAnyAddress, List[IPvAnyAddress], IPvAnyNetwork, List[IPvAnyNetwork]]
+    image_name: ClassVar[str] = "ipaddress:1.0"
     output: ClassVar[List[InputOutputType]] = [InputOutputType.IP]
+    repetition: Optional[int] = None
 
-    def model_dump(self, *args, **kwargs):
-        data = super().model_dump(*args, **kwargs)
-        data['ip_addresses'] = [str(ip) for ip in self.ip_addresses]
+    @model_serializer
+    def ser_model(self) -> dict[str, Any]:
+        data = super().ser_model()
+        if isinstance(self.ip_addresses, list):
+            data[self.__class__.__name__]['ip_addresses'] = [str(ip) for ip in self.ip_addresses]
+        else:
+            data[self.__class__.__name__]['ip_addresses'] = str(self.ip_addresses)
         return data
 
 class CertstreamTrigger(TriggerConfig):

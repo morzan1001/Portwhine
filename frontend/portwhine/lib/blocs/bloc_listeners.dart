@@ -3,6 +3,7 @@ import 'package:portwhine/blocs/pipelines/create_pipeline/create_pipeline_bloc.d
 import 'package:portwhine/blocs/pipelines/delete_pipeline/delete_pipeline_bloc.dart';
 import 'package:portwhine/blocs/pipelines/get_all_pipelines/get_all_pipelines_bloc.dart';
 import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_page_cubit.dart';
+import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_size_cubit.dart';
 import 'package:portwhine/global/global.dart';
 import 'package:portwhine/widgets/toast.dart';
 
@@ -12,6 +13,14 @@ class BlocListeners {
       listener: (context, state) {
         BlocProvider.of<GetAllPipelinesBloc>(context).add(
           GetAllPipelines(page: state),
+        );
+      },
+    ),
+    BlocListener<PipelineSizeCubit, int>(
+      listener: (context, state) {
+        BlocProvider.of<PipelinePageCubit>(context).setFirstPage();
+        BlocProvider.of<GetAllPipelinesBloc>(context).add(
+          GetAllPipelines(size: state),
         );
       },
     ),

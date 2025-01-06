@@ -1,6 +1,6 @@
 {
   "details": {
-    "path": "/trigger/CertstreamTrigger",
+    "path": "/trigger/IPAddressTrigger",
     "method": "GET",
     "pathParams": []
   },

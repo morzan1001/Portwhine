@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:portwhine/blocs/pipelines/create_pipeline/create_pipeline_bloc.dart';
 import 'package:portwhine/blocs/pipelines/delete_pipeline/delete_pipeline_bloc.dart';
 import 'package:portwhine/blocs/pipelines/get_all_pipelines/get_all_pipelines_bloc.dart';
+import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_size_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/canvas_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/node_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/nodes_connection_cubit.dart';
@@ -23,6 +24,9 @@ class BlocProviders {
     ),
     BlocProvider<PipelinePageCubit>(
       create: (context) => PipelinePageCubit(),
+    ),
+    BlocProvider<PipelineSizeCubit>(
+      create: (context) => PipelineSizeCubit(),
     ),
 
     // single pipeline
