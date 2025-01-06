@@ -3,6 +3,8 @@ import 'package:portwhine/blocs/pipelines/create_pipeline/create_pipeline_bloc.d
 import 'package:portwhine/blocs/pipelines/delete_pipeline/delete_pipeline_bloc.dart';
 import 'package:portwhine/blocs/pipelines/get_all_pipelines/get_all_pipelines_bloc.dart';
 import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_size_cubit.dart';
+import 'package:portwhine/blocs/pipelines/pipelines_status/pipelines_status_bloc.dart';
+import 'package:portwhine/blocs/pipelines/start_stop_pipeline/start_stop_pipeline_bloc.dart';
 import 'package:portwhine/blocs/single_pipeline/canvas_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/node_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/nodes_connection_cubit.dart';
@@ -16,11 +18,17 @@ class BlocProviders {
     BlocProvider<GetAllPipelinesBloc>(
       create: (context) => GetAllPipelinesBloc()..add(const GetAllPipelines()),
     ),
+    BlocProvider<PipelinesStatusBloc>(
+      create: (context) => PipelinesStatusBloc(),
+    ),
     BlocProvider<CreatePipelineBloc>(
       create: (context) => CreatePipelineBloc(),
     ),
     BlocProvider<DeletePipelineBloc>(
       create: (context) => DeletePipelineBloc(),
+    ),
+    BlocProvider<StartStopPipelineBloc>(
+      create: (context) => StartStopPipelineBloc(),
     ),
     BlocProvider<PipelinePageCubit>(
       create: (context) => PipelinePageCubit(),

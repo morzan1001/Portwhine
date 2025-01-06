@@ -11,11 +11,9 @@ class CreatePipelineBloc
   CreatePipelineBloc() : super(CreatePipelineInitial()) {
     on<CreatePipeline>(
       (event, emit) async {
-        final repo = PipelinesRepo();
-
         try {
           emit(CreatePipelineStarted());
-          final pipeline = await repo.createPipeline(event.name);
+          final pipeline = await PipelinesRepo.createPipeline(event.name);
           emit(CreatePipelineCompleted(pipeline));
         } catch (e) {
           emit(CreatePipelineFailed(e.toString()));

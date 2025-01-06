@@ -8,8 +8,6 @@ part 'get_all_pipelines_state.dart';
 
 class GetAllPipelinesBloc
     extends Bloc<GetAllPipelinesEvent, GetAllPipelinesState> {
-  final repo = PipelinesRepo();
-
   List<PipelineModel> pipelines = [];
 
   GetAllPipelinesBloc() : super(GetAllPipelinesInitial()) {
@@ -17,7 +15,7 @@ class GetAllPipelinesBloc
       (event, emit) async {
         try {
           emit(GetAllPipelinesLoading());
-          final newPipelines = await repo.getAllPipelines(
+          final newPipelines = await PipelinesRepo.getAllPipelines(
             page: event.page,
             size: event.size,
           );

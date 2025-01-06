@@ -2,7 +2,7 @@ import 'package:portwhine/api/api.dart';
 import 'package:portwhine/models/pipeline_model.dart';
 
 class PipelinesRepo {
-  Future<List<PipelineModel>> getAllPipelines({
+  static Future<List<PipelineModel>> getAllPipelines({
     int size = 10,
     int page = 1,
   }) async {
@@ -10,13 +10,23 @@ class PipelinesRepo {
     return pipelines;
   }
 
-  Future<PipelineModel> createPipeline(String name) async {
+  static Future<PipelineModel> createPipeline(String name) async {
     final result = await Api.createPipeline(name);
     return result;
   }
 
-  Future<bool> deletePipeline(String id) async {
+  static Future<bool> deletePipeline(String id) async {
     final result = await Api.deletePipeline(id);
+    return result;
+  }
+
+  static Future<bool> startPipeline(String id) async {
+    final result = await Api.startPipeline(id);
+    return result;
+  }
+
+  static Future<bool> stopPipeline(String id) async {
+    final result = await Api.stopPipeline(id);
     return result;
   }
 }

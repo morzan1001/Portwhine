@@ -15,23 +15,24 @@ from utils.logger import LoggingModule
 logger = LoggingModule.get_logger()
 
 class NmapScanner:
-    def __init__(self, pipeline_id: str):
+    def __init__(self, pipeline_id: str, worker_id: str):
         # Elasticsearch connection
         self.es = get_elasticsearch_connection()
         self.pipeline_id = pipeline_id
-        self.job_id = self.get_job_id()
+        self.worker_id = worker_id
 
-    def scan_ip(self, target: str) -> Optional[Dict]:
+    def scan_ip(self, targets: str) -> Optional[Dict]:
         """Scans an IP using nmap directly"""
         try:
-            result = subprocess.run(['nmap', '-A', '-p-', '-oX', '-', target], capture_output=True, text=True)
+            target_str = ' '.join(targets)
+            result = subprocess.run(['nmap', '-A', '-p-', '-oX', '-', target_str], capture_output=True, text=True)
             if result.returncode == 0:
                 return self.parse_nmap_output(result.stdout)
             else:
-                logger.error(f"Error scanning {target}: {result.stderr}")
+                logger.error(f"Error scanning {targets}: {result.stderr}")
                 return None
         except Exception as e:
-            logger.error(f"Error scanning {target}: {e}")
+            logger.error(f"Error scanning {targets}: {e}")
             return None
 
     def parse_nmap_output(self, output: str) -> Dict:
@@ -79,7 +80,7 @@ class NmapScanner:
     def notify_handler(self, organized_results: Dict):
         """Notifies the handler with the matched URL"""
         try:
-            endpoint = f"/job/{self.pipeline_id}/{self.job_id}"
+            endpoint = f"/job/{self.pipeline_id}/{self.worker_id}"
             url = f"http://api:8000/api/v1{endpoint}"
             payload = {protocol: {"ip": data["ip"], "ports": data["ports"]} for protocol, data in organized_results.items()}
             headers = {'Content-Type': 'application/json'}
@@ -103,8 +104,13 @@ def main():
     if not pipeline_id:
         logger.error("PIPELINE_ID environment variable not set.")
         return
+    
+    worker_id = os.getenv("WORKER_ID")
+    if not worker_id:
+        logger.error("WORKER_ID environment variable not set.")
+        return
 
-    scanner = NmapScanner(pipeline_id)
+    scanner = NmapScanner(pipeline_id, worker_id)
     logger.info(f"Scanning Target: {payload.get('ip')}")
     results = scanner.scan_ip(payload.get('ip'))
     if results:

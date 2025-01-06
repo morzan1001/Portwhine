@@ -61,4 +61,26 @@ final class _$ApiService extends ApiService {
     );
     return client.send<Map<String, dynamic>, Map<String, dynamic>>($request);
   }
+
+  @override
+  Future<Response<Map<String, dynamic>>> startPipeline(String pipelineId) {
+    final Uri $url = Uri.parse('/pipeline/start/${pipelineId}');
+    final Request $request = Request(
+      'POST',
+      $url,
+      client.baseUrl,
+    );
+    return client.send<Map<String, dynamic>, Map<String, dynamic>>($request);
+  }
+
+  @override
+  Future<Response<Map<String, dynamic>>> stopPipeline(String pipelineId) {
+    final Uri $url = Uri.parse('/pipeline/stop/${pipelineId}');
+    final Request $request = Request(
+      'POST',
+      $url,
+      client.baseUrl,
+    );
+    return client.send<Map<String, dynamic>, Map<String, dynamic>>($request);
+  }
 }

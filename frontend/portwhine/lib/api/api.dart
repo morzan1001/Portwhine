@@ -24,6 +24,16 @@ class Api {
 
   static Future<bool> deletePipeline(String id) async {
     final result = await service.deletePipeline(id);
-    return result.body?['message'] == kPipelineDeleteSuccessMessage;
+    return result.body?['message'] == kPipelineDeleted;
+  }
+
+  static Future<bool> startPipeline(String id) async {
+    final result = await service.startPipeline(id);
+    return result.body?['message']?.contains(kPipelineStarted) == true;
+  }
+
+  static Future<bool> stopPipeline(String id) async {
+    final result = await service.stopPipeline(id);
+    return result.body?['message']?.contains(kPipelineStopped) == true;
   }
 }

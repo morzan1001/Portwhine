@@ -10,11 +10,9 @@ class DeletePipelineBloc
   DeletePipelineBloc() : super(DeletePipelineInitial()) {
     on<DeletePipeline>(
       (event, emit) async {
-        final repo = PipelinesRepo();
-
         try {
           emit(DeletePipelineStarted(event.id));
-          final deleted = await repo.deletePipeline(event.id);
+          final deleted = await PipelinesRepo.deletePipeline(event.id);
           if (deleted) {
             emit(DeletePipelineCompleted(event.id));
           } else {

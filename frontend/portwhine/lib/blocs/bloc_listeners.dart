@@ -4,11 +4,22 @@ import 'package:portwhine/blocs/pipelines/delete_pipeline/delete_pipeline_bloc.d
 import 'package:portwhine/blocs/pipelines/get_all_pipelines/get_all_pipelines_bloc.dart';
 import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_page_cubit.dart';
 import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_size_cubit.dart';
+import 'package:portwhine/blocs/pipelines/pipelines_status/pipelines_status_bloc.dart';
+import 'package:portwhine/blocs/pipelines/start_stop_pipeline/start_stop_pipeline_bloc.dart';
 import 'package:portwhine/global/global.dart';
 import 'package:portwhine/widgets/toast.dart';
 
 class BlocListeners {
   static final List<BlocListener> pipelinesListener = [
+    BlocListener<GetAllPipelinesBloc, GetAllPipelinesState>(
+      listener: (context, state) {
+        if (state is GetAllPipelinesLoaded) {
+          BlocProvider.of<PipelinesStatusBloc>(context).add(
+            UpdatePipelinesList(state.pipelines),
+          );
+        }
+      },
+    ),
     BlocListener<PipelinePageCubit, int>(
       listener: (context, state) {
         BlocProvider.of<GetAllPipelinesBloc>(context).add(
@@ -32,8 +43,6 @@ class BlocListeners {
 
         if (state is CreatePipelineCompleted) {
           pop(context);
-          // todo: added delay so backend gets updated with new data
-          await Future.delayed(const Duration(milliseconds: 500));
           BlocProvider.of<GetAllPipelinesBloc>(context).add(
             const GetAllPipelines(),
           );
@@ -49,6 +58,20 @@ class BlocListeners {
         if (state is DeletePipelineCompleted) {
           BlocProvider.of<GetAllPipelinesBloc>(context).add(
             DeletePipelineFromList(state.id),
+          );
+        }
+      },
+    ),
+    BlocListener<StartStopPipelineBloc, StartStopPipelineState>(
+      listener: (context, state) {
+        if (state is StartStopPipelineFailed) {
+          showToast(context, state.error);
+        }
+
+        if (state is StartStopPipelineCompleted) {
+          showToast(context, 'Pipeline is ${state.status.toLowerCase()}');
+          BlocProvider.of<PipelinesStatusBloc>(context).add(
+            UpdatePipelineStatus(state.id, state.status),
           );
         }
       },

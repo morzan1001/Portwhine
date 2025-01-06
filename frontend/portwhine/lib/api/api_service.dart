@@ -23,10 +23,21 @@ abstract class ApiService extends ChopperService {
     @Path('pipeline_id') String pipelineId,
   );
 
+  @Post(path: '/pipeline/start/{pipeline_id}')
+  Future<Response<Map<String, dynamic>>> startPipeline(
+    @Path('pipeline_id') String pipelineId,
+  );
+
+  @Post(path: '/pipeline/stop/{pipeline_id}')
+  Future<Response<Map<String, dynamic>>> stopPipeline(
+    @Path('pipeline_id') String pipelineId,
+  );
+
   // chopper client
   static Future<ApiService> create() async {
     final client = ChopperClient(
-      baseUrl: Uri.parse('https://37.27.179.252:8000/api/v1/'),
+      // baseUrl: Uri.parse('https://37.27.179.252:8000/api/v1/'),
+      baseUrl: Uri.parse('https://localhost:8000/api/v1/'),
       services: [_$ApiService()],
       interceptors: [],
       converter: const JsonConverter(),

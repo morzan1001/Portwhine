@@ -10,7 +10,7 @@ LABEL description="Dockerfile for the Nmap helper module of Portwhine"
 COPY src/modules/nmap /src/nmap
 
 # Install Nmap
-RUN apk add --no-cache nmap
+RUN apk add --no-cache nmap nmap-scripts 
 
 # Set the working directory
 WORKDIR /src

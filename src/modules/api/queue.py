@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+import re
 import threading
 import time
 import json
@@ -19,6 +21,9 @@ def process_queue():
         container_name = task.get("container_name")
         pipeline_id = task.get("pipeline_id")
 
+        # Strip instance number to get clean node (trigger or worker) id
+        node_id = re.sub(r'_instance_\d+$', '', container_name)
+
         if action == "start":
             image_name = task.get("image_name")
             command = task.get("command")
@@ -31,13 +36,13 @@ def process_queue():
                 environment=environment
             )
             if container:
-                PipelineHandler.update_status(pipeline_id=pipeline_id, node_id=container_name, status=NodeStatus.RUNNING)
+                PipelineHandler.update_status(pipeline_id=pipeline_id, node_id=node_id, status=NodeStatus.RUNNING)
             else:
-                PipelineHandler.update_status(pipeline_id=pipeline_id, node_id=container_name, status=NodeStatus.ERROR)
+                PipelineHandler.update_status(pipeline_id=pipeline_id, node_id=node_id, status=NodeStatus.ERROR)
         elif action == "stop":
             logger.info(f"Stopping container {container_name}")
             docker_manager.stop_container(container_name)
-            PipelineHandler.update_status(pipeline_id=pipeline_id, node_id=container_name, status=NodeStatus.STOPPED)
+            PipelineHandler.update_status(pipeline_id=pipeline_id, node_id=node_id, status=NodeStatus.STOPPED)
         elif action == "cleanup":
             logger.info(f"Cleaning up containers for container {container_name}")
             docker_manager.cleanup_containers(container_name)

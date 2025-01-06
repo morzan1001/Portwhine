@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from fastapi import APIRouter, HTTPException
 from api.models.pipeline import Pipeline
 from api.models.job_payload import JobPayload

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException
 from utils.elasticsearch import get_elasticsearch_connection

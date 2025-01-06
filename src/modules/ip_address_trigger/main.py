@@ -58,7 +58,7 @@ class IPAddressScanner:
         try:
             endpoint = f"/job/{self.pipeline_id}/{self.job_id}"
             url = f"https://api:8000/api/v1{endpoint}"
-            payload = {"ip": [{"address": ip_address}]}
+            payload = {"ip": [ip_address]}
             headers = {'Content-Type': 'application/json'}
             response = requests.post(url, json=payload, headers=headers, verify='/usr/local/share/ca-certificates/selfsigned-ca.crt')
             if response.status_code == 200:
