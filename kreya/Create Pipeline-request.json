@@ -1,17 +1,3 @@
 {
-  "name": "Testpipeline IPAddressTrigger", 
-  "trigger": {
-    "IPAddressTrigger":
-    {
-      "ip_addresses": [
-        "192.168.15.2",
-        "192.168.11.1"
-      ]
-    }
-  },
-  "worker": [
-    {
-      "NmapWorker": {}
-    }
-  ]
+  "name": "Testpipeline IPAddressTrigger"
 }

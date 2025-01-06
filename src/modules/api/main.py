@@ -30,7 +30,7 @@ app.add_middleware(
 @app.middleware("http")
 async def set_secure_headers(request: Request, call_next):
     response = await call_next(request)
-    response.headers["Content-Security-Policy"] = "default-src 'self'"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'cdn.jsdelivr.net'; style-src 'self' 'cdn.jsdelivr.net'; img-src 'self' 'fastapi.tiangolo.com'; upgrade-insecure-requests;"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"

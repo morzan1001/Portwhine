@@ -20,6 +20,12 @@ class PipelineHandler:
             result = self.es_client.get(index="pipelines", id=pipeline_id)
             pipeline = Pipeline(**result["_source"])
 
+            if not pipeline.trigger:
+                raise HTTPException(status_code=400, detail="Pipeline cannot be started without a trigger")
+
+            if pipeline._status != NodeStatus.STOPPED:
+                raise HTTPException(status_code=400, detail="Pipeline is already running")
+
             container_name = str(pipeline.trigger._id)
             task = {
                 "pipeline_id": pipeline_id,
@@ -36,6 +42,8 @@ class PipelineHandler:
                 self.es_client.indices.create(index=pipeline_id)
             self.logger.info(f"Created new index {pipeline_id} for pipeline results.")
 
+        except HTTPException as http_exc:
+            raise http_exc
         except NotFoundError:
             raise HTTPException(status_code=404, detail="Pipeline not found")
         except Exception as e:
@@ -47,6 +55,9 @@ class PipelineHandler:
             # Retrieve the pipeline structure from Elasticsearch
             result = self.es_client.get(index="pipelines", id=pipeline_id)
             pipeline = Pipeline(**result["_source"])
+
+            if pipeline._status == NodeStatus.STOPPED:
+                raise HTTPException(status_code=400, detail="Pipeline is already stopped")
 
             # Stop the trigger container
             self.logger.debug(f"Queueing stop for trigger container with ID: {pipeline.trigger._id}")
@@ -69,6 +80,8 @@ class PipelineHandler:
 
             self.logger.info(f"Queued stop for all containers for pipeline {pipeline_id}.")
 
+        except HTTPException as http_exc:
+            raise http_exc
         except NotFoundError:
             raise HTTPException(status_code=404, detail="Pipeline not found")
         except Exception as e:
