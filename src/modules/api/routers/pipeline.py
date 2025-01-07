@@ -104,7 +104,7 @@ async def delete_pipeline(pipeline_id: str):
         raise HTTPException(status_code=500, detail="Could not connect to Elasticsearch")
     try:
         es_client.delete(index="pipelines", id=pipeline_id)
-        return {"message": "Pipeline deleted successfully"}
+        return {"detail": "Pipeline deleted successfully"}
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Pipeline not found")
     except Exception as e:
@@ -118,7 +118,7 @@ async def delete_pipeline(pipeline_id: str):
 )
 async def start_pipeline(pipeline_id: str):
     pipeline_handler.handle_pipeline_start(pipeline_id)
-    return {"message": f"Pipeline {pipeline_id} started successfully."}
+    return {"detail": f"Pipeline {pipeline_id} started successfully."}
 
 @router.post(
     "/pipeline/stop/{pipeline_id}",
@@ -127,7 +127,7 @@ async def start_pipeline(pipeline_id: str):
 )
 async def stop_pipeline(pipeline_id: str):
     pipeline_handler.handle_pipeline_stop(pipeline_id)
-    return {"message": f"Pipeline {pipeline_id} stopped successfully."}
+    return {"detail": f"Pipeline {pipeline_id} stopped successfully."}
 
 @router.post(
     "/pipeline/cleanup/{pipeline_id}",
@@ -144,7 +144,7 @@ async def cleanup_containers(pipeline_id: str):
             pipeline_handler.cleanup_containers(str(pipeline.trigger._id))
             for worker in pipeline.worker:
                 pipeline_handler.cleanup_containers(str(worker._id))
-            return {"message": "Containers cleaned up successfully"}
+            return {"detail": "Containers cleaned up successfully"}
         else:
             raise HTTPException(status_code=400, detail="Pipeline is not stopped")
     except NotFoundError:
