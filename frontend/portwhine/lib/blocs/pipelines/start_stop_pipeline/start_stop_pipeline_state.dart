@@ -18,8 +18,9 @@ class StartStopPipelineStarted extends StartStopPipelineState {
 class StartStopPipelineCompleted extends StartStopPipelineState {
   final String id;
   final String status;
+  final String message;
 
-  const StartStopPipelineCompleted(this.id, this.status);
+  const StartStopPipelineCompleted(this.id, this.status, this.message);
 }
 
 class StartStopPipelineFailed extends StartStopPipelineState {

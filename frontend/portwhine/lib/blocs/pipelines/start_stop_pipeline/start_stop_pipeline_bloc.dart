@@ -13,11 +13,13 @@ class StartStopPipelineBloc
       (event, emit) async {
         try {
           emit(StartStopPipelineStarted(event.id));
-          final started = await PipelinesRepo.startPipeline(event.id);
-          if (started) {
-            emit(StartStopPipelineCompleted(event.id, kStatusRunning));
+          final result = await PipelinesRepo.startPipeline(event.id);
+          final String message = result['detail'];
+
+          if (message.contains(kPipelineStarted)) {
+            emit(StartStopPipelineCompleted(event.id, kStatusRunning, message));
           } else {
-            emit(const StartStopPipelineFailed('Error occurred'));
+            emit(StartStopPipelineFailed(message));
           }
         } catch (e) {
           emit(StartStopPipelineFailed(e.toString()));
@@ -29,11 +31,13 @@ class StartStopPipelineBloc
       (event, emit) async {
         try {
           emit(StartStopPipelineStarted(event.id));
-          final stopped = await PipelinesRepo.stopPipeline(event.id);
-          if (stopped) {
-            emit(StartStopPipelineCompleted(event.id, kStatusStopped));
+          final result = await PipelinesRepo.stopPipeline(event.id);
+          final String message = result['detail'];
+
+          if (message.contains(kPipelineStopped)) {
+            emit(StartStopPipelineCompleted(event.id, kStatusStopped, message));
           } else {
-            emit(const StartStopPipelineFailed('Error occurred'));
+            emit(StartStopPipelineFailed(message));
           }
         } catch (e) {
           emit(StartStopPipelineFailed(e.toString()));

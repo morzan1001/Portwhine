@@ -6,6 +6,8 @@ import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_page_cubit.dart
 import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_size_cubit.dart';
 import 'package:portwhine/blocs/pipelines/pipelines_status/pipelines_status_bloc.dart';
 import 'package:portwhine/blocs/pipelines/start_stop_pipeline/start_stop_pipeline_bloc.dart';
+import 'package:portwhine/global/colors.dart';
+import 'package:portwhine/global/constants.dart';
 import 'package:portwhine/global/global.dart';
 import 'package:portwhine/widgets/toast.dart';
 
@@ -69,7 +71,15 @@ class BlocListeners {
         }
 
         if (state is StartStopPipelineCompleted) {
-          showToast(context, 'Pipeline is ${state.status.toLowerCase()}');
+          showToast(
+            context,
+            state.message,
+            color: switch (state.status) {
+              kStatusRunning => MyColors.green,
+              kStatusStopped => MyColors.red,
+              _ => MyColors.prime,
+            },
+          );
           BlocProvider.of<PipelinesStatusBloc>(context).add(
             UpdatePipelineStatus(state.id, state.status),
           );

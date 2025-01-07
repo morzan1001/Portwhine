@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:portwhine/api/api_service.dart';
 import 'package:portwhine/global/constants.dart';
 import 'package:portwhine/models/pipeline_model.dart';
@@ -24,16 +26,18 @@ class Api {
 
   static Future<bool> deletePipeline(String id) async {
     final result = await service.deletePipeline(id);
-    return result.body?['message'] == kPipelineDeleted;
+    return result.body?['detail'] == kPipelineDeleted;
   }
 
-  static Future<bool> startPipeline(String id) async {
+  static Future<Map<String, dynamic>> startPipeline(String id) async {
     final result = await service.startPipeline(id);
-    return result.body?['message']?.contains(kPipelineStarted) == true;
+    if (result.error != null) return jsonDecode(result.error! as String);
+    return result.body ?? defaultErrorMap;
   }
 
-  static Future<bool> stopPipeline(String id) async {
+  static Future<Map<String, dynamic>> stopPipeline(String id) async {
     final result = await service.stopPipeline(id);
-    return result.body?['message']?.contains(kPipelineStopped) == true;
+    if (result.error != null) return jsonDecode(result.error! as String);
+    return result.body ?? defaultErrorMap;
   }
 }

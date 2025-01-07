@@ -39,7 +39,14 @@ class PipelineItem extends StatelessWidget {
             // name
             Expanded(
               flex: 1,
-              child: Heading(model.name),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Heading(model.name),
+                  const VerticalSpacer(2),
+                  SmallText(model.id),
+                ],
+              ),
             ),
             const HorizontalSpacer(12),
 
@@ -98,7 +105,7 @@ class StatusText extends StatelessWidget {
               Text(
                 status,
                 style: style(
-                  size: 16,
+                  size: 15,
                   color: status == kStatusRunning
                       ? MyColors.green
                       : status == kStatusError

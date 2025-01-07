@@ -3,10 +3,12 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:portwhine/global/colors.dart';
 import 'package:portwhine/global/text_style.dart';
 
-void showToast(BuildContext context, String text, {Color? color}) {
+void showToast(
+  BuildContext context,
+  String text, {
+  Color color = MyColors.prime,
+}) {
   final toast = FToast().init(context);
-
-  color = color ?? MyColors.prime;
 
   toast.showToast(
     positionedToastBuilder: (context, child, _) => Positioned(

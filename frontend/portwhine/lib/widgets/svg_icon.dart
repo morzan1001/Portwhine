@@ -20,7 +20,7 @@ class SvgIcon extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: SvgPicture.asset(
-        'assets/images/$icon.svg',
+        'assets/$icon.svg',
         colorFilter:
             color != null ? ColorFilter.mode(color!, BlendMode.srcIn) : null,
         height: size,

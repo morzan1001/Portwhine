@@ -16,4 +16,4 @@ WORKDIR /src
 RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-interaction --no-ansi --with certstream --without dev
 
 # Start the Certstream client module
-CMD ["python", "-m", "certstream_client.main"]
+CMD ["python", "-m", "certstream_trigger.main"]

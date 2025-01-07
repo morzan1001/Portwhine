@@ -1,19 +1,10 @@
 {
-  "name": "Testpipeline IPAddressTrigger 3IP", 
-  "trigger": {
-    "IPAddressTrigger":
-    {
-      "ip_addresses": [
-        "192.168.15.2",
-        "192.168.11.1",
-        "192.168.12.2",
-        "192.168.13.2"
-      ]
+  "name": "Testpipeline Certstream Test",
+  "trigger": 
+  {
+    "CertstreamTrigger": {
+      "regex": "\\.amazonaws\\.com"
     }
   },
-  "worker": [
-    {
-      "NmapWorker": {}
-    }
-  ]
+  "worker": []
 }

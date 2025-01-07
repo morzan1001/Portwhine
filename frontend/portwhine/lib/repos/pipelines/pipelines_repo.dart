@@ -20,12 +20,12 @@ class PipelinesRepo {
     return result;
   }
 
-  static Future<bool> startPipeline(String id) async {
+  static Future<Map<String, dynamic>> startPipeline(String id) async {
     final result = await Api.startPipeline(id);
     return result;
   }
 
-  static Future<bool> stopPipeline(String id) async {
+  static Future<Map<String, dynamic>> stopPipeline(String id) async {
     final result = await Api.stopPipeline(id);
     return result;
   }

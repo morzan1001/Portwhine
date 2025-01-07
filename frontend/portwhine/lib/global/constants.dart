@@ -9,3 +9,5 @@ const kStatusRunning = 'Running';
 const kStatusStopped = 'Stopped';
 const kStatusUnknown = 'Unknown';
 const kStatusError = 'Error';
+
+const defaultErrorMap = {'detail': 'Unknown error occurred'};
