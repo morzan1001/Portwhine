@@ -2,9 +2,16 @@
   "name": "Testpipeline Certstream Test",
   "trigger": 
   {
-    "CertstreamTrigger": {
-      "regex": "\\.amazonaws\\.com"
+    "IPAddressTrigger": {
+      "ip_addresses": [
+        "192.168.15.2",
+        "192.168.13.0/24"
+      ]
     }
   },
-  "worker": []
+  "worker": [
+    {
+      "NmapWorker": {}
+    }
+  ]
 }

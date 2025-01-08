@@ -46,13 +46,26 @@ class NmapScanner:
 
     def save_results(self, organized_results: Dict ,results: Dict) -> None:
         """Saves scan results to Elasticsearch"""
-        tags = organized_results.keys()
+        tags = list(organized_results.keys())
 
         try:
+            # Ensure all fields are correctly formatted to avoid type conflicts
+            def sanitize_data(data):
+                if isinstance(data, dict):
+                    return {k: sanitize_data(v) for k, v in data.items()}
+                elif isinstance(data, list):
+                    return [sanitize_data(v) for v in data]
+                elif isinstance(data, (str, int, float, bool)):
+                    return data
+                else:
+                    return str(data)
+
+            sanitized_results = sanitize_data(results)
+
             document = {
-                "scan_results": results,
+                "scan_results": sanitized_results,
                 "scan_date": datetime.now().isoformat(),
-                "category": "certificate",
+                "category": "portscan",
                 "tags": tags
             }
             self.es.index(index=self.pipeline_id, document=document)
@@ -115,7 +128,7 @@ def main():
     results = scanner.scan_ip(payload.get('ip'))
     if results:
         organized_results = scanner.organize_results_by_service(results)
-        scanner.save_results(results)
+        scanner.save_results(organized_results, results)
         scanner.notify_handler(organized_results)
         logger.info(f"Results saved and sent for {payload.get('ip')}")
 
