@@ -18,12 +18,19 @@ class WorkerConfig(BaseModel):
 
     @model_serializer
     def ser_model(self) -> dict[str, Any]:
-        data = {self.__class__.__name__: self.__dict__}
-        data[self.__class__.__name__]['id'] = str(self._id)
-        data[self.__class__.__name__]['status'] = self._status
-        data[self.__class__.__name__]['input'] = self.__class__.input
-        data[self.__class__.__name__]['output'] = self.__class__.output
-        return data
+        data = {
+            'id': str(self._id),
+            'status': self._status,
+            'input': self.__class__.input,
+            'output': self.__class__.output,
+            'children': [child.ser_model() for child in self.children] if self.children else None
+        }
+        # Add all other attributes that are not serialized by default
+        for key, value in self.__dict__.items():
+            if key not in data:
+                data[key] = value
+        return {self.__class__.__name__: data}
+
 
     @model_validator(mode="after")
     def validate_worker_hierarchy(cls, values):
@@ -33,7 +40,7 @@ class WorkerConfig(BaseModel):
             for child in children:
                 child_input_set: Set[InputOutputType] = set(child.input)
                 if not parent_output_set & child_input_set:
-                    raise ValueError(f"Worker {values.id} output does not match any child {child.id} input")
+                    raise ValueError(f"Worker {values._id} output does not match any child {child._id} input")
         return values
 
 class FFUFWorker(WorkerConfig):

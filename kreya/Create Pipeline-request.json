@@ -2,16 +2,31 @@
   "name": "Testpipeline Certstream Test",
   "trigger": 
   {
-    "IPAddressTrigger": {
-      "ip_addresses": [
-        "192.168.15.2",
-        "192.168.13.0/24"
-      ]
+    "CertstreamTrigger": {
+      "regex": "//.example//.tlr"
     }
   },
   "worker": [
     {
-      "NmapWorker": {}
+      "ResolverWorker": {
+        "children": [
+          {
+            "NmapWorker": {
+              "children": [
+                {
+                  "WebAppAnalyzerWorker": {}
+                }
+              ]
+            }
+          },
+          {
+            "TestSSLWorker": {}
+          }
+        ]
+      }
+    },
+    {
+      "ScreenshotWorker": {}
     }
   ]
 }
