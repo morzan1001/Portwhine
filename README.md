@@ -10,8 +10,38 @@ Portwhine is a software for automatically checking assets, especially on the web
 
 - [🚀 Quick Start](#quick-start)
 - [✨ Features](#features)
+- [🛠️ Development](#development)
 
 ## 🚀 Quick Start
 <a name="quick-start"></a>
 
 The entire program can be built and started using the `make start` command.
+
+## ✨ Features
+<a name="features"></a>
+
+The features of Portwhine are limitless. joking aside, because Portwhine is only a platform for individual containers, any checks can be poured into containers and executed in a pipeline. The following checks are currently configurable:
+
+### Trigger
+
+| Name | Description | Settings |
+|---|---|---|
+| IPAddressTrigger |   |   |
+| CertStreamTrigger |   |   |
+
+### Worker
+
+| Name | Description | Settings |
+|---|---|---|
+| NmapWorker |   |   |
+| FFUFWorker |   |   |
+| HumbleWorker |   |   |
+| ResolverWorker |   |   |
+| ScreenshotWorker |   |   |
+| TestSSLWorker |   |   |
+| WebAppAnalyzerWorker |   |   |
+
+## Development
+<a name="development"></a>
+
+> :warning: **Development ongoing**: This software is currently under development and both the configurations and the APIs are subject to change.
