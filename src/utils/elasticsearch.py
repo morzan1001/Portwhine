@@ -7,7 +7,7 @@ from utils.logger import LoggingModule
 # Logger initializing
 logger = LoggingModule.get_logger()
 
-def get_elasticsearch_connection() -> Optional[Elasticsearch]:
+def get_elasticsearch_connection() -> Optional[Elasticsearch]: # type: ignore
     """Returns an Elasticsearch connection or None if an error occurs"""
     try:
         es = Elasticsearch(

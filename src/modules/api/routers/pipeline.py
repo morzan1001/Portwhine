@@ -85,8 +85,24 @@ async def update_pipeline(pipeline_id: str, pipeline: Pipeline):
     if not es_client:
         raise HTTPException(status_code=500, detail="Could not connect to Elasticsearch")
     try:
-        es_client.index(index="pipelines", id=pipeline_id, body=pipeline.ser_model())
-        return pipeline
+        # Retrieve the existing pipeline
+        existing_pipeline = es_client.get(index="pipelines", id=pipeline_id)["_source"]
+        logger.debug(f"Existing pipeline data: {existing_pipeline}")
+
+        # Update the existing pipeline with new data
+        updated_data = pipeline.ser_model()
+        logger.debug(f"Updated data: {updated_data}")
+
+        for key, value in updated_data.items():
+            existing_pipeline[key] = value
+
+        # Validate the updated pipeline
+        updated_pipeline = Pipeline(**existing_pipeline)
+        logger.debug(f"Updated pipeline: {updated_pipeline}")
+
+        # Save the updated pipeline to Elasticsearch
+        es_client.index(index="pipelines", id=pipeline_id, body=updated_pipeline.ser_model())
+        return updated_pipeline
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Pipeline not found")
     except Exception as e:

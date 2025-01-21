@@ -5,7 +5,7 @@ import json
 import subprocess
 import xmltodict
 from datetime import datetime
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 import requests
 
 from utils.elasticsearch import get_elasticsearch_connection
@@ -36,74 +36,136 @@ class NmapScanner:
             return None
 
     def parse_nmap_output(self, output: str) -> Dict:
-        """Parses the nmap XML output into a structured dictionary"""
+        """Parses and normalizes the nmap XML output"""
         try:
-            parsed_output = xmltodict.parse(output)
-            return json.loads(json.dumps(parsed_output))
+            # Parse XML to dict
+            parsed = xmltodict.parse(output)
+            
+            # Normalize script elements
+            if 'nmaprun' in parsed and 'host' in parsed['nmaprun']:
+                hosts = parsed['nmaprun']['host']
+                if not isinstance(hosts, list):
+                    hosts = [hosts]
+                    
+                for host in hosts:
+                    if 'ports' in host and 'port' in host['ports']:
+                        ports = host['ports']['port']
+                        if not isinstance(ports, list):
+                            ports = [ports]
+                            
+                        for port in ports:
+                            if 'script' in port:
+                                scripts = port['script']
+                                if not isinstance(scripts, list):
+                                    scripts = [scripts]
+                                    
+                                for script in scripts:
+                                    if 'elem' in script and not isinstance(script['elem'], list):
+                                        script['elem'] = [script['elem']]
+
+            return parsed
         except Exception as e:
             logger.error(f"Error parsing nmap output: {e}")
             return {}
 
-    def save_results(self, organized_results: Dict ,results: Dict) -> None:
-        """Saves scan results to Elasticsearch"""
-        tags = list(organized_results.keys())
-
+    def organize_results_by_service(self, results: Dict) -> Dict:
+        """Organizes results by service type"""
+        organized = {
+            "http": [],
+            "ip": []
+        }
+        
         try:
-            # Ensure all fields are correctly formatted to avoid type conflicts
-            def sanitize_data(data):
-                if isinstance(data, dict):
-                    return {k: sanitize_data(v) for k, v in data.items()}
-                elif isinstance(data, list):
-                    return [sanitize_data(v) for v in data]
-                elif isinstance(data, (str, int, float, bool)):
-                    return data
-                else:
-                    return str(data)
+            hosts = results.get('nmaprun', {}).get('host', [])
+            if not isinstance(hosts, list):
+                hosts = [hosts]
+                
+            for host in hosts:
+                if not isinstance(host, dict):
+                    continue
+                    
+                ip = host.get('address', {}).get('@addr')
+                if not ip:
+                    continue
 
-            sanitized_results = sanitize_data(results)
-
-            document = {
-                "scan_results": sanitized_results,
-                "scan_date": datetime.now().isoformat(),
-                "category": "portscan",
-                "tags": tags
-            }
-            self.es.index(index=self.pipeline_id, document=document)
-            logger.info(f"Results saved successfully in index {self.pipeline_id}.")
-        except Exception as e:
-            logger.error(f"Error saving results: {e}")
-
-    def organize_results_by_service(self, results: Dict) -> Dict[str, List[str]]:
-        """Organizes results by service"""
-        organized_results = {}
-        try:
-            for host in results.get('nmaprun', {}).get('host', []):
-                ip_address = host.get('address', {}).get('@addr')
-                for port in host.get('ports', {}).get('port', []):
-                    protocol = port.get('service', {}).get('@name')
+                ports = host.get('ports', {}).get('port', [])
+                if not isinstance(ports, list):
+                    ports = [ports]
+                    
+                for port in ports:
+                    if not isinstance(port, dict):
+                        continue
+                        
+                    service = port.get('service', {}).get('@name', '')
                     port_id = port.get('@portid')
-                    if protocol and port_id:
-                        if protocol not in organized_results:
-                            organized_results[protocol] = {"ip": ip_address, "ports": []}
-                        organized_results[protocol]["ports"].append(port_id)
+                    
+                    if service and port_id:
+                        organized["http"].append({
+                            "protocol": service,
+                            "ip": ip,
+                            "port": port_id
+                        })
+                        
+                organized["ip"].append(ip)
+                
+            organized["ip"] = list(set(organized["ip"]))
+            return organized
+            
         except Exception as e:
             logger.error(f"Error organizing results: {e}")
-        return organized_results
+            return {"http": [], "ip": []}
 
     def notify_handler(self, organized_results: Dict):
-        """Notifies the handler with the matched URL"""
+        """Notifies the handler with organized results"""
         try:
             endpoint = f"/job/{self.pipeline_id}/{self.worker_id}"
             url = f"http://api:8000/api/v1{endpoint}"
-            payload = {protocol: {"ip": data["ip"], "ports": data["ports"]} for protocol, data in organized_results.items()}
+            
+            payload = {
+                "services": organized_results["http"],
+                "ips": organized_results["ip"]
+            }
+            
             headers = {'Content-Type': 'application/json'}
             response = requests.post(url, json=payload, headers=headers)
+            
             if response.status_code == 200:
                 logger.info(f"Successfully notified handler for pipeline {self.pipeline_id}")
             else:
-                logger.error(f"Failed to notify handler for pipeline {self.pipeline_id}: {response.status_code}")
+                logger.error(f"Failed to notify handler: {response.status_code}")
+                
         except Exception as e:
-            logger.error(f"Error notifying handler for pipeline {self.pipeline_id}: {e}")
+            logger.error(f"Error notifying handler: {e}")
+
+    def save_results(self, organized_results: Dict, results: Dict) -> None:
+        """Saves sanitized results to Elasticsearch"""
+        try:
+            document = {
+                "metadata": {
+                    "scan_date": datetime.now().isoformat(),
+                    "category": "portscan",
+                    "tags": list(organized_results.keys())
+                },
+                "organized_results": organized_results,
+                "raw_results": self._sanitize_for_es(results)
+            }
+            
+            self.es.index(index=self.pipeline_id, document=document)
+            logger.info(f"Results saved to index {self.pipeline_id}")
+            
+        except Exception as e:
+            logger.error(f"Error saving to Elasticsearch: {e}")
+
+    def _sanitize_for_es(self, data: Any) -> Any:
+        """Sanitizes data for Elasticsearch storage"""
+        if isinstance(data, dict):
+            return {k: self._sanitize_for_es(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._sanitize_for_es(v) for v in data]
+        elif isinstance(data, (str, int, float, bool)):
+            return data
+        else:
+            return str(data)
 
 def main():
     payload = os.getenv('JOB_PAYLOAD')
@@ -127,6 +189,7 @@ def main():
     logger.info(f"Scanning Target: {payload.get('ip')}")
     results = scanner.scan_ip(payload.get('ip'))
     if results:
+        logger.info(f"Results: {results}")
         organized_results = scanner.organize_results_by_service(results)
         scanner.save_results(organized_results, results)
         scanner.notify_handler(organized_results)

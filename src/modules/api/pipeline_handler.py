@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 from elasticsearch import NotFoundError
 from fastapi import HTTPException
 from api.models.pipeline import Pipeline
@@ -32,7 +33,8 @@ class PipelineHandler:
                 "action": "start",
                 "container_name": container_name,
                 "image_name": pipeline.trigger.image_name,
-                "environment": {"PIPELINE_ID": pipeline_id}
+                "environment": {"PIPELINE_ID": pipeline_id, 
+                                "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO")},
             }
             self.redis_client.rpush("container_queue", json.dumps(task))
             self.logger.info(f"Queued start for container {container_name}")

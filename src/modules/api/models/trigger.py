@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import uuid
-from pydantic import BaseModel, PrivateAttr, model_serializer, IPvAnyAddress, IPvAnyNetwork
+from pydantic import BaseModel, PrivateAttr, Field, model_serializer, field_validator, IPvAnyAddress, IPvAnyNetwork
 from typing import Any, List, ClassVar, Optional, Union
 from api.models.types import InputOutputType, NodeStatus
 
@@ -27,10 +27,17 @@ class IPAddressTrigger(TriggerConfig):
     """
     Trigger that accepts a list of IP addresses, single IP address, a list of networks, or single network. The repetition (seconds) defines if the trigger should start a scan repetitively.
     """
-    ip_addresses: Union[IPvAnyAddress, List[IPvAnyAddress], IPvAnyNetwork, List[IPvAnyNetwork]]
+    ip_addresses: List[Union[IPvAnyAddress, IPvAnyNetwork]] = Field(default_factory=list)
     image_name: ClassVar[str] = "ipaddress:1.0"
     output: ClassVar[List[InputOutputType]] = [InputOutputType.IP]
     repetition: Optional[int] = None
+
+    @field_validator('ip_addresses', mode="before")
+    @classmethod
+    def ensure_list(cls, v) -> list:
+        if not isinstance(v, list):
+            return [v]
+        return v
 
     @model_serializer
     def ser_model(self) -> dict[str, Any]:

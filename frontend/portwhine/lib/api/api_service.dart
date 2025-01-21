@@ -36,7 +36,7 @@ abstract class ApiService extends ChopperService {
   // chopper client
   static Future<ApiService> create() async {
     final client = ChopperClient(
-      baseUrl: Uri.parse('https://37.27.179.252:8000/api/v1/'),
+      baseUrl: Uri.parse('https://10.21.0.251:8000/api/v1/'),
       services: [_$ApiService()],
       interceptors: [],
       converter: const JsonConverter(),
