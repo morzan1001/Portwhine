@@ -10,7 +10,7 @@ import 'package:portwhine/blocs/single_pipeline/node_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/nodes_connection_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/pipeline_cubit.dart';
 
-import 'pipelines/pipeline_page/pipeline_page_cubit.dart';
+import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_page_cubit.dart';
 
 class BlocProviders {
   static final List<BlocProvider> providers = [

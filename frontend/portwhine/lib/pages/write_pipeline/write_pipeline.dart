@@ -8,7 +8,7 @@ import 'package:portwhine/widgets/spacer.dart';
 import 'package:portwhine/widgets/text_field.dart';
 
 class WritePipelineDialog extends StatefulWidget {
-  const WritePipelineDialog({this.pipeline, Key? key}) : super(key: key);
+  const WritePipelineDialog({this.pipeline, super.key});
 
   final PipelineModel? pipeline;
 
