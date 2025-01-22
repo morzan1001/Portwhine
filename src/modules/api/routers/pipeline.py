@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
+import json
+
 from elasticsearch import NotFoundError
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict
+
+from fastapi.encoders import jsonable_encoder
 from utils.elasticsearch import get_elasticsearch_connection
 from utils.logger import LoggingModule
 from api.models.pipeline import Pipeline
@@ -76,32 +80,32 @@ async def get_all_pipelines(size: int = Query(10, ge=1), page: int = Query(1, ge
         raise HTTPException(status_code=500, detail="Error retrieving pipelines")
 
 @router.patch(
-    "/pipeline/{pipeline_id}",
+    "/pipeline",
     response_model=Pipeline,
     summary=pipeline_summaries["update_pipeline"],
     description=pipeline_descriptions["update_pipeline"],
 )
-async def update_pipeline(pipeline_id: str, pipeline: Pipeline):
+async def update_pipeline(pipeline: Pipeline) -> Pipeline:
     if not es_client:
         raise HTTPException(status_code=500, detail="Could not connect to Elasticsearch")
     try:
         # Retrieve the existing pipeline
-        existing_pipeline = es_client.get(index="pipelines", id=pipeline_id)["_source"]
+        database_output = es_client.get(index="pipelines", id=pipeline._id)["_source"]
+        existing_pipeline: Pipeline = Pipeline(**database_output)
         logger.debug(f"Existing pipeline data: {existing_pipeline}")
 
-        # Update the existing pipeline with new data
-        updated_data = pipeline.ser_model()
-        logger.debug(f"Updated data: {updated_data}")
+        if existing_pipeline._status == NodeStatus.RUNNING:
+            raise HTTPException(status_code=400, detail="Pipeline is running. Stop the pipeline before updating")
 
-        for key, value in updated_data.items():
-            existing_pipeline[key] = value
+        # Update the pipeline
+        updated_fields = pipeline.model_dump(exclude_unset=True)
+        logger.debug(f"Updated fields: {updated_fields}")
+        updated_pipeline: Pipeline = existing_pipeline.model_copy(update=updated_fields)
+        logger.debug(f"Updated pipeline data: {updated_pipeline}")
 
-        # Validate the updated pipeline
-        updated_pipeline = Pipeline(**existing_pipeline)
-        logger.debug(f"Updated pipeline: {updated_pipeline}")
-
+        # This is kind of stupid. “updated_pipeline” is of type "Pipeline", but I can only call .ser_model() if I cast the __dict__ of it back to "pipeline". I really don't know why :(
         # Save the updated pipeline to Elasticsearch
-        es_client.index(index="pipelines", id=pipeline_id, body=updated_pipeline.ser_model())
+        es_client.index(index="pipelines", id=pipeline._id, body=Pipeline(**updated_pipeline.__dict__).ser_model(), refresh="wait_for")
         return updated_pipeline
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Pipeline not found")

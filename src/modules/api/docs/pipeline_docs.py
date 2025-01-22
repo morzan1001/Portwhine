@@ -13,7 +13,7 @@ pipeline_descriptions = {
     "create_pipeline": "Create a new pipeline with the specified configurations.",
     "get_pipeline": "Retrieve the configuration of a specific pipeline by pipeline ID.",
     "get_all_pipelines": "Retrieve a list of all available pipelines.",
-    "update_pipeline": "Update the configuration of a specific pipeline by pipeline ID.",
+    "update_pipeline": "Update the configuration of a specific pipeline by pipeline ID. None set fields will be left unchanged.",
     "delete_pipeline": "Delete a specific pipeline by pipeline ID.",
     "start_pipeline": "Start a specific pipeline by pipeline ID.",
     "stop_pipeline": "Stop a specific pipeline by pipeline ID.",
