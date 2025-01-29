@@ -3,13 +3,13 @@ import uuid
 from pydantic import BaseModel, Field, PrivateAttr, model_serializer, model_validator
 from typing import Any, ClassVar, List, Optional, Set
 from api.models.types import InputOutputType, NodeStatus
+from api.models.grid_position import GridPosition
 
 class WorkerConfig(BaseModel):
     _id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
     _status: str = PrivateAttr(default=NodeStatus.STOPPED)
     children: Optional[List['WorkerConfig']] = None
-    xPosition: float = Field(default=0.0)
-    yPosition: float = Field(default=0.0)
+    gridPosition: GridPosition = Field(default_factory=GridPosition)
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -26,10 +26,6 @@ class WorkerConfig(BaseModel):
             'input': self.__class__.input,
             'output': self.__class__.output,
             'children': [child.ser_model() for child in self.children] if self.children else None,
-            'gridPosition': {
-                'x': self.xPosition,
-                'y': self.yPosition
-            }
         }
         # Add all other attributes that are not serialized by default
         for key, value in self.__dict__.items():

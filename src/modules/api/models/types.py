@@ -9,3 +9,4 @@ class NodeStatus(str, Enum):
     RUNNING = "Running"
     STOPPED = "Stopped"
     ERROR = "Error"
+
