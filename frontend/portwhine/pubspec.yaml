@@ -24,13 +24,13 @@ dependencies:
 dev_dependencies:
   auto_route_generator: ^9.0.0
   build_runner: ^2.4.6
+  chopper_generator: ^8.0.3
   flutter_launcher_icons: ^0.14.0
   flutter_lints: ^5.0.0
   flutter_native_splash: ^2.3.9
   flutter_test:
     sdk: flutter
   import_sorter: ^4.6.0
-  chopper_generator: ^8.0.3
 
 flutter:
   uses-material-design: true

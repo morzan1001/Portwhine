@@ -45,3 +45,9 @@ The features of Portwhine are limitless. joking aside, because Portwhine is only
 <a name="development"></a>
 
 > :warning: **Development ongoing**: This software is currently under development and both the configurations and the APIs are subject to change.
+
+### Future Plans
+
+https://github.com/EnableSecurity/wafw00f
+https://github.com/blacklanternsecurity/MANSPIDER
+
