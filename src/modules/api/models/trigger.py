@@ -21,6 +21,10 @@ class TriggerConfig(BaseModel):
     @model_serializer
     def ser_model(self) -> dict[str, Any]:
         data = {self.__class__.__name__: self.__dict__}
+
+        if isinstance(self.gridPosition, GridPosition):
+            data[self.__class__.__name__]['gridPosition'] = self.gridPosition.ser_model()
+
         data[self.__class__.__name__]['id'] = str(self._id)
         data[self.__class__.__name__]['status'] = self._status
         data[self.__class__.__name__]['output'] = self.__class__.output

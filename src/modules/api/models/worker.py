@@ -26,7 +26,9 @@ class WorkerConfig(BaseModel):
             'input': self.__class__.input,
             'output': self.__class__.output,
             'children': [child.ser_model() for child in self.children] if self.children else None,
+            'gridPosition': self.gridPosition.ser_model()
         }
+
         # Add all other attributes that are not serialized by default
         for key, value in self.__dict__.items():
             if key not in data:
