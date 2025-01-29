@@ -7,6 +7,8 @@ from api.models.types import InputOutputType, NodeStatus
 class TriggerConfig(BaseModel):
     _id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
     _status: str = PrivateAttr(default=NodeStatus.STOPPED)
+    xPosition: float = Field(default=0.0)
+    yPosition: float = Field(default=0.0)
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -21,6 +23,10 @@ class TriggerConfig(BaseModel):
         data[self.__class__.__name__]['id'] = str(self._id)
         data[self.__class__.__name__]['status'] = self._status
         data[self.__class__.__name__]['output'] = self.__class__.output
+        data[self.__class__.__name__]['gridPosition'] = {
+            'x': self.xPosition,
+            'y': self.yPosition
+        }
         return data
 
 class IPAddressTrigger(TriggerConfig):
