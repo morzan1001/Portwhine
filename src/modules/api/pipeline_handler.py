@@ -89,55 +89,6 @@ class PipelineHandler:
         except Exception as e:
             self.logger.error(f"Error stopping pipeline: {e}")
             raise HTTPException(status_code=500, detail=f"Error stopping pipeline: {str(e)}")
-
-    @staticmethod
-    def update_status(pipeline_id: str, node_id: str, status: NodeStatus):
-        try:
-            es_client = get_elasticsearch_connection()
-            logger = LoggingModule.get_logger()
-            # Retrieve the pipeline structure from Elasticsearch
-            result = es_client.get(index="pipelines", id=pipeline_id)
-            pipeline = Pipeline(**result["_source"])
-
-            logger.debug(f"Updating status for node {node_id} in pipeline {pipeline_id} to {status}")
-
-            if node_id == str(pipeline.trigger._id):
-                pipeline.trigger._status = status
-            else:
-                for worker in pipeline.worker:
-                    if node_id == str(worker._id):
-                        worker._status = status
-                        break
-
-            # Check if any trigger or worker is in error state
-            is_any_error = (
-                pipeline.trigger._status == NodeStatus.ERROR or
-                any(worker._status == NodeStatus.ERROR for worker in pipeline.worker)
-            )
-
-            # Check if any trigger or worker is running
-            is_any_running = (
-                pipeline.trigger._status == NodeStatus.RUNNING or
-                any(worker._status == NodeStatus.RUNNING for worker in pipeline.worker)
-            )
-
-            # Update pipeline status
-            if is_any_error:
-                pipeline_status = NodeStatus.ERROR
-            else:
-                pipeline_status = NodeStatus.RUNNING if is_any_running else NodeStatus.STOPPED
-            pipeline._status = pipeline_status
-
-            # Save updated pipeline status to Elasticsearch
-            es_client.index(index="pipelines", id=pipeline_id, body=pipeline.ser_model())
-            logger.info(f"Updated status for pipeline {pipeline_id} to {pipeline_status}")
-
-        except NotFoundError:
-            raise HTTPException(status_code=404, detail="Pipeline not found")
-        except Exception as e:
-            logger = LoggingModule.get_logger()
-            logger.error(f"Error updating status: {e}")
-            raise HTTPException(status_code=500, detail=f"Error updating status: {str(e)}")
         
     def cleanup_containers(self, node_id: str):
         try:
@@ -147,7 +98,28 @@ class PipelineHandler:
                     "action": "cleanup",
                 }
             self.redis_client.rpush("container_queue", json.dumps(task))
+
             self.logger.info(f"All containers for node {node_id} have been removed.")
         except Exception as e:
             self.logger.error(f"Error cleaning up containers for node {node_id}: {e}")
             raise
+    
+    def cleanup_instance_count(self, worker_id: str, pipeline_id: str):
+        # Cleanup worker fields in Elasticsearch
+        script = {
+            "source": """
+                for (int i = 0; i < ctx._source.worker.size(); i++) {
+                    if (ctx._source.worker[i].id == params.worker_id) {
+                        ctx._source.worker[i].numberOfInstances = 0;
+                        ctx._source.worker[i].instanceHealth = None;
+                        break;
+                    }
+                }
+            """,
+            "lang": "painless",
+            "params": {
+                "worker_id": worker_id
+            }
+        }
+        self.es_client.update(index="pipeline_index", id=pipeline_id, body={"script": script})
+        self.logger.info(f"Cleaned up worker {worker_id} in pipeline {pipeline_id}")

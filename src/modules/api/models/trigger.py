@@ -8,7 +8,7 @@ from api.models.grid_position import GridPosition
 
 class TriggerConfig(BaseModel):
     _id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
-    _status: str = PrivateAttr(default=NodeStatus.STOPPED)
+    _status: str = PrivateAttr(default=NodeStatus.PAUSED)
     gridPosition: GridPosition = Field(default_factory=GridPosition)
 
     def __init__(self, **data: Any):
@@ -57,7 +57,7 @@ class IPAddressTrigger(TriggerConfig):
 
 class CertstreamTrigger(TriggerConfig):
     """
-    Trigger that accepts a regex pattern.
+    Trigger that accepts a regex pattern. The trigger monitors certificate transparency logs for new certificates that match the regex pattern.
     """
     regex: str
     image_name: ClassVar[str] = "certstream:1.0"

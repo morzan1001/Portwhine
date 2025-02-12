@@ -164,6 +164,7 @@ async def cleanup_containers(pipeline_id: str):
             pipeline_handler.cleanup_containers(str(pipeline.trigger._id))
             for worker in pipeline.worker:
                 pipeline_handler.cleanup_containers(str(worker._id))
+                pipeline_handler.reset_instance_count(str(worker._id), pipeline_id)
             return {"detail": "Containers cleaned up successfully"}
         else:
             raise HTTPException(status_code=400, detail="Pipeline is not stopped")

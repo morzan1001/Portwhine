@@ -3,6 +3,7 @@ import json
 from api.models.worker import WorkerConfig
 from api.models.job_payload import JobPayload
 from utils.redis import get_redis_connection
+from utils.elasticsearch import get_elasticsearch_connection
 from utils.logger import LoggingModule
 from utils.helper import json_serial
 
@@ -10,6 +11,7 @@ class WorkerHandler:
     def __init__(self):
         self.redis_block_client = get_redis_connection(db=0)
         self.redis_queue_client = get_redis_connection(db=1)
+        self.es_client = get_elasticsearch_connection()
         self.logger = LoggingModule.get_logger()
 
     def start_worker(self, pipeline_id: str, worker: WorkerConfig, job_payload: JobPayload):
@@ -34,6 +36,19 @@ class WorkerHandler:
             instance_key = f"worker:{worker_id}:instances"
             existing_instances = int(self.redis_queue_client.get(instance_key) or 0)
             instance_number = existing_instances + 1
+
+            # Update the numberOfInstances for the worker
+            self.es_client.update(index="pipeline_index", id=pipeline_id, body={
+                "script": {
+                    "source": "for (int i = 0; i < ctx._source.worker.size(); i++) { if (ctx._source.worker[i].id == params.worker_id) { ctx._source.worker[i].numberOfInstances = params.instance_number; break; } }",
+                    "lang": "painless",
+                    "params": {
+                        "worker_id": worker_id,
+                        "instance_number": instance_number
+                    }
+                }
+            })
+            
             container_name = f"{worker_id}_instance_{instance_number}"
 
             self.redis_queue_client.set(instance_key, instance_number)

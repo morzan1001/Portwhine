@@ -4,6 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.queue import start_queue_thread
+from api.docker.container_health import start_container_health_thread
 
 from .routers import trigger, pipeline, handler, worker
 from api.docs.main_docs import app_metadata, tags_metadata
@@ -55,6 +56,7 @@ app.include_router(handler.router, prefix="/api/v1", tags=["Handlers"])
 app.include_router(worker.router, prefix="/api/v1", tags=["Worker"])
 
 queue_thread = start_queue_thread()
+container_health_thread = start_container_health_thread()
 
 # Health check endpoint
 @app.get("/health", tags=["Health"])
