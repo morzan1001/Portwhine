@@ -1,3 +1,4 @@
+// dart format width=80
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
 part of 'api_service.dart';
@@ -82,5 +83,54 @@ final class _$ApiService extends ApiService {
       client.baseUrl,
     );
     return client.send<Map<String, dynamic>, Map<String, dynamic>>($request);
+  }
+
+  @override
+  Future<Response<Map<String, dynamic>>> getPipeline(String pipelineId) {
+    final Uri $url = Uri.parse('/pipeline/${pipelineId}');
+    final Request $request = Request(
+      'GET',
+      $url,
+      client.baseUrl,
+    );
+    return client.send<Map<String, dynamic>, Map<String, dynamic>>($request);
+  }
+
+  @override
+  Future<Response<Map<String, dynamic>>> updatePipeline(
+    String pipelineId,
+    Map<String, dynamic> pipelineInput,
+  ) {
+    final Uri $url = Uri.parse('/pipeline/${pipelineId}');
+    final $body = pipelineInput;
+    final Request $request = Request(
+      'PUT',
+      $url,
+      client.baseUrl,
+      body: $body,
+    );
+    return client.send<Map<String, dynamic>, Map<String, dynamic>>($request);
+  }
+
+  @override
+  Future<Response<List<String>>> getAllWorkers() {
+    final Uri $url = Uri.parse('/worker');
+    final Request $request = Request(
+      'GET',
+      $url,
+      client.baseUrl,
+    );
+    return client.send<List<String>, String>($request);
+  }
+
+  @override
+  Future<Response<List<String>>> getAllTriggers() {
+    final Uri $url = Uri.parse('/trigger');
+    final Request $request = Request(
+      'GET',
+      $url,
+      client.baseUrl,
+    );
+    return client.send<List<String>, String>($request);
   }
 }

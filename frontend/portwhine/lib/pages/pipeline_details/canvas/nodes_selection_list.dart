@@ -22,14 +22,14 @@ class _NodesListState extends State<NodesList> {
         horizontal: 20,
       ),
       decoration: BoxDecoration(
-        color: MyColors.darkGrey.withOpacity(0.3),
+        color: MyColors.grey,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: MyColors.darkGrey, width: 0.5),
         boxShadow: [
           BoxShadow(
             blurRadius: 6,
             spreadRadius: 1,
-            color: MyColors.black.withOpacity(0.04),
+            color: MyColors.black.withValues(alpha: 0.04),
           ),
         ],
       ),
@@ -53,22 +53,6 @@ class _NodesListState extends State<NodesList> {
                   ),
                 ),
               ),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.add,
-                    color: MyColors.black,
-                    size: 20,
-                  ),
-                  const HorizontalSpacer(2),
-                  Text(
-                    'Add',
-                    style: style(
-                      weight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              )
             ],
           ),
           children: [

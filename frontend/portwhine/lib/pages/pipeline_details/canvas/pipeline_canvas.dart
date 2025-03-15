@@ -6,8 +6,8 @@ import 'package:portwhine/models/canvas_model.dart';
 import 'package:portwhine/models/line_model.dart';
 import 'package:portwhine/models/node_model.dart';
 import 'package:portwhine/models/node_position.dart';
-import 'package:portwhine/pages/pipeline_details/sections/canvas/line_map_item.dart';
-import 'package:portwhine/pages/pipeline_details/sections/canvas/node_map_item.dart';
+import 'package:portwhine/pages/pipeline_details/canvas/line_map_item.dart';
+import 'package:portwhine/pages/pipeline_details/canvas/node_map_item.dart';
 
 class PipelineCanvas extends StatefulWidget {
   const PipelineCanvas({super.key});

@@ -40,4 +40,19 @@ class Api {
     if (result.error != null) return jsonDecode(result.error! as String);
     return result.body ?? defaultErrorMap;
   }
+
+  static Future<PipelineModel> getPipeline(String id) async {
+    final result = await service.getPipeline(id);
+    return PipelineModel.fromMap(result.body!);
+  }
+
+  static Future<List<String>> getAllWorkers() async {
+    final result = await service.getAllWorkers();
+    return result.body!;
+  }
+
+  static Future<List<String>> getAllTriggers() async {
+    final result = await service.getAllTriggers();
+    return result.body!;
+  }
 }

@@ -15,7 +15,7 @@ class NodeDetails extends StatelessWidget {
       width: 500,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: MyColors.darkGrey.withOpacity(0.1),
+        color: MyColors.darkGrey.withValues(alpha: 0.1),
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(16),
         ),
@@ -64,7 +64,7 @@ class NodeDetails extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           margin: const EdgeInsets.only(top: 12),
                           decoration: BoxDecoration(
-                            color: MyColors.black.withOpacity(0.1),
+                            color: MyColors.black.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
@@ -99,7 +99,7 @@ class NodeDetails extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           margin: const EdgeInsets.only(top: 12),
                           decoration: BoxDecoration(
-                            color: MyColors.black.withOpacity(0.1),
+                            color: MyColors.black.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(

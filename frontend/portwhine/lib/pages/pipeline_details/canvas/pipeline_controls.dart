@@ -7,6 +7,7 @@ import 'package:portwhine/global/global.dart';
 import 'package:portwhine/global/text_style.dart';
 import 'package:portwhine/models/canvas_model.dart';
 import 'package:portwhine/models/pipeline_model.dart';
+import 'package:portwhine/pages/pipeline_details/widgets/shadow_container.dart';
 import 'package:portwhine/widgets/spacer.dart';
 
 class PipelineControls extends StatelessWidget {
@@ -19,47 +20,21 @@ class PipelineControls extends StatelessWidget {
         return Row(
           children: [
             // back button
-            Container(
-              height: 56,
-              width: 56,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: MyColors.white,
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 6,
-                    spreadRadius: 1,
-                    color: MyColors.black.withOpacity(0.04),
-                  ),
-                ],
-              ),
-              child: InkWell(
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: MyColors.black,
-                  size: 20,
-                ),
-                onTap: () => pop(context),
+            ShadowContainer(
+              onTap: () => pop(context),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: const Icon(
+                Icons.arrow_back,
+                color: MyColors.black,
+                size: 20,
               ),
             ),
+
             const Spacer(),
 
             // buttons
-            Container(
-              height: 56,
+            ShadowContainer(
               padding: const EdgeInsets.symmetric(horizontal: 32),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: MyColors.white,
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 6,
-                    spreadRadius: 1,
-                    color: MyColors.black.withOpacity(0.04),
-                  ),
-                ],
-              ),
               child: Center(
                 child: Text(
                   'View Results',
@@ -71,20 +46,8 @@ class PipelineControls extends StatelessWidget {
               ),
             ),
             const HorizontalSpacer(16),
-            Container(
-              height: 56,
+            ShadowContainer(
               padding: const EdgeInsets.symmetric(horizontal: 32),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: MyColors.white,
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 6,
-                    spreadRadius: 1,
-                    color: MyColors.black.withOpacity(0.04),
-                  ),
-                ],
-              ),
               child: Center(
                 child: Text(
                   'Save',
@@ -100,20 +63,8 @@ class PipelineControls extends StatelessWidget {
             // controls
             BlocBuilder<CanvasCubit, CanvasModel>(
               builder: (context, state) {
-                return Container(
-                  height: 56,
+                return ShadowContainer(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: MyColors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        blurRadius: 6,
-                        spreadRadius: 1,
-                        color: MyColors.black.withOpacity(0.04),
-                      ),
-                    ],
-                  ),
                   child: Row(
                     children: [
                       const Icon(
