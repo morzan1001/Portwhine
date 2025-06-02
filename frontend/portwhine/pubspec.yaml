@@ -18,7 +18,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   fluttertoast: ^8.2.10
   google_fonts: ^6.1.0
-  intl: ^0.20.1
+  intl: ^0.20.2
   shimmer: ^3.0.0
 
 dev_dependencies:
