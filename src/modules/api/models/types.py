@@ -6,6 +6,14 @@ class InputOutputType(str, Enum):
     IP = "ip"
 
 class NodeStatus(str, Enum):
+    STATUS = "Status"
     RUNNING = "Running"
-    STOPPED = "Stopped"
+    PAUSED = "Paused"
+    RESTARTING = "Restarting"
+    OOMKILLED = "OOMKilled"
+    DEAD = "Dead"
+    PID = "Pid"
+    EXITCODE = "ExitCode"
     ERROR = "Error"
+    STARTEDAT = "StartedAt"
+    FINISHEDAT = "FinishedAt"

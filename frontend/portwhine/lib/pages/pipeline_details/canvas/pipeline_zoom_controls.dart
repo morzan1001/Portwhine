@@ -23,7 +23,7 @@ class PipelineZoomControls extends StatelessWidget {
               BoxShadow(
                 blurRadius: 6,
                 spreadRadius: 1,
-                color: MyColors.black.withOpacity(0.04),
+                color: MyColors.black.withValues(alpha: 0.02),
               ),
             ],
           ),

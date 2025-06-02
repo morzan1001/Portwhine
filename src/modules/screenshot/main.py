@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
+import json
 import os
 import sys
 from datetime import datetime, timezone
+
+import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -15,9 +18,11 @@ from utils.logger import LoggingModule
 logger = LoggingModule()
 
 class ScreenshotTaker:
-    def __init__(self):
+    def __init__(self, pipeline_id: str, worker_id: str):
         # Elasticsearch connection
         self.es = get_elasticsearch_connection()
+        self.pipeline_id = pipeline_id
+        self.worker_id = worker_id
         
         # MinIO client setup
         self.s3_client = get_minio_client()
@@ -27,7 +32,7 @@ class ScreenshotTaker:
         """Takes a screenshot of the given URL and returns the file path"""
         options = Options()
         options.headless = True
-        service = Service('/path/to/chromedriver')
+        service = Service('/usr/bin/chromedriver')
         driver = webdriver.Chrome(service=service, options=options)
         driver.get(url)
         screenshot_path = f"/tmp/screenshot_{datetime.now().timestamp()}.png"
@@ -47,21 +52,51 @@ class ScreenshotTaker:
         document = {
             "url": url,
             "screenshot_url": object_url,
-            "timestamp": datetime.now(timezone.utc)
+            "timestamp": datetime.now(timezone.utc),
+            "category": "screenshot",
         }
         self.es.index(index="screenshots", document=document)
         logger.info(f"Screenshot metadata for {url} saved successfully.")
 
-def main():
-    if len(sys.argv) != 2:
-        logger.error("Usage: python main.py <url>")
-        sys.exit(1)
+    def notify_handler(self, http_payload: str):
+        """Notifies the handler with the screenshot URL"""
+        try:
+            endpoint = f"/job/{self.pipeline_id}/{self.worker_id}"
+            url = f"http://api:8000/api/v1{endpoint}"
+            payload = {"http": http_payload,}
+            response = requests.post(url, json=payload)
+            response.raise_for_status()
+            logger.info(f"Notification sent to handler for {http_payload}")
+        except Exception as e:
+            logger.error(f"Error notifying handler: {e}")
 
-    url = sys.argv[1]
-    screenshot_taker = ScreenshotTaker()
-    screenshot_path = screenshot_taker.take_screenshot(url)
-    object_url = screenshot_taker.upload_to_minio(screenshot_path)
-    screenshot_taker.save_to_elasticsearch(url, object_url)
+def main():
+    payload = os.getenv('JOB_PAYLOAD')
+    if not payload:
+        logger.error("JOB_PAYLOAD environment variable not set")
+        sys.exit(1)
+    else:
+        payload = json.loads(payload)
+    
+    pipeline_id = os.getenv("PIPELINE_ID")
+    if not pipeline_id:
+        logger.error("PIPELINE_ID environment variable not set.")
+        return
+    
+    worker_id = os.getenv("WORKER_ID")
+    if not worker_id:
+        logger.error("WORKER_ID environment variable not set.")
+        return
+    
+    scanner = ScreenshotTaker(pipeline_id, worker_id)
+    for http_payload in payload.get("http", []):
+        logger.info(f"Taking Screenhot: {http_payload}")
+        result = scanner.take_screenshot(http_payload)
+        if result:
+            object_url = scanner.upload_to_minio(result)
+            scanner.save_to_elasticsearch(http_payload, object_url)
+            scanner.notify_handler(http_payload)
+            logger.info(f"Results saved and sent for {http_payload}")
 
 if __name__ == "__main__":
     main()

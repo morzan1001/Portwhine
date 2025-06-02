@@ -1,9 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:portwhine/blocs/pipelines/create_pipeline/create_pipeline_bloc.dart';
 import 'package:portwhine/blocs/pipelines/delete_pipeline/delete_pipeline_bloc.dart';
-import 'package:portwhine/blocs/pipelines/get_all_pipelines/get_all_pipelines_bloc.dart';
 import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_page_cubit.dart';
 import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_size_cubit.dart';
+import 'package:portwhine/blocs/pipelines/pipelines_list/pipelines_list_bloc.dart';
 import 'package:portwhine/blocs/pipelines/pipelines_status/pipelines_status_bloc.dart';
 import 'package:portwhine/blocs/pipelines/start_stop_pipeline/start_stop_pipeline_bloc.dart';
 import 'package:portwhine/global/colors.dart';
@@ -13,9 +13,9 @@ import 'package:portwhine/widgets/toast.dart';
 
 class BlocListeners {
   static final List<BlocListener> pipelinesListener = [
-    BlocListener<GetAllPipelinesBloc, GetAllPipelinesState>(
+    BlocListener<PipelinesListBloc, PipelinesListState>(
       listener: (context, state) {
-        if (state is GetAllPipelinesLoaded) {
+        if (state is PipelinesListLoaded) {
           BlocProvider.of<PipelinesStatusBloc>(context).add(
             UpdatePipelinesList(state.pipelines),
           );
@@ -24,7 +24,7 @@ class BlocListeners {
     ),
     BlocListener<PipelinePageCubit, int>(
       listener: (context, state) {
-        BlocProvider.of<GetAllPipelinesBloc>(context).add(
+        BlocProvider.of<PipelinesListBloc>(context).add(
           GetAllPipelines(page: state),
         );
       },
@@ -32,7 +32,7 @@ class BlocListeners {
     BlocListener<PipelineSizeCubit, int>(
       listener: (context, state) {
         BlocProvider.of<PipelinePageCubit>(context).setFirstPage();
-        BlocProvider.of<GetAllPipelinesBloc>(context).add(
+        BlocProvider.of<PipelinesListBloc>(context).add(
           GetAllPipelines(size: state),
         );
       },
@@ -45,7 +45,7 @@ class BlocListeners {
 
         if (state is CreatePipelineCompleted) {
           pop(context);
-          BlocProvider.of<GetAllPipelinesBloc>(context).add(
+          BlocProvider.of<PipelinesListBloc>(context).add(
             const GetAllPipelines(),
           );
         }
@@ -58,7 +58,7 @@ class BlocListeners {
         }
 
         if (state is DeletePipelineCompleted) {
-          BlocProvider.of<GetAllPipelinesBloc>(context).add(
+          BlocProvider.of<PipelinesListBloc>(context).add(
             DeletePipelineFromList(state.id),
           );
         }

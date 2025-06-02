@@ -65,6 +65,7 @@ class IPAddressScanner:
                 logger.info(f"Successfully notified handler for pipeline {self.pipeline_id}")
             else:
                 logger.error(f"Failed to notify handler for pipeline {self.pipeline_id}: {response.status_code}")
+                logger.debug(f"IP-Address: {ip_address} \nResponse: {response.text}")
         except Exception as e:
             logger.error(f"Error notifying handler for pipeline {self.pipeline_id}: {e}")
 

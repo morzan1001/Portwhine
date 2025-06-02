@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:portwhine/blocs/pipelines/get_all_pipelines/get_all_pipelines_bloc.dart';
 import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_page_cubit.dart';
 import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_size_cubit.dart';
+import 'package:portwhine/blocs/pipelines/pipelines_list/pipelines_list_bloc.dart';
 import 'package:portwhine/global/colors.dart';
 import 'package:portwhine/global/text_style.dart';
 import 'package:portwhine/widgets/icon_button.dart';
@@ -14,9 +14,9 @@ class PaginationSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<GetAllPipelinesBloc, GetAllPipelinesState>(
+    return BlocBuilder<PipelinesListBloc, PipelinesListState>(
       builder: (context, pipelinesState) {
-        final isLoaded = pipelinesState is GetAllPipelinesLoaded;
+        final isLoaded = pipelinesState is PipelinesListLoaded;
 
         return AbsorbPointer(
           absorbing: !isLoaded,
@@ -41,7 +41,7 @@ class PageChangeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<GetAllPipelinesBloc, GetAllPipelinesState>(
+    return BlocBuilder<PipelinesListBloc, PipelinesListState>(
       builder: (context, pipelinesState) {
         return BlocBuilder<PipelineSizeCubit, int>(
           builder: (context, size) {
@@ -63,7 +63,7 @@ class PageChangeWidget extends StatelessWidget {
                       child: SmallText('Page $page'),
                     ),
                     const HorizontalSpacer(12),
-                    if (pipelinesState is GetAllPipelinesLoaded &&
+                    if (pipelinesState is PipelinesListLoaded &&
                         pipelinesState.pipelines.length >= size)
                       MyIconButton(
                         Icons.arrow_right,

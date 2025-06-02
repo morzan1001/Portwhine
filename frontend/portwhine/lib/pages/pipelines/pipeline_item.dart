@@ -23,9 +23,8 @@ class PipelineItem extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () {
-        AutoRouter.of(context).navigate(
-          PipelineDetailsRoute(id: model.id, model: model),
-        );
+        // AutoRouter.of(context).navigate(const PDTestRoute());
+        AutoRouter.of(context).navigate(PipelineDetailsRoute(id: model.id));
       },
       child: Container(
         width: double.infinity,

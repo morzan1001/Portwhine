@@ -1,36 +1,47 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:portwhine/blocs/single_pipeline/pipeline_cubit.dart';
-import 'package:portwhine/models/pipeline_model.dart';
-import 'package:portwhine/pages/pipeline_details/sections/canvas/pipeline_canvas_wrapper.dart';
+import 'package:portwhine/blocs/single_pipeline/canvas_cubit.dart';
+import 'package:portwhine/blocs/single_pipeline/node_cubit.dart';
+import 'package:portwhine/blocs/single_pipeline/show_nodes/show_nodes_cubit.dart';
+import 'package:portwhine/blocs/single_pipeline/single_pipeline/single_pipeline_bloc.dart';
+import 'package:portwhine/blocs/single_pipeline/triggers_list/triggers_list_bloc.dart';
+import 'package:portwhine/blocs/single_pipeline/workers_list/workers_list_bloc.dart';
+import 'package:portwhine/global/colors.dart';
+import 'package:portwhine/global/constants.dart';
+import 'package:portwhine/global/global.dart';
+import 'package:portwhine/models/node_model.dart';
+import 'package:portwhine/pages/pipeline_details/canvas/node_map_item.dart';
+import 'package:portwhine/pages/pipeline_details/canvas/nodes_list.dart';
+import 'package:portwhine/pages/pipeline_details/canvas/pipeline_canvas.dart';
+import 'package:portwhine/pages/pipeline_details/canvas/pipeline_controls.dart';
+import 'package:portwhine/pages/pipeline_details/canvas/pipeline_zoom_controls.dart';
+import 'package:portwhine/pages/pipeline_details/widgets/shadow_container.dart';
 
 @RoutePage()
 class PipelineDetailsPage extends StatefulWidget {
   const PipelineDetailsPage({
     @PathParam('id') required this.id,
-    this.model,
     super.key,
   });
 
   final String id;
-  final PipelineModel? model;
 
   @override
   State<PipelineDetailsPage> createState() => _PipelineDetailsPageState();
 }
 
-class _PipelineDetailsPageState extends State<PipelineDetailsPage> {
+class _PipelineDetailsPageState extends State<PipelineDetailsPage>
+    with SingleTickerProviderStateMixin {
   @override
   void initState() {
     Future.delayed(
       const Duration(milliseconds: 0),
       () {
-        if (widget.model != null) {
-          BlocProvider.of<PipelineCubit>(context).setPipeline(
-            widget.model!,
-          );
-        }
+        context.read<CanvasCubit>().setController(this);
+        context.read<SinglePipelineBloc>().add(GetSinglePipeline(widget.id));
+        context.read<WorkersListBloc>().add(GetWorkersList());
+        context.read<TriggersListBloc>().add(GetTriggersList());
       },
     );
     super.initState();
@@ -40,11 +51,106 @@ class _PipelineDetailsPageState extends State<PipelineDetailsPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: BlocBuilder<PipelineCubit, PipelineModel>(
-          builder: (context, state) {
-            return const Column(
+        body: BlocBuilder<SelectedNodeCubit, NodeModel?>(
+          builder: (context, selectedNode) {
+            final canvas = BlocProvider.of<CanvasCubit>(context).state;
+
+            return Stack(
               children: [
-                Expanded(child: PipelineCanvasWrapper()),
+                // color filtered to blur canvas
+                ColorFiltered(
+                  colorFilter: ColorFilter.mode(
+                    selectedNode == null ? Colors.transparent : Colors.black54,
+                    BlendMode.multiply,
+                  ),
+                  child: Stack(
+                    children: [
+                      // bg container to show grey color
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: Container(color: MyColors.lightGrey),
+                      ),
+
+                      // main
+                      const PipelineCanvas(),
+
+                      // nodes list to drag on canvas
+                      BlocBuilder<ShowNodesCubit, bool>(
+                        builder: (context, state) {
+                          return AnimatedPositioned(
+                            top: 104,
+                            left: state ? 24 : -304,
+                            bottom: 104,
+                            duration: const Duration(milliseconds: 100),
+                            child: const NodesList(),
+                          );
+                        },
+                      ),
+
+                      // nodes list controller
+                      BlocBuilder<ShowNodesCubit, bool>(
+                        builder: (context, state) {
+                          return Positioned(
+                            bottom: 24,
+                            left: 24,
+                            child: ShadowContainer(
+                              onTap: () {
+                                BlocProvider.of<ShowNodesCubit>(context)
+                                    .toggleNodes();
+                              },
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 18),
+                              child: Icon(
+                                state
+                                    ? Icons.chevron_left
+                                    : Icons.chevron_right,
+                                color: MyColors.black,
+                                size: 20,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      // controls
+                      const Positioned(
+                        top: 24,
+                        left: 24,
+                        right: 24,
+                        child: PipelineControls(),
+                      ),
+                      const Positioned(
+                        bottom: 24,
+                        right: 24,
+                        child: PipelineZoomControls(),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // showing selected node when dialog is open
+                if (selectedNode != null)
+                  Positioned(
+                    left: (width(context) - nodeWidth) / 2,
+                    top: 100,
+                    child: Transform.scale(
+                      scale: canvas.zoom,
+                      child: NodeMapItem(selectedNode),
+                    ),
+                  ),
+                // Positioned(
+                //     left: (selectedNode.position!.x + canvas.position.x) *
+                //         canvas.zoom,
+                //     top: (selectedNode.position!.y + canvas.position.y) *
+                //         canvas.zoom,
+                //     child: Transform.scale(
+                //       scale: canvas.zoom,
+                //       child: NodeMapItem(selectedNode),
+                //     ),
+                //   ),
               ],
             );
           },

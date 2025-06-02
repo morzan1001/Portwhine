@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
+import json
+
 from elasticsearch import NotFoundError
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict
+
+from fastapi.encoders import jsonable_encoder
 from utils.elasticsearch import get_elasticsearch_connection
 from utils.logger import LoggingModule
 from api.models.pipeline import Pipeline
@@ -76,17 +80,33 @@ async def get_all_pipelines(size: int = Query(10, ge=1), page: int = Query(1, ge
         raise HTTPException(status_code=500, detail="Error retrieving pipelines")
 
 @router.patch(
-    "/pipeline/{pipeline_id}",
+    "/pipeline",
     response_model=Pipeline,
     summary=pipeline_summaries["update_pipeline"],
     description=pipeline_descriptions["update_pipeline"],
 )
-async def update_pipeline(pipeline_id: str, pipeline: Pipeline):
+async def update_pipeline(pipeline: Pipeline) -> Pipeline:
     if not es_client:
         raise HTTPException(status_code=500, detail="Could not connect to Elasticsearch")
     try:
-        es_client.index(index="pipelines", id=pipeline_id, body=pipeline.ser_model())
-        return pipeline
+        # Retrieve the existing pipeline
+        database_output = es_client.get(index="pipelines", id=pipeline._id)["_source"]
+        existing_pipeline: Pipeline = Pipeline(**database_output)
+        logger.debug(f"Existing pipeline data: {existing_pipeline}")
+
+        if existing_pipeline._status == NodeStatus.RUNNING:
+            raise HTTPException(status_code=400, detail="Pipeline is running. Stop the pipeline before updating")
+
+        # Update the pipeline
+        updated_fields = pipeline.model_dump(exclude_unset=True)
+        logger.debug(f"Updated fields: {updated_fields}")
+        updated_pipeline: Pipeline = existing_pipeline.model_copy(update=updated_fields)
+        logger.debug(f"Updated pipeline data: {updated_pipeline}")
+
+        # This is kind of stupid. “updated_pipeline” is of type "Pipeline", but I can only call .ser_model() if I cast the __dict__ of it back to "pipeline". I really don't know why :(
+        # Save the updated pipeline to Elasticsearch
+        es_client.index(index="pipelines", id=pipeline._id, body=Pipeline(**updated_pipeline.__dict__).ser_model(), refresh="wait_for")
+        return updated_pipeline
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Pipeline not found")
     except Exception as e:
@@ -144,6 +164,7 @@ async def cleanup_containers(pipeline_id: str):
             pipeline_handler.cleanup_containers(str(pipeline.trigger._id))
             for worker in pipeline.worker:
                 pipeline_handler.cleanup_containers(str(worker._id))
+                pipeline_handler.reset_instance_count(str(worker._id), pipeline_id)
             return {"detail": "Containers cleaned up successfully"}
         else:
             raise HTTPException(status_code=400, detail="Pipeline is not stopped")

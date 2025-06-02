@@ -1,14 +1,26 @@
 #!/usr/bin/env python3
+import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.queue import start_queue_thread
-from utils.logger import LoggingModule
+from api.docker.container_health import start_container_health_thread
+
 from .routers import trigger, pipeline, handler, worker
 from api.docs.main_docs import app_metadata, tags_metadata
 
-# Logger initializing
-logger = LoggingModule.get_logger()
+# Block logging for specific endpoints
+block_endpoints = ["/health"]
+
+class LogFilter(logging.Filter):
+    def filter(self, record):
+        if record.args and len(record.args) >= 3:
+            if record.args[2] in block_endpoints:
+                return False
+        return True
+
+uvicorn_logger = logging.getLogger("uvicorn.access")
+uvicorn_logger.addFilter(LogFilter())
 
 # FastAPI app with metadata
 app = FastAPI(
@@ -44,6 +56,7 @@ app.include_router(handler.router, prefix="/api/v1", tags=["Handlers"])
 app.include_router(worker.router, prefix="/api/v1", tags=["Worker"])
 
 queue_thread = start_queue_thread()
+container_health_thread = start_container_health_thread()
 
 # Health check endpoint
 @app.get("/health", tags=["Health"])

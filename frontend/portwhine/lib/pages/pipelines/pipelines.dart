@@ -2,7 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:portwhine/blocs/bloc_listeners.dart';
-import 'package:portwhine/blocs/pipelines/get_all_pipelines/get_all_pipelines_bloc.dart';
+import 'package:portwhine/blocs/pipelines/pipelines_list/pipelines_list_bloc.dart';
 import 'package:portwhine/global/colors.dart';
 import 'package:portwhine/pages/pipelines/change_page_section.dart';
 import 'package:portwhine/pages/pipelines/pipeline_item.dart';
@@ -56,9 +56,9 @@ class PipelinesPage extends StatelessWidget {
 
                 // list of pipelines
                 Expanded(
-                  child: BlocBuilder<GetAllPipelinesBloc, GetAllPipelinesState>(
+                  child: BlocBuilder<PipelinesListBloc, PipelinesListState>(
                     builder: (context, state) {
-                      if (state is GetAllPipelinesLoading) {
+                      if (state is PipelinesListLoading) {
                         return Shimmer.fromColors(
                           baseColor: MyColors.grey,
                           highlightColor: MyColors.darkGrey,
@@ -81,11 +81,11 @@ class PipelinesPage extends StatelessWidget {
                         );
                       }
 
-                      if (state is GetAllPipelinesFailed) {
+                      if (state is PipelinesListFailed) {
                         return Text(state.error);
                       }
 
-                      if (state is GetAllPipelinesLoaded) {
+                      if (state is PipelinesListLoaded) {
                         final pipelines = state.pipelines;
 
                         return ListView.separated(

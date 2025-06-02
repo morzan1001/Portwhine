@@ -17,6 +17,11 @@ class AppRouter extends RootStackRouter {
         page: PipelineDetailsRoute.page,
         transitionsBuilder: TransitionsBuilders.noTransition,
       ),
+      CustomRoute(
+        path: '/pd-test',
+        page: PDTestRoute.page,
+        transitionsBuilder: TransitionsBuilders.noTransition,
+      ),
     ];
   }
 }

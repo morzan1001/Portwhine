@@ -4,7 +4,7 @@ ignore=tests
 [MESSAGES CONTROL]
 disable=C0111,  # Missing docstring
         C0304,  # Final newline missing
-        F0401  # Unable to import
+        F0401   # Unable to import
 
 [REPORTS]
 output-format=colorized

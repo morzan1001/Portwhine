@@ -95,10 +95,10 @@ if [ $? -ne 0 ]; then
 fi
 
 # Grant permissions to Redis user for specific databases
-echo "Granting permissions to Redis user for databases 0 and 1..."
-echo -e "AUTH $REDIS_DEFAULT_PW\r\nACL SETUSER $REDIS_USER on >$REDIS_PASSWORD ~* +@read +@write +select +ping &0 &1\r\nQUIT\r\n" | openssl s_client -connect redis:6379 -quiet -ign_eof
+echo "Granting permissions to Redis user for databases 0, 1 and 2..."
+echo -e "AUTH $REDIS_DEFAULT_PW\r\nACL SETUSER $REDIS_USER on >$REDIS_PASSWORD ~* +@read +@write +select +ping &0 &1 &2\r\nQUIT\r\n" | openssl s_client -connect redis:6379 -quiet -ign_eof
 if [ $? -ne 0 ]; then
-    echo "Error: Failed to grant permissions to Redis user for databases 0 and 1"
+    echo "Error: Failed to grant permissions to Redis user for databases 0, 1 and 2"
     exit 1
 fi
 

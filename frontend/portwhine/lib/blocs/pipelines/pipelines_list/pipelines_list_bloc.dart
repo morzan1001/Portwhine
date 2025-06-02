@@ -3,36 +3,35 @@ import 'package:equatable/equatable.dart';
 import 'package:portwhine/models/pipeline_model.dart';
 import 'package:portwhine/repos/pipelines/pipelines_repo.dart';
 
-part 'get_all_pipelines_event.dart';
-part 'get_all_pipelines_state.dart';
+part 'pipelines_list_event.dart';
+part 'pipelines_list_state.dart';
 
-class GetAllPipelinesBloc
-    extends Bloc<GetAllPipelinesEvent, GetAllPipelinesState> {
+class PipelinesListBloc extends Bloc<PipelinesListEvent, PipelinesListState> {
   List<PipelineModel> pipelines = [];
 
-  GetAllPipelinesBloc() : super(GetAllPipelinesInitial()) {
+  PipelinesListBloc() : super(PipelinesListInitial()) {
     on<GetAllPipelines>(
       (event, emit) async {
         try {
-          emit(GetAllPipelinesLoading());
+          emit(PipelinesListLoading());
           final newPipelines = await PipelinesRepo.getAllPipelines(
             page: event.page,
             size: event.size,
           );
           pipelines.clear();
           pipelines.addAll(newPipelines);
-          emit(GetAllPipelinesLoaded(pipelines));
+          emit(PipelinesListLoaded(pipelines));
         } catch (e) {
-          emit(GetAllPipelinesFailed(e.toString()));
+          emit(PipelinesListFailed(e.toString()));
         }
       },
     );
 
     on<DeletePipelineFromList>(
       (event, emit) {
-        emit(GetAllPipelinesLoading());
+        emit(PipelinesListLoading());
         pipelines.removeWhere((e) => e.id == event.id);
-        emit(GetAllPipelinesLoaded(List.from(pipelines)));
+        emit(PipelinesListLoaded(List.from(pipelines)));
       },
     );
   }

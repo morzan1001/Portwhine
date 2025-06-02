@@ -5,6 +5,9 @@ from pydantic import BaseModel, PrivateAttr, SerializeAsAny, model_serializer, m
 from api.models.trigger import TriggerConfig, CertstreamTrigger, IPAddressTrigger
 from api.models.worker import ResolverWorker, WorkerConfig, FFUFWorker, HumbleWorker, ScreenshotWorker, TestSSLWorker, WebAppAnalyzerWorker, NmapWorker
 from api.models.types import InputOutputType, NodeStatus
+from utils.logger import LoggingModule
+
+logger = LoggingModule.get_logger()
 
 class Pipeline(BaseModel):
     _id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
@@ -34,6 +37,7 @@ class Pipeline(BaseModel):
     @model_validator(mode="before")
     def validate_trigger(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         trigger_data = values.get("trigger")
+        logger.debug(f"Validating trigger: {trigger_data}")
         if trigger_data == {}:
             values["trigger"] = None
         elif trigger_data:
@@ -50,6 +54,7 @@ class Pipeline(BaseModel):
     @model_validator(mode="before")
     def validate_workers(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         workers_data = values.get("worker")
+        logger.debug(f"Validating workers: {workers_data}")
         if workers_data:
             worker_classes = [
                 FFUFWorker, HumbleWorker, ScreenshotWorker, TestSSLWorker,

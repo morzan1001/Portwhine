@@ -10,7 +10,7 @@ import 'package:portwhine/global/text_style.dart';
 import 'package:portwhine/models/node_model.dart';
 import 'package:portwhine/models/node_position.dart';
 import 'package:portwhine/models/position.dart';
-import 'package:portwhine/pages/pipeline_details/sections/node_details/node_details.dart';
+import 'package:portwhine/pages/pipeline_details/node_details.dart';
 import 'package:portwhine/widgets/spacer.dart';
 
 class NodeMapItem extends StatelessWidget {

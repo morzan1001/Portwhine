@@ -3,11 +3,16 @@ import uuid
 from pydantic import BaseModel, Field, PrivateAttr, model_serializer, model_validator
 from typing import Any, ClassVar, List, Optional, Set
 from api.models.types import InputOutputType, NodeStatus
+from api.models.grid_position import GridPosition
+from api.models.instance_health import InstanceHealth
 
 class WorkerConfig(BaseModel):
     _id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
-    _status: str = PrivateAttr(default=NodeStatus.STOPPED)
+    _status: str = PrivateAttr(default=NodeStatus.PAUSED)
     children: Optional[List['WorkerConfig']] = None
+    gridPosition: GridPosition = Field(default_factory=GridPosition)
+    numberOfInstances: int = 0
+    instanceHealth: Optional[List[InstanceHealth]] = None
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -23,8 +28,11 @@ class WorkerConfig(BaseModel):
             'status': self._status,
             'input': self.__class__.input,
             'output': self.__class__.output,
-            'children': [child.ser_model() for child in self.children] if self.children else None
+            'children': [child.ser_model() for child in self.children] if self.children else None,
+            'gridPosition': self.gridPosition.ser_model(),
+            'instanceHealth': self.instanceHealth.ser_model() if self.instanceHealth else None,
         }
+
         # Add all other attributes that are not serialized by default
         for key, value in self.__dict__.items():
             if key not in data:
@@ -53,7 +61,7 @@ class FFUFWorker(WorkerConfig):
 
 class HumbleWorker(WorkerConfig):
     """
-    Worker that processes IP addresses.
+    Worker that analyzes HTTP headers.
     """
     input: ClassVar[List[InputOutputType]] = [InputOutputType.IP]
     output: ClassVar[List[InputOutputType]] = [InputOutputType.IP]

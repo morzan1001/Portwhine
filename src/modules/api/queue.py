@@ -7,10 +7,10 @@ from api.models.types import NodeStatus
 from utils.logger import LoggingModule
 from utils.redis import get_redis_connection
 from api.docker.manager import DockerManager
-from api.pipeline_handler import PipelineHandler
 
 logger = LoggingModule.get_logger()
 redis_client = get_redis_connection(db=1)
+redis_container_health_client = get_redis_connection(db=2)
 docker_manager = DockerManager()
 
 def process_queue():
@@ -36,16 +36,20 @@ def process_queue():
                 environment=environment
             )
             if container:
-                PipelineHandler.update_status(pipeline_id=pipeline_id, node_id=node_id, status=NodeStatus.RUNNING)
-            else:
-                PipelineHandler.update_status(pipeline_id=pipeline_id, node_id=node_id, status=NodeStatus.ERROR)
+                redis_container_health_client.hset("active_containers", container_name, pipeline_id) 
         elif action == "stop":
             logger.info(f"Stopping container {container_name}")
             docker_manager.stop_container(container_name)
-            PipelineHandler.update_status(pipeline_id=pipeline_id, node_id=node_id, status=NodeStatus.STOPPED)
         elif action == "cleanup":
             logger.info(f"Cleaning up containers for container {container_name}")
+            redis_container_health_client.hdel("active_containers", container_name)
             docker_manager.cleanup_containers(container_name)
+
+            # Delete all Redis keys for the container
+            keys_to_delete = redis_container_health_client.keys(f"*{container_name}*")
+            for key in keys_to_delete:
+                redis_container_health_client.delete(key)
+                logger.info(f"Deleted Redis key: {key}")
 
         time.sleep(1)  # Optional: Sleep to prevent tight loop
 
