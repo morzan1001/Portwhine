@@ -17,7 +17,7 @@ requests = "^2.32.4"
 optional = true
 
 [tool.poetry.group.api.dependencies]
-fastapi = "^0.115.6"
+fastapi = "^0.115.13"
 uvicorn = "^0.34.3"
 docker = "^7.1.0"
 pydantic = "^2.11.7"
