@@ -39,7 +39,7 @@ xmltodict = "^0.14.2"
 optional = true
 
 [tool.poetry.group.screenshot.dependencies]
-selenium = "^4.34.0"
+selenium = "^4.34.2"
 boto3 = "^1.38.46"
 botocore = "^1.39.4"
 
