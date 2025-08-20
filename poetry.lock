@@ -835,14 +835,14 @@ crt = ["botocore[crt] (>=1.37.4,<2.0a.0)"]
 
 [[package]]
 name = "selenium"
-version = "4.34.2"
+version = "4.35.0"
 description = "Official Python bindings for Selenium WebDriver"
 optional = false
 python-versions = ">=3.9"
 groups = ["screenshot"]
 files = [
-    {file = "selenium-4.34.2-py3-none-any.whl", hash = "sha256:ea208f7db9e3b26e58c4a817ea9dd29454576d6ea55937d754df079ad588e1ad"},
-    {file = "selenium-4.34.2.tar.gz", hash = "sha256:0f6d147595f08c6d4bad87b34c39dcacb4650aedc78e3956c8eac1bb752a3854"},
+    {file = "selenium-4.35.0-py3-none-any.whl", hash = "sha256:90bb6c6091fa55805785cf1660fa1e2176220475ccdb466190f654ef8eef6114"},
+    {file = "selenium-4.35.0.tar.gz", hash = "sha256:83937a538afb40ef01e384c1405c0863fa184c26c759d34a1ebbe7b925d3481c"},
 ]
 
 [package.dependencies]
@@ -850,7 +850,7 @@ certifi = ">=2025.6.15"
 trio = ">=0.30.0,<0.31.0"
 trio-websocket = ">=0.12.2,<0.13.0"
 typing_extensions = ">=4.14.0,<4.15.0"
-urllib3 = {version = ">=2.5.0,<2.6.0", extras = ["socks"]}
+urllib3 = {version = ">=2.5.0,<3.0", extras = ["socks"]}
 websocket-client = ">=1.8.0,<1.9.0"
 
 [[package]]
@@ -1086,4 +1086,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "f9464d8ec750c9dee8dfdbb2370988fe96b77128fa2080f8da4f218052626623"
+content-hash = "2d305c92a1548fdaa0d5c731f6593c52d838723ba64f35872bde85344a567347"
