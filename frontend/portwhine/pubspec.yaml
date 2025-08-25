@@ -30,7 +30,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   import_sorter: ^4.6.0
-  chopper_generator: ^8.3.0
+  chopper_generator: ^8.3.1
 
 flutter:
   uses-material-design: true
