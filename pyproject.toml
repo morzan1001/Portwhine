@@ -40,7 +40,7 @@ optional = true
 
 [tool.poetry.group.screenshot.dependencies]
 selenium = "^4.35.0"
-boto3 = "^1.40.11"
+boto3 = "^1.40.25"
 botocore = "^1.40.11"
 
 [tool.poetry.group.dev.dependencies]
