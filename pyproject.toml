@@ -41,7 +41,7 @@ optional = true
 [tool.poetry.group.screenshot.dependencies]
 selenium = "^4.35.0"
 boto3 = "^1.40.11"
-botocore = "^1.40.11"
+botocore = "^1.40.30"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^3.3.8"
