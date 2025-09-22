@@ -33,7 +33,7 @@ certstream = "^1.12"
 optional = true
 
 [tool.poetry.group.nmap.dependencies]
-xmltodict = "^0.14.2"
+xmltodict = "^1.0.2"
 
 [tool.poetry.group.screenshot]
 optional = true
