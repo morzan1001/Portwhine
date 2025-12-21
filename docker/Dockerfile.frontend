@@ -37,14 +37,8 @@ LABEL description="Dockerfile for the frontend module of Portwhine"
 # Ensure the CA certificates directory exists
 RUN mkdir -p /usr/local/share/ca-certificates
 # Copy the CA certificate to the trusted certificates directory
-COPY /certs/selfsigned-ca.crt /usr/local/share/ca-certificates/
-RUN chmod 644 /usr/local/share/ca-certificates/selfsigned-ca.crt
 # Update the CA certificates
 RUN apk add --no-cache ca-certificates
-RUN update-ca-certificates
-
-COPY certs/selfsigned-server.crt /etc/nginx/certs/selfsigned-server.crt
-COPY certs/selfsigned-server.key /etc/nginx/certs/selfsigned-server.key
 
 COPY nginx/50x.html /usr/local/openresty/nginx/html/50x.html
 COPY nginx/404.html /usr/local/openresty/nginx/html/404.html
@@ -52,6 +46,16 @@ COPY nginx/nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
 
 COPY --from=build-env /app/build/web /usr/local/openresty/nginx/html
 
-EXPOSE 80
-EXPOSE 443
+# Create a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Change ownership of the application directory and nginx temp paths
+RUN chown -R appuser:appgroup /usr/local/openresty/nginx \
+    && chown -R appuser:appgroup /var/run/openresty
+
+# Switch to the non-root user
+USER appuser
+
+EXPOSE 8080
+EXPOSE 8443
 CMD ["openresty", "-g", "daemon off;"]

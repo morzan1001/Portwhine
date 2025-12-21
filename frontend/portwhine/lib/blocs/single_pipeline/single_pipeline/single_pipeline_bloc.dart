@@ -20,5 +20,19 @@ class SinglePipelineBloc
         }
       },
     );
+
+    on<UpdatePipeline>(
+      (event, emit) async {
+        try {
+          // Keep current state or show loading?
+          // Ideally we should show a saving indicator, but for now let's just save.
+          await SinglePipelineRepo.updatePipeline(event.pipeline);
+          // Optionally refresh or emit success
+          emit(SinglePipelineLoaded(event.pipeline));
+        } catch (e) {
+          emit(SinglePipelineFailed(e.toString()));
+        }
+      },
+    );
   }
 }

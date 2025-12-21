@@ -8,9 +8,9 @@ from typing import List, Dict
 from fastapi.encoders import jsonable_encoder
 from utils.elasticsearch import get_elasticsearch_connection
 from utils.logger import LoggingModule
-from api.models.pipeline import Pipeline
+from models.pipeline import Pipeline
 from api.pipeline_handler import PipelineHandler
-from api.models.types import NodeStatus
+from models.types import NodeStatus
 from api.docs.pipeline_docs import pipeline_summaries, pipeline_descriptions
 
 router = APIRouter()
@@ -103,9 +103,8 @@ async def update_pipeline(pipeline: Pipeline) -> Pipeline:
         updated_pipeline: Pipeline = existing_pipeline.model_copy(update=updated_fields)
         logger.debug(f"Updated pipeline data: {updated_pipeline}")
 
-        # This is kind of stupid. “updated_pipeline” is of type "Pipeline", but I can only call .ser_model() if I cast the __dict__ of it back to "pipeline". I really don't know why :(
         # Save the updated pipeline to Elasticsearch
-        es_client.index(index="pipelines", id=pipeline._id, body=Pipeline(**updated_pipeline.__dict__).ser_model(), refresh="wait_for")
+        es_client.index(index="pipelines", id=pipeline._id, body=updated_pipeline.model_dump(), refresh="wait_for")
         return updated_pipeline
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Pipeline not found")

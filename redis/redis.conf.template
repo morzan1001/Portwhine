@@ -1,0 +1,51 @@
+tls-port 6379
+port 0
+
+# Enable TLS encryption
+tls-cert-file /certs/redis.crt
+tls-key-file /certs/redis.key
+tls-ca-cert-file /certs/ca.crt
+tls-auth-clients yes
+
+# =============================================================================
+# ACCESS CONTROL (ACL)
+# =============================================================================
+# Default user is DISABLED for security - no fallback authentication
+user default off
+
+# Application user with minimal required permissions
+# - Access to keys matching app:* pattern only
+# - Read/Write operations, no admin commands
+# - Can SELECT databases, PING for health checks
+user ${REDIS_USER} on >${REDIS_PASSWORD} ~app:* ~pipeline:* ~job:* &* +@read +@write +@connection +@fast -@admin -@dangerous
+
+# =============================================================================
+# SECURITY HARDENING
+# =============================================================================
+# Disable dangerous commands completely
+rename-command CONFIG ""
+rename-command FLUSHDB ""
+rename-command FLUSHALL ""
+rename-command DEBUG ""
+rename-command SHUTDOWN ""
+rename-command SLAVEOF ""
+rename-command REPLICAOF ""
+rename-command BGSAVE ""
+rename-command BGREWRITEAOF ""
+
+# Disable script execution (if not needed)
+rename-command EVAL ""
+rename-command EVALSHA ""
+rename-command SCRIPT ""
+
+# Memory and connection limits
+maxclients 100
+maxmemory 256mb
+maxmemory-policy allkeys-lru
+
+# Disable external access to dangerous info
+protected-mode yes
+
+# Logging
+loglevel notice
+

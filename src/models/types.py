@@ -7,8 +7,12 @@ class InputOutputType(str, Enum):
 
 class NodeStatus(str, Enum):
     STATUS = "Status"
+    PENDING = "Pending"
+    STARTING = "Starting"
     RUNNING = "Running"
     PAUSED = "Paused"
+    STOPPED = "Stopped"
+    COMPLETED = "Completed"
     RESTARTING = "Restarting"
     OOMKILLED = "OOMKilled"
     DEAD = "Dead"

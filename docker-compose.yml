@@ -1,98 +1,153 @@
 services:
-  setup:
-    image: appropriate/curl
-    container_name: setup
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      ELASTIC_USERNAME: $ELASTIC_USERNAME
-      ELASTIC_PASSWORD: $ELASTIC_PASSWORD
-      APP_DB_USER: $APP_DB_USER
-      APP_DB_PASSWORD: $APP_DB_PASSWORD
-      MINIO_ROOT_USER: $MINIO_ROOT_USER
-      MINIO_ROOT_PASSWORD: $MINIO_ROOT_PASSWORD
-      APP_MINIO_USER: $APP_MINIO_USER
-      APP_MINIO_PASSWORD: $APP_MINIO_PASSWORD
-      REDIS_DEFAULT_PW: $REDIS_DEFAULT_PW
-      REDIS_PASSWORD: $REDIS_PASSWORD
-      REDIS_USER: $REDIS_USER
+  cert-gen:
+    image: alpine/openssl:latest
+    container_name: cert-gen
     volumes:
-      - ./setup/setup.sh:/setup.sh
-      - ./emk/kibana.yml:/kibana.yml
-      - ./redis/redis.conf:/redis.conf
-      - ./certs:/certs:ro
-    entrypoint: ["sh", "/setup.sh"]
+      - ./certs:/certs
+      - ./certs/gen_certs.sh:/gen_certs.sh
+    entrypoint: ["sh", "/gen_certs.sh"]
+    environment:
+      DOMAIN: ${DOMAIN:-portwhine.local}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      ES_HOST: ${ES_HOST:-elasticsearch}
+      KIBANA_HOST: ${KIBANA_HOST:-kibana}
+      API_HOST: ${API_HOST:-api}
+      MINIO_HOST: ${MINIO_HOST:-minio}
+      FRONTEND_HOST: ${FRONTEND_HOST:-frontend}
+      METRICBEAT_HOST: ${METRICBEAT_HOST:-metricbeat}
+      CLIENT_CERT_NAME: ${CLIENT_CERT_NAME:-client}
+      TRAEFIK_HOST: ${TRAEFIK_HOST:-traefik}
     networks:
-      - portwhine
+      - internal_net
+
+  traefik:
+    image: traefik:v3.6.5
+    container_name: ${TRAEFIK_HOST:-traefik}
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - ./certs/${TRAEFIK_HOST}.crt:/certs/${TRAEFIK_HOST}.crt:ro
+      - ./certs/${TRAEFIK_HOST}.key:/certs/${TRAEFIK_HOST}.key:ro
+      - ./certs/external.crt:/certs/external.crt:ro
+      - ./certs/external.key:/certs/external.key:ro
+      - ./certs/ca.crt:/certs/ca.crt:ro
+    environment:
+      DOMAIN: ${DOMAIN:-portwhine.local}
+      TRAEFIK_HOST: ${TRAEFIK_HOST:-traefik}
+      API_HOST: ${API_HOST:-api}
+      KIBANA_HOST: ${KIBANA_HOST:-kibana}
+      FRONTEND_HOST: ${FRONTEND_HOST:-frontend}
+    networks:
+      - proxy_net
+    depends_on:
+      cert-gen:
+        condition: service_completed_successfully
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80 || exit 0"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.0
-    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.3
+    container_name: ${ES_HOST:-elasticsearch}
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-      - ./certs:/usr/share/elasticsearch/config/certs:ro
+      - ./certs/${ES_HOST}.crt:/usr/share/elasticsearch/config/certs/elasticsearch.crt:ro
+      - ./certs/${ES_HOST}.key:/usr/share/elasticsearch/config/certs/elasticsearch.key:ro
+      - ./certs/ca.crt:/usr/share/elasticsearch/config/certs/ca.crt:ro
       - ./emk/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-    ports:
-      - "9200:9200"
+      - ./emk/roles.yml:/usr/share/elasticsearch/config/roles.yml:ro
+      - ./emk/es_entrypoint.sh:/es_entrypoint.sh:ro
+    entrypoint: ["bash", "/es_entrypoint.sh"]
     environment:
       ES_JAVA_OPTS: "-Xms512m -Xmx512m"
       ELASTIC_USERNAME: $ELASTIC_USERNAME
       ELASTIC_PASSWORD: $ELASTIC_PASSWORD
+      APP_DB_USER: $APP_DB_USER
+      APP_DB_PASSWORD: $APP_DB_PASSWORD
+      KIBANA_SYSTEM_PASSWORD: $KIBANA_SYSTEM_PASSWORD
+      METRICBEAT_WRITER_USER: ${METRICBEAT_WRITER_USER}
+      METRICBEAT_WRITER_PASSWORD: ${METRICBEAT_WRITER_PASSWORD}
+      METRICBEAT_SETUP_USER: ${METRICBEAT_SETUP_USER}
+      METRICBEAT_SETUP_PASSWORD: ${METRICBEAT_SETUP_PASSWORD}
+      KIBANA_USER: ${KIBANA_USER}
+      KIBANA_USER_PASSWORD: ${KIBANA_USER_PASSWORD}
+    depends_on:
+      cert-gen:
+        condition: service_completed_successfully
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsSL --cacert /usr/share/elasticsearch/config/certs/selfsigned-ca.crt -u ${ELASTIC_USERNAME}:${ELASTIC_PASSWORD} https://localhost:9200 | grep -q 'You Know, for Search'"]
+      test: ["CMD-SHELL", "curl -fsSL --cert /usr/share/elasticsearch/config/certs/elasticsearch.crt --key /usr/share/elasticsearch/config/certs/elasticsearch.key --cacert /usr/share/elasticsearch/config/certs/ca.crt -u '${ELASTIC_USERNAME}:${ELASTIC_PASSWORD}' https://localhost:9200 | grep -q 'You Know, for Search'"]
       interval: 30s
       timeout: 10s
       retries: 5
     networks:
-      - portwhine
+      - internal_net
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.17.0
-    container_name: kibana
-    ports:
-      - "5601:5601"
+    image: docker.elastic.co/kibana/kibana:9.2.3
+    container_name: ${KIBANA_HOST:-kibana}
     volumes:
-      - ./certs:/usr/share/kibana/config/certs:ro
+      - ./certs/${KIBANA_HOST}.crt:/usr/share/kibana/config/certs/kibana.crt:ro
+      - ./certs/${KIBANA_HOST}.key:/usr/share/kibana/config/certs/kibana.key:ro
+      - ./certs/ca.crt:/usr/share/kibana/config/certs/ca.crt:ro
       - ./emk/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    environment:
+      KIBANA_SYSTEM_PASSWORD: ${KIBANA_SYSTEM_PASSWORD}
+      ES_HOST: ${ES_HOST:-elasticsearch}
     restart: always
     networks:
-      - portwhine
+      - proxy_net
+      - internal_net
     depends_on:
       elasticsearch:
         condition: service_healthy
-      setup:
+      cert-gen:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsSL --cacert /usr/share/kibana/config/certs/selfsigned-ca.crt https://localhost:5601/api/status | grep -q '\"level\":\"available\"'"]
+      test: ["CMD-SHELL", "curl -fsSL --cert /usr/share/kibana/config/certs/kibana.crt --key /usr/share/kibana/config/certs/kibana.key --cacert /usr/share/kibana/config/certs/ca.crt https://localhost:5601/api/status | grep -q '\"level\":\"available\"'"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kibana.rule=Host(`kibana.${DOMAIN:-portwhine.local}`)"
+      - "traefik.http.routers.kibana.entrypoints=websecure"
+      - "traefik.http.routers.kibana.tls=true"
+      - "traefik.http.routers.kibana.middlewares=sec-headers@file,rate-limit@file,gzip@file"
+      - "traefik.http.services.kibana.loadbalancer.server.port=5601"
+      - "traefik.http.services.kibana.loadbalancer.server.scheme=https"
+      - "traefik.http.services.kibana.loadbalancer.serversTransport=kibana-transport@file"
 
   metricbeat:
-    image: docker.elastic.co/beats/metricbeat:8.17.0
-    container_name: metricbeat
+    image: docker.elastic.co/beats/metricbeat:9.2.3
+    container_name: ${METRICBEAT_HOST:-metricbeat}
     user: root
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./emk/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
-      - ./certs:/usr/share/metricbeat/certs:ro
-    entrypoint: >
-      sh -c "
-      metricbeat setup -e --strict.perms=false  &&
-      metricbeat -e --strict.perms=false
-      "
+      - ./certs/${METRICBEAT_HOST}.crt:/usr/share/metricbeat/certs/metricbeat.crt:ro
+      - ./certs/${METRICBEAT_HOST}.key:/usr/share/metricbeat/certs/metricbeat.key:ro
+      - ./certs/ca.crt:/usr/share/metricbeat/certs/ca.crt:ro
+    command: ["-e", "--strict.perms=false"]
     environment:
-      ELASTIC_USERNAME: "${ELASTIC_USERNAME}"
-      ELASTIC_PASSWORD: "${ELASTIC_PASSWORD}"
+      ES_HOST: ${ES_HOST:-elasticsearch}
+      KIBANA_HOST: ${KIBANA_HOST:-kibana}
+      METRICBEAT_WRITER_USER: ${METRICBEAT_WRITER_USER}
+      METRICBEAT_WRITER_PASSWORD: ${METRICBEAT_WRITER_PASSWORD}
+      METRICBEAT_SETUP_USER: ${METRICBEAT_SETUP_USER}
+      METRICBEAT_SETUP_PASSWORD: ${METRICBEAT_SETUP_PASSWORD}
     networks:
-      - portwhine
+      - internal_net
     depends_on:
       elasticsearch:
         condition: service_healthy
@@ -105,53 +160,75 @@ services:
       context: .
       dockerfile: docker/Dockerfile.api
     image: api:1.0
-    container_name: api
-    ports:
-      - "8000:8000"
+    container_name: ${API_HOST:-api}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./certs:/certs:ro
+      - ./certs/${API_HOST}.crt:/certs/api.crt:ro
+      - ./certs/${API_HOST}.key:/certs/api.key:ro
+      - ./certs/ca.crt:/certs/ca.crt:ro
     restart: always
     environment:
-      DATABASE_HOST: https://elasticsearch:9200
+      DATABASE_HOST: https://${ES_HOST:-elasticsearch}:9200
       DATABASE_USER: $APP_DB_USER
       DATABASE_PASSWORD: $APP_DB_PASSWORD
-      REDIS_HOST: redis
+      CA_CERT_PATH: /certs/ca.crt
+      CLIENT_CERT_PATH: /certs/api.crt
+      CLIENT_KEY_PATH: /certs/api.key
+      HOST_CERTS_PATH: ${HOST_CERTS_PATH}
+      REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_USER: $REDIS_USER
       REDIS_PASSWORD: $REDIS_PASSWORD
       LOG_LEVEL: DEBUG
+      APP_MINIO_USER: $APP_MINIO_USER
+      APP_MINIO_PASSWORD: $APP_MINIO_PASSWORD
+      MINIO_ENDPOINT: https://${MINIO_HOST:-minio}:9000
     networks:
-      - portwhine
+      - proxy_net
+      - internal_net
     depends_on:
       elasticsearch:
         condition: service_healthy
       redis: 
         condition: service_healthy
-      setup:
+      cert-gen:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider -q https://127.0.0.1:8000/health || exit 1"]
+      test: ["CMD-SHELL", "curl -fsSL --cert /certs/api.crt --key /certs/api.key --cacert /certs/ca.crt https://127.0.0.1:8000/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.${DOMAIN:-portwhine.local}`)"
+      - "traefik.http.routers.api.entrypoints=websecure"
+      - "traefik.http.routers.api.tls=true"
+      - "traefik.http.routers.api.middlewares=cors-api@file,sec-headers-api@file,rate-limit@file,gzip@file"
+      - "traefik.http.services.api.loadbalancer.server.port=8000"
+      - "traefik.http.services.api.loadbalancer.server.scheme=https"
+      - "traefik.http.services.api.loadbalancer.serversTransport=api-transport@file"
 
   minio:
-    image: minio/minio:latest
-    container_name: minio
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+    image: ghcr.io/morzan1001/minio:latest
+    container_name: ${MINIO_HOST:-minio}
     environment:
       MINIO_ROOT_USER: $MINIO_ROOT_USER
       MINIO_ROOT_PASSWORD: $MINIO_ROOT_PASSWORD
+      APP_MINIO_USER: $APP_MINIO_USER
+      APP_MINIO_PASSWORD: $APP_MINIO_PASSWORD
     volumes:
       - minio_data:/data
-      - ./certs:/root/.minio/certs:ro
-    command: server /data --console-address ":9001"
+      - ./certs/${MINIO_HOST}.crt:/root/.minio/certs/public.crt:ro
+      - ./certs/${MINIO_HOST}.key:/root/.minio/certs/private.key:ro
+      - ./certs/ca.crt:/root/.minio/certs/CAs/public.crt:ro
+      - ./minio/entrypoint.sh:/entrypoint.sh:ro
+    entrypoint: ["sh", "/entrypoint.sh"]
     networks:
-      - portwhine
+      - internal_net
+    depends_on:
+      cert-gen:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      test: ["CMD-SHELL", "curl -f --cacert /root/.minio/certs/CAs/public.crt https://localhost:9000/minio/health/live || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -159,18 +236,31 @@ services:
 
   redis:
     image: redis:latest
-    container_name: redis
-    ports:
-      - "6379:6379"
+    container_name: ${REDIS_HOST:-redis}
+    user: redis
     volumes:
-      - ./certs:/certs:ro
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf", "--requirepass", "$REDIS_DEFAULT_PW"]
+      - ./certs/${REDIS_HOST:-redis}.crt:/certs/redis.crt:ro
+      - ./certs/${REDIS_HOST:-redis}.key:/certs/redis.key:ro
+      - ./certs/${CLIENT_CERT_NAME:-client}.crt:/certs/client.crt:ro
+      - ./certs/${CLIENT_CERT_NAME:-client}.key:/certs/client.key:ro
+      - ./certs/ca.crt:/certs/ca.crt:ro
+      - ./redis/redis.conf.template:/usr/local/etc/redis/redis.conf.template:ro
+    command: >
+      sh -c "sed -e 's/\$${REDIS_USER}/'\"$$REDIS_USER\"'/' 
+      -e 's/\$${REDIS_PASSWORD}/'\"$$REDIS_PASSWORD\"'/' 
+      /usr/local/etc/redis/redis.conf.template > /tmp/redis.conf && 
+      redis-server /tmp/redis.conf"
+    environment:
+      REDIS_PASSWORD: $REDIS_PASSWORD
+      REDIS_USER: $REDIS_USER
     restart: always
     networks:
-      - portwhine
+      - internal_net
+    depends_on:
+      cert-gen:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "redis-cli", "--tls", "--cacert", "/certs/selfsigned-ca.crt", "-h", "127.0.0.1", "ping"]
+      test: ["CMD-SHELL", "redis-cli --tls --cert /certs/client.crt --key /certs/client.key --cacert /certs/ca.crt -h 127.0.0.1 --user \"$${REDIS_USER}\" --pass \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -180,25 +270,41 @@ services:
       context: .
       dockerfile: docker/Dockerfile.frontend
     image: frontend:1.0
-    container_name: frontend
-    ports:
-      - "8443:443"
+    container_name: ${FRONTEND_HOST}
+    volumes:
+      - ./certs/${FRONTEND_HOST}.crt:/certs/frontend.crt:ro
+      - ./certs/${FRONTEND_HOST}.key:/certs/frontend.key:ro
+      - ./certs/ca.crt:/certs/ca.crt:ro
+    environment:
+      CSP_API_URL: https://api.${DOMAIN:-portwhine.local}
     restart: always
     depends_on:
       api:
         condition: service_healthy
+      cert-gen:
+        condition: service_completed_successfully
     networks:
-      - portwhine
+      - proxy_net
+      - internal_net
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider -q https://127.0.0.1 || exit 1"]
+      test: ["CMD-SHELL", "wget --no-check-certificate --spider -q https://127.0.0.1:8443 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN:-portwhine.local}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.middlewares=sec-headers-frontend@file,rate-limit@file"
+      - "traefik.http.services.frontend.loadbalancer.server.port=8443"
+      - "traefik.http.services.frontend.loadbalancer.server.scheme=https"
+      - "traefik.http.services.frontend.loadbalancer.serversTransport=frontend-transport@file"
 
 volumes:
   elasticsearch_data:
   minio_data:
 
 networks:
-  portwhine:
-    external: true
+  proxy_net:
+  internal_net:

@@ -1,18 +1,21 @@
 server.name: kibana
 server.host: "0.0.0.0"
-elasticsearch.hosts: ["https://elasticsearch:9200"]
-elasticsearch.serviceAccountToken: AAEAAWVsYXN0aWMva2liYW5hL3Rva2VuX1FpZ3gxcFFCY0pRUHp6YldjMTBHOk1EdG80ZVVvUjNLUkh0VXlvc29oNlE
+elasticsearch.hosts: ["https://${ES_HOST}:9200"]
+elasticsearch.username: "kibana_system"
+elasticsearch.password: "${KIBANA_SYSTEM_PASSWORD}"
 elasticsearch.requestTimeout: 90000
 elasticsearch.shardTimeout: 90000
 
 # SSL Settings for Elasticsearch
-elasticsearch.ssl.certificateAuthorities: ["/usr/share/kibana/config/certs/selfsigned-ca.crt"]
-elasticsearch.ssl.certificate: "/usr/share/kibana/config/certs/selfsigned-server.crt"
-elasticsearch.ssl.key: "/usr/share/kibana/config/certs/selfsigned-server.key"
+elasticsearch.ssl.certificateAuthorities: ["/usr/share/kibana/config/certs/ca.crt"]
+elasticsearch.ssl.certificate: "/usr/share/kibana/config/certs/kibana.crt"
+elasticsearch.ssl.key: "/usr/share/kibana/config/certs/kibana.key"
 elasticsearch.ssl.verificationMode: full
+elasticsearch.ssl.alwaysPresentCertificate: true
 
 # Server SSL Settings
 server.ssl.enabled: true
-server.ssl.key: "/usr/share/kibana/config/certs/selfsigned-server.key"
-server.ssl.certificate: "/usr/share/kibana/config/certs/selfsigned-server.crt"
-server.ssl.certificateAuthorities: ["/usr/share/kibana/config/certs/selfsigned-ca.crt"]
+server.ssl.key: "/usr/share/kibana/config/certs/kibana.key"
+server.ssl.certificate: "/usr/share/kibana/config/certs/kibana.crt"
+server.ssl.certificateAuthorities: ["/usr/share/kibana/config/certs/ca.crt"]
+server.ssl.clientAuthentication: required

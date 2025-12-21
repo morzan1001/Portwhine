@@ -133,3 +133,23 @@ cython_debug/
 
 # VS Code
 .vscode/
+
+# =============================================================================
+# Certificates and Keys (NEVER commit these!)
+# =============================================================================
+certs/*.crt
+certs/*.key
+certs/*.pem
+certs/*.p12
+certs/*.pfx
+certs/ca.srl
+certs/services.conf
+!certs/ca.cnf
+!certs/openssl.cnf
+!certs/gen_certs.sh
+!certs/services.conf.template
+
+# Private keys anywhere
+*.key
+*.pem
+!*.pem.example

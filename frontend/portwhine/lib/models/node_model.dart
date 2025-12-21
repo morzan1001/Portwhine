@@ -7,6 +7,7 @@ class NodeModel {
   Map<String, Type> inputs;
   Map<String, Type> outputs;
   Map<String, String> inputNodes;
+  Map<String, dynamic> config;
   String? result;
   String? code;
   List<NodeOutputModel>? nodeOutputs;
@@ -18,6 +19,7 @@ class NodeModel {
     this.inputs = const {},
     this.outputs = const {},
     this.inputNodes = const {},
+    this.config = const {},
     this.result = '',
     this.code,
     this.nodeOutputs,
@@ -31,6 +33,7 @@ class NodeModel {
       'inputs': inputs,
       'outputs': outputs,
       'inputNodes': inputNodes,
+      'config': config,
       'result': result,
       'code': code,
       'nodeOutputs': nodeOutputs?.map((output) => output.toMap()).toList(),
@@ -45,6 +48,7 @@ class NodeModel {
       inputs: map['inputs'],
       outputs: map['outputs'],
       inputNodes: map['inputNodes'],
+      config: map['config'] ?? {},
       result: map['result'],
       code: map['code'],
       position: map['position'],
@@ -61,6 +65,7 @@ class NodeModel {
     Map<String, Type>? inputs,
     Map<String, Type>? outputs,
     Map<String, String>? inputNodes,
+    Map<String, dynamic>? config,
     String? result,
     String? code,
     List<NodeOutputModel>? nodeOutputs,
@@ -72,6 +77,7 @@ class NodeModel {
       inputs: inputs ?? this.inputs,
       outputs: outputs ?? this.outputs,
       inputNodes: inputNodes ?? this.inputNodes,
+      config: config ?? this.config,
       result: result ?? this.result,
       code: code ?? this.code,
       nodeOutputs: nodeOutputs ?? this.nodeOutputs,

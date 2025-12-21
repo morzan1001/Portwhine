@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pydantic import BaseModel, Field, model_serializer
 
-from api.models.types import NodeStatus
+from models.types import NodeStatus
 
 class InstanceHealth(BaseModel):
     number: int = Field(default=0)

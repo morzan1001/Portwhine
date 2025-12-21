@@ -1,0 +1,36 @@
+portwhine_api:
+  cluster: ["monitor"]
+  indices:
+    - names: ["pipelines", "pipeline_runs", "pipeline_results", "pipeline_index"]
+      privileges: ["read", "write", "create_index", "view_index_metadata", "auto_configure"]
+      allow_restricted_indices: false
+
+metricbeat_setup:
+  cluster: ["monitor", "manage_ilm", "manage_index_templates", "manage_pipeline"]
+  indices:
+    - names: ["metricbeat-*"]
+      privileges: ["manage", "create_index", "index", "read", "write"]
+    - names: [".kibana*"]
+      privileges: ["all"]
+  applications:
+    - application: "kibana-.kibana"
+      privileges: ["all"]
+      resources: ["*"]
+
+metricbeat_writer:
+  cluster: ["monitor", "read_ilm", "read_pipeline"]
+  indices:
+    - names: ["metricbeat-*"]
+      privileges: ["view_index_metadata", "auto_configure", "create_doc"]
+
+kibana_user:
+  cluster: ["monitor"]
+  indices:
+    - names: ["metricbeat-*"]
+      privileges: ["read", "view_index_metadata"]
+    - names: ["pipelines", "pipeline_runs", "pipeline_results", "pipeline_index"]
+      privileges: ["read", "view_index_metadata"]
+  applications:
+    - application: "kibana-.kibana"
+      privileges: ["feature_discover.all", "feature_dashboard.all", "feature_visualize.all", "feature_canvas.read", "feature_maps.read", "feature_observability.all"]
+      resources: ["*"]

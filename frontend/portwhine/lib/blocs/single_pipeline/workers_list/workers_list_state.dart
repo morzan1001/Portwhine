@@ -12,7 +12,7 @@ class WorkersListInitial extends WorkersListState {}
 class WorkersListLoading extends WorkersListState {}
 
 class WorkersListLoaded extends WorkersListState {
-  final List<String> workers;
+  final List<NodeModel> workers;
 
   const WorkersListLoaded(this.workers);
 }

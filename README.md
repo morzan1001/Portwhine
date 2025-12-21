@@ -21,6 +21,21 @@ The entire program can be built and started using the `make start` command. This
 Before all services start up, some environment variables should be set. This can be done, for example, with an `.env` file in the root of this repository. The file could look like this:
 
 ```dotenv
+# Optional: Service-Namen (Defaults sind in docker-compose.yml hinterlegt)
+ES_HOST=elasticsearch
+KIBANA_HOST=kibana
+METRICBEAT_HOST=metricbeat
+API_HOST=api
+MINIO_HOST=minio
+REDIS_HOST=redis
+FRONTEND_HOST=frontend
+CLIENT_CERT_NAME=client
+TRAEFIK_HOST=traefik
+
+# Wichtig für Worker-Container (API startet Worker via Docker-Socket):
+# Muss ein HOST-Pfad zum lokalen certs-Ordner sein (z.B. Windows: C:\Users\...\Portwhine\certs)
+HOST_CERTS_PATH=/absolute/path/to/Portwhine/certs
+
 ELASTIC_USERNAME=elastic
 ELASTIC_PASSWORD=changeme
 
@@ -33,7 +48,7 @@ APP_MINIO_PASSWORD=app_minio_password
 MINIO_ROOT_USER=minio
 MINIO_ROOT_PASSWORD=changeme
 
-REDIS_DEFAULT_PW=changeme
+# Redis (default user is disabled for security)
 REDIS_USER=app_redis
 REDIS_PASSWORD=app_redis_password
 ```

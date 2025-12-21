@@ -3,117 +3,143 @@ import json
 import re
 import threading
 import certstream
-from datetime import datetime, timezone
-from typing import Optional, Dict
-import requests
 import os
+import sys
+import requests
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from typing import Optional, Dict, List
 
-from utils.elasticsearch import get_elasticsearch_connection
 from utils.logger import LoggingModule
+from models.job_payload import JobPayload, HttpTarget
+from models.worker_result import WorkerResult
+from models.types import NodeStatus
+from models.trigger import CertstreamTrigger
 
 # Logger initializing
 logger = LoggingModule.get_logger()
 
+class HealthRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            
+            status_data = {
+                "status": self.server.worker_instance.current_status,
+                "worker_id": self.server.worker_instance.worker_id,
+                "instance_name": self.server.worker_instance.instance_name
+            }
+            self.wfile.write(json.dumps(status_data).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def log_message(self, format, *args):
+        pass
+
 class CertstreamScanner:
-    def __init__(self, pipeline_id: str):
-        # Elasticsearch connection
-        self.es = get_elasticsearch_connection()
+    def __init__(self):
         self.regex_lock = threading.Lock()
-        self.pipeline_id = pipeline_id
-        self.regexes = self.get_stored_regexes()
-        self.job_id = self.get_job_id()
-
-    def get_stored_regexes(self) -> list:
-        """Fetches stored regex patterns from Elasticsearch based on pipeline_id"""
-        try:
-            doc = self.es.get(index="pipelines", id=self.pipeline_id)
-            pipeline = doc["_source"]
-            if "trigger" in pipeline and "CertstreamTrigger" in pipeline["trigger"]:
-                return [re.compile(pipeline["trigger"]["CertstreamTrigger"]["regex"])]
-        except Exception as e:
-            logger.error(f"Error fetching regexes for pipeline {self.pipeline_id}: {e}")
-            return []
+        self.pipeline_id = os.getenv("PIPELINE_ID")
+        self.worker_id = os.getenv("WORKER_ID")
+        self.run_id = os.getenv("RUN_ID")
+        self.instance_name = os.getenv("INSTANCE_NAME")
+        self.current_status = NodeStatus.STARTING
         
-    def get_job_id(self) -> str:
-        """Fetches the job ID from Elasticsearch based on pipeline_id"""
-        try:
-            doc = self.es.get(index="pipelines", id=self.pipeline_id)
-            pipeline = doc["_source"]
-            if "trigger" in pipeline and "CertstreamTrigger" in pipeline["trigger"]:
-                return pipeline["trigger"]["CertstreamTrigger"]["id"]
-        except Exception as e:
-            logger.error(f"Error fetching container ID for pipeline {self.pipeline_id}: {e}")
-            return ""
+        if not self.pipeline_id or not self.worker_id:
+            logger.error("Missing required environment variables: PIPELINE_ID or WORKER_ID")
+            sys.exit(1)
 
-    def analyze_cert(self, message: Dict) -> Optional[Dict]:
+        self.config = self._load_config()
+        self.regexes = [re.compile(self.config.regex)]
+        
+        self._start_health_server()
+
+    def _start_health_server(self):
+        try:
+            server = HTTPServer(('0.0.0.0', 8000), HealthRequestHandler)
+            server.worker_instance = self
+            thread = threading.Thread(target=server.serve_forever)
+            thread.daemon = True
+            thread.start()
+            logger.info("Health server started on port 8000")
+        except Exception as e:
+            logger.error(f"Failed to start health server: {e}")
+
+    def _load_config(self) -> CertstreamTrigger:
+        config_str = os.getenv('TRIGGER_CONFIG')
+        if not config_str:
+            logger.error("TRIGGER_CONFIG environment variable not set")
+            sys.exit(1)
+        
+        try:
+            import json
+            data = json.loads(config_str)
+            # Unwrap if wrapped in class name
+            if isinstance(data, dict) and len(data) == 1:
+                first_value = list(data.values())[0]
+                if isinstance(first_value, dict):
+                    data = first_value
+            
+            return CertstreamTrigger.model_validate(data)
+        except Exception as e:
+            logger.error(f"Invalid TRIGGER_CONFIG: {e}")
+            sys.exit(1)
+
+    def notify_handler(self, domain: str, message: Dict):
+        """Notifies the handler with the results"""
+        try:
+            url_endpoint = f"https://api:8000/api/v1/job/result"
+            if self.instance_name:
+                url_endpoint += f"?instance_name={self.instance_name}"
+
+            output_payload = JobPayload(
+                http=[HttpTarget(url=domain, method="GET")]
+            )
+            
+            worker_result = WorkerResult(
+                run_id=self.run_id,
+                pipeline_id=self.pipeline_id,
+                node_id=self.worker_id,
+                status=NodeStatus.COMPLETED,
+                output_payload=output_payload,
+                raw_data=message
+            )
+
+            headers = {'Content-Type': 'application/json'}
+            response = requests.post(url_endpoint, json=worker_result.model_dump(mode='json'), headers=headers, verify='/usr/local/share/ca-certificates/selfsigned-ca.crt')
+            
+            if response.status_code == 200:
+                logger.info(f"Successfully notified handler for {domain}")
+            else:
+                logger.error(f"Failed to notify handler: {response.status_code}")
+        except Exception as e:
+            logger.error(f"Error notifying handler: {e}")
+
+    def analyze_cert(self, message: Dict, context):
         """Analyzes a certificate message using stored regex patterns"""
         try:
-            cert_data = message['data']['leaf_cert']['all_domains']
-            matched_patterns = []
-            for domain in cert_data:
-                for regex in self.regexes:
-                    if regex.search(domain):
-                        matched_patterns.append(domain)
-            if matched_patterns:
-                return {"cert_data": message, "urls": matched_patterns}
-            else:
-                logger.debug(f"No patterns matched for certificate: {cert_data}")
-                return None
+            if message["message_type"] == "heartbeat":
+                return
+
+            if message["message_type"] == "certificate_update":
+                all_domains = message["data"]["leaf_cert"]["all_domains"]
+                
+                for domain in all_domains:
+                    with self.regex_lock:
+                        for regex in self.regexes:
+                            if regex.search(domain):
+                                logger.info(f"Match found: {domain}")
+                                self.notify_handler(domain, message)
         except Exception as e:
             logger.error(f"Error analyzing certificate: {e}")
-            return None
-        
-    def save_results(self, results: Dict):
-        """Saves the analysis results to Elasticsearch"""
-        try:
-            if "cert_data" in results:
-                results["cert_data"] = json.dumps(results["cert_data"])
-
-            document = {
-                "results": results,
-                "timestamp": datetime.now(timezone.utc),
-                "category": "certificate",
-                "tags": ["http"]
-            }
-            self.es.index(index=self.pipeline_id, document=document)
-            logger.info(f"Results saved successfully in index {self.pipeline_id}.")
-        except Exception as e:
-            logger.error(f"Error saving results: {e}")
-            logger.debug(f"Results data: {results}")
-
-    def notify_handler(self, matched_url: str):
-        """Notifies the handler with the matched URL"""
-        try:
-            endpoint = f"/job/{self.pipeline_id}/{self.job_id}"
-            url = f"https://api:8000/api/v1{endpoint}"
-            payload = {"http": [{"domain": matched_url}]}
-            headers = {'Content-Type': 'application/json'}
-            response = requests.post(url, json=payload, headers=headers, verify='/usr/local/share/ca-certificates/selfsigned-ca.crt')
-            print(response.status_code)
-            print(response.text)
-            if response.status_code == 200:
-                logger.info(f"Successfully notified handler for pipeline {self.pipeline_id}")
-            else:
-                logger.error(f"Failed to notify handler for pipeline {self.pipeline_id}: {response.status_code}")
-        except Exception as e:
-            logger.error(f"Error notifying handler for pipeline {self.pipeline_id}: {e}")
-
-    def certstream_callback(self, message: Dict, context: Optional[Dict] = None):
-        """Callback function for certstream_trigger messages"""
-        if message['message_type'] == "certificate_update":
-            results = self.analyze_cert(message)
-            if results:
-                self.save_results(results)
-                for url in results["urls"]:
-                    self.notify_handler(url)
 
 def main():
-    pipeline_id = os.getenv("PIPELINE_ID")
-    if not pipeline_id:
-        logger.error("PIPELINE_ID environment variable not set.")
-        return
-    scanner = CertstreamScanner(pipeline_id)
-    certstream.listen_for_events(scanner.certstream_callback, url='wss://certstream.calidog.io/')
+    scanner = CertstreamScanner()
+    scanner.current_status = NodeStatus.RUNNING
+    logger.info("Starting Certstream listener...")
+    certstream.listen_for_events(scanner.analyze_cert, url='wss://certstream.calidog.io/')
 
 if __name__ == "__main__":
     main()

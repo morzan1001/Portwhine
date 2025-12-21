@@ -1,44 +1,68 @@
+import 'dart:math';
+
 import 'package:bloc/bloc.dart';
 import 'package:portwhine/models/line_model.dart';
 import 'package:portwhine/models/node_model.dart';
 import 'package:portwhine/models/node_position.dart';
 
 class NodesCubit extends Cubit<List<NodeModel>> {
-  NodesCubit()
-      : super(
-          [
-            NodeModel(
-              name: 'Domain',
-              inputs: {'Input 1': int, 'Input 2': int},
-              outputs: {'Output': int},
-              position: NodePosition(x: 2550, y: 2100),
-            ),
-            // NodeModel(
-            //   id: generateId(),
-            //   name: 'Nmap',
-            //   inputs: {'Input 1': int, 'Input 2': int},
-            //   outputs: {'Output': int},
-            //   position: NodePosition(x: 1700, y: 1150),
-            // ),
-            // NodeModel(
-            //   id: generateId(),
-            //   name: 'Nikto',
-            //   inputs: {'Input 1': int, 'Input 2': int},
-            //   outputs: {'Output': int},
-            //   position: NodePosition(x: 1500, y: 1350),
-            // ),
-          ],
-        );
+  NodesCubit() : super([]);
+
+  void setNodes(List<NodeModel> nodes) {
+    emit(nodes);
+  }
 
   void addNode(NodeModel model) {
-    emit([...state, model]);
+    // Ensure the node has a unique ID if it doesn't have one
+    final nodeToAdd =
+        model.id.isEmpty ? model.copyWith(id: _generateId()) : model;
+
+    emit([...state, nodeToAdd]);
+  }
+
+  void removeNode(String id) {
+    emit(state.where((node) => node.id != id).toList());
   }
 
   void addConnection(NodeModel output, NodeModel input) {
+    // Check for compatible types
+    // The keys of inputs/outputs represent the types (e.g., "HTTP", "IP")
+    final outputTypes = output.outputs.keys.toSet();
+    final inputTypes = input.inputs.keys.toSet();
+
+    final commonTypes = outputTypes.intersection(inputTypes);
+
+    if (commonTypes.isEmpty) {
+      // No compatible types found
+      // TODO: Emit a state or callback to notify UI of failure?
+      // For now, just return without connecting.
+      return;
+    }
+
     emit(
       state.map((node) {
         if (node.id == input.id) {
-          final updatedInputNodes = {...node.inputNodes, 'Input 1': output.id};
+          // Avoid duplicate connections
+          if (node.inputNodes.containsValue(output.id)) {
+            return node;
+          }
+          // Use the common type as the key if possible, or generate unique key
+          // Ideally we map specific output port to specific input port.
+          // For now, we just use the first common type as the "port" name if available
+          final portName = commonTypes.first;
+
+          // Check if this port is already occupied?
+          // If we allow multiple inputs per port, we might need a list.
+          // But the current model is Map<String, String> (InputName -> SourceNodeId).
+          // So one source per input port.
+
+          // If the port is already taken, we can't connect.
+          if (node.inputNodes.containsKey(portName)) {
+            // Port occupied
+            return node;
+          }
+
+          final updatedInputNodes = {...node.inputNodes, portName: output.id};
           return node.copyWith(inputNodes: updatedInputNodes);
         }
         return node;
@@ -55,6 +79,22 @@ class NodesCubit extends Cubit<List<NodeModel>> {
         return node;
       }).toList(),
     );
+  }
+
+  void updateNode(NodeModel updatedNode) {
+    emit(
+      state.map((node) {
+        if (node.id == updatedNode.id) {
+          return updatedNode;
+        }
+        return node;
+      }).toList(),
+    );
+  }
+
+  String _generateId() {
+    return DateTime.now().millisecondsSinceEpoch.toString() +
+        Random().nextInt(1000).toString();
   }
 }
 

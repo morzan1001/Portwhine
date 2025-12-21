@@ -18,6 +18,9 @@ import 'package:portwhine/pages/pipeline_details/canvas/pipeline_controls.dart';
 import 'package:portwhine/pages/pipeline_details/canvas/pipeline_zoom_controls.dart';
 import 'package:portwhine/pages/pipeline_details/widgets/shadow_container.dart';
 
+import 'package:portwhine/blocs/single_pipeline/nodes_connection_cubit.dart';
+import 'package:portwhine/blocs/single_pipeline/pipeline_cubit.dart';
+
 @RoutePage()
 class PipelineDetailsPage extends StatefulWidget {
   const PipelineDetailsPage({
@@ -51,109 +54,117 @@ class _PipelineDetailsPageState extends State<PipelineDetailsPage>
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: BlocBuilder<SelectedNodeCubit, NodeModel?>(
-          builder: (context, selectedNode) {
-            final canvas = BlocProvider.of<CanvasCubit>(context).state;
+        body: MultiBlocListener(
+          listeners: [
+            BlocListener<SinglePipelineBloc, SinglePipelineState>(
+              listener: (context, state) {
+                if (state is SinglePipelineLoaded) {
+                  context.read<PipelineCubit>().setPipeline(state.pipeline);
+                  context.read<NodesCubit>().setNodes(state.pipeline.nodes);
+                  // LinesCubit needs to be updated based on nodes, but it calculates lines from nodes.
+                  // We can trigger an update or set lines directly if we had setLines.
+                  // But LinesCubit.updateLines takes nodes and recalculates.
+                  context.read<LinesCubit>().updateLines(state.pipeline.nodes);
+                }
+              },
+            ),
+          ],
+          child: BlocBuilder<SelectedNodeCubit, NodeModel?>(
+            builder: (context, selectedNode) {
+              final canvas = BlocProvider.of<CanvasCubit>(context).state;
 
-            return Stack(
-              children: [
-                // color filtered to blur canvas
-                ColorFiltered(
-                  colorFilter: ColorFilter.mode(
-                    selectedNode == null ? Colors.transparent : Colors.black54,
-                    BlendMode.multiply,
-                  ),
-                  child: Stack(
-                    children: [
-                      // bg container to show grey color
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: Container(color: MyColors.lightGrey),
-                      ),
+              return Stack(
+                children: [
+                  // color filtered to blur canvas
+                  ColorFiltered(
+                    colorFilter: ColorFilter.mode(
+                      selectedNode == null
+                          ? Colors.transparent
+                          : Colors.black54,
+                      BlendMode.multiply,
+                    ),
+                    child: Stack(
+                      children: [
+                        // bg container to show grey color
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: Container(color: MyColors.lightGrey),
+                        ),
 
-                      // main
-                      const PipelineCanvas(),
+                        // main
+                        const PipelineCanvas(),
 
-                      // nodes list to drag on canvas
-                      BlocBuilder<ShowNodesCubit, bool>(
-                        builder: (context, state) {
-                          return AnimatedPositioned(
-                            top: 104,
-                            left: state ? 24 : -304,
-                            bottom: 104,
-                            duration: const Duration(milliseconds: 100),
-                            child: const NodesList(),
-                          );
-                        },
-                      ),
+                        // nodes list to drag on canvas
+                        BlocBuilder<ShowNodesCubit, bool>(
+                          builder: (context, state) {
+                            return AnimatedPositioned(
+                              top: 104,
+                              left: state ? 24 : -304,
+                              bottom: 104,
+                              duration: const Duration(milliseconds: 100),
+                              child: const NodesList(),
+                            );
+                          },
+                        ),
 
-                      // nodes list controller
-                      BlocBuilder<ShowNodesCubit, bool>(
-                        builder: (context, state) {
-                          return Positioned(
-                            bottom: 24,
-                            left: 24,
-                            child: ShadowContainer(
-                              onTap: () {
-                                BlocProvider.of<ShowNodesCubit>(context)
-                                    .toggleNodes();
-                              },
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 18),
-                              child: Icon(
-                                state
-                                    ? Icons.chevron_left
-                                    : Icons.chevron_right,
-                                color: MyColors.black,
-                                size: 20,
+                        // nodes list controller
+                        BlocBuilder<ShowNodesCubit, bool>(
+                          builder: (context, state) {
+                            return Positioned(
+                              bottom: 24,
+                              left: 24,
+                              child: ShadowContainer(
+                                onTap: () {
+                                  BlocProvider.of<ShowNodesCubit>(context)
+                                      .toggleNodes();
+                                },
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 18),
+                                child: Icon(
+                                  state
+                                      ? Icons.chevron_left
+                                      : Icons.chevron_right,
+                                  color: MyColors.black,
+                                  size: 20,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          },
+                        ),
 
-                      // controls
-                      const Positioned(
-                        top: 24,
-                        left: 24,
-                        right: 24,
-                        child: PipelineControls(),
-                      ),
-                      const Positioned(
-                        bottom: 24,
-                        right: 24,
-                        child: PipelineZoomControls(),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // showing selected node when dialog is open
-                if (selectedNode != null)
-                  Positioned(
-                    left: (width(context) - nodeWidth) / 2,
-                    top: 100,
-                    child: Transform.scale(
-                      scale: canvas.zoom,
-                      child: NodeMapItem(selectedNode),
+                        // controls
+                        const Positioned(
+                          top: 24,
+                          left: 24,
+                          right: 24,
+                          child: PipelineControls(),
+                        ),
+                        const Positioned(
+                          bottom: 24,
+                          right: 24,
+                          child: PipelineZoomControls(),
+                        ),
+                      ],
                     ),
                   ),
-                // Positioned(
-                //     left: (selectedNode.position!.x + canvas.position.x) *
-                //         canvas.zoom,
-                //     top: (selectedNode.position!.y + canvas.position.y) *
-                //         canvas.zoom,
-                //     child: Transform.scale(
-                //       scale: canvas.zoom,
-                //       child: NodeMapItem(selectedNode),
-                //     ),
-                //   ),
-              ],
-            );
-          },
+
+                  // showing selected node when dialog is open
+                  if (selectedNode != null)
+                    Positioned(
+                      left: (width(context) - nodeWidth) / 2,
+                      top: 100,
+                      child: Transform.scale(
+                        scale: canvas.zoom,
+                        child: NodeMapItem(selectedNode),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

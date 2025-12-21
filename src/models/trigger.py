@@ -2,8 +2,8 @@
 import uuid
 from pydantic import BaseModel, PrivateAttr, Field, model_serializer, field_validator, IPvAnyAddress, IPvAnyNetwork
 from typing import Any, List, ClassVar, Optional, Union
-from api.models.types import InputOutputType, NodeStatus
-from api.models.grid_position import GridPosition
+from models.types import InputOutputType, NodeStatus
+from models.grid_position import GridPosition
 
 
 class TriggerConfig(BaseModel):
@@ -17,6 +17,14 @@ class TriggerConfig(BaseModel):
             self._id = uuid.UUID(data['id'])
         if 'status' in data:
             self._status = NodeStatus(data['status'])
+
+    @property
+    def id(self) -> uuid.UUID:
+        return self._id
+
+    @property
+    def status(self) -> str:
+        return self._status
 
     @model_serializer
     def ser_model(self) -> dict[str, Any]:

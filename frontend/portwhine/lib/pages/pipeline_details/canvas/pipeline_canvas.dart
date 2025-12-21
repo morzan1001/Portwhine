@@ -8,6 +8,7 @@ import 'package:portwhine/models/node_model.dart';
 import 'package:portwhine/models/node_position.dart';
 import 'package:portwhine/pages/pipeline_details/canvas/line_map_item.dart';
 import 'package:portwhine/pages/pipeline_details/canvas/node_map_item.dart';
+import 'package:portwhine/pages/pipeline_details/widgets/grid_painter.dart';
 
 class PipelineCanvas extends StatefulWidget {
   const PipelineCanvas({super.key});
@@ -17,6 +18,8 @@ class PipelineCanvas extends StatefulWidget {
 }
 
 class _PipelineCanvasState extends State<PipelineCanvas> {
+  final GlobalKey _canvasKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<CanvasCubit, CanvasModel>(
@@ -26,6 +29,9 @@ class _PipelineCanvasState extends State<PipelineCanvas> {
         return InteractiveViewer(
           constrained: false,
           transformationController: controller,
+          boundaryMargin: const EdgeInsets.all(double.infinity),
+          minScale: 0.1,
+          maxScale: 5.0,
           onInteractionEnd: (_) {
             final cubit = BlocProvider.of<CanvasCubit>(context);
             final position = controller!.value.getTranslation();
@@ -41,7 +47,14 @@ class _PipelineCanvasState extends State<PipelineCanvas> {
                 return BlocBuilder<NodesCubit, List<NodeModel>>(
                   builder: (context, nodesState) {
                     return Stack(
+                      key: _canvasKey,
                       children: [
+                        // Grid background for better visualization
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: GridPainter(),
+                          ),
+                        ),
                         ...linesState.map(
                           (e) => Positioned(
                             left: 0,
@@ -68,26 +81,31 @@ class _PipelineCanvasState extends State<PipelineCanvas> {
                             );
                           },
                         ),
-                        DragTarget<NodeModel>(
-                          builder: (a, b, c) => Container(),
-                          // removed onWillAccept
-                          onAcceptWithDetails: (details) {
-                            final canvas =
-                                BlocProvider.of<CanvasCubit>(context).state;
+                        Positioned.fill(
+                          child: DragTarget<NodeModel>(
+                            builder: (context, candidateData, rejectedData) {
+                              return Container(
+                                color: Colors.transparent,
+                              );
+                            },
+                            onWillAcceptWithDetails: (details) => true,
+                            onAcceptWithDetails: (details) {
+                              final renderBox = _canvasKey.currentContext!
+                                  .findRenderObject() as RenderBox;
+                              final localOffset =
+                                  renderBox.globalToLocal(details.offset);
 
-                            final node = details.data.copyWith(
-                              position: NodePosition(
-                                x: (details.offset.dx - canvas.position.x) /
-                                    canvas.zoom,
-                                y: (details.offset.dy -
-                                        canvas.position.y -
-                                        90) /
-                                    canvas.zoom,
-                              ),
-                            );
+                              final node = details.data.copyWith(
+                                position: NodePosition(
+                                  x: localOffset.dx,
+                                  y: localOffset.dy,
+                                ),
+                              );
 
-                            BlocProvider.of<NodesCubit>(context).addNode(node);
-                          },
+                              BlocProvider.of<NodesCubit>(context)
+                                  .addNode(node);
+                            },
+                          ),
                         ),
                       ],
                     );

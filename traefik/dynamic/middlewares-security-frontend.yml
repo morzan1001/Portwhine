@@ -1,0 +1,16 @@
+# Minimal Security Headers for Frontend
+# NOTE: Frontend (nginx) already sets CSP, HSTS, X-Content-Type-Options, 
+# Referrer-Policy, and Permissions-Policy with nonce support.
+# This middleware only adds headers that nginx doesn't set.
+http:
+  middlewares:
+    sec-headers-frontend:
+      headers:
+        # Only add headers that nginx doesn't set
+        browserXssFilter: true
+        frameDeny: true
+        customFrameOptionsValue: "SAMEORIGIN"
+        customResponseHeaders:
+          X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex"
+          server: ""
+          X-Powered-By: ""

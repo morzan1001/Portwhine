@@ -14,7 +14,7 @@ class DockerManager:
             # Set environment variables for database connection
             environment = kwargs.get('environment', {})
             environment.update({
-                "DATABASE_HOST": os.getenv("DATABASE_HOST", "http://elasticsearch:9200"),
+                "DATABASE_HOST": os.getenv("DATABASE_HOST", "https://elasticsearch:9200"),
                 "DATABASE_USER": os.getenv("DATABASE_USER", "elastic"),
                 "DATABASE_PASSWORD": os.getenv("DATABASE_PASSWORD", "changeme")
             })
@@ -22,6 +22,16 @@ class DockerManager:
 
             # Set network
             kwargs['network'] = network_name
+
+            # Mount certs
+            host_certs_path = os.getenv("HOST_CERTS_PATH")
+            if host_certs_path:
+                volumes = kwargs.get('volumes', {})
+                # Mount as read-only
+                volumes[host_certs_path] = {'bind': '/certs', 'mode': 'ro'}
+                kwargs['volumes'] = volumes
+            else:
+                self.logger.warning("HOST_CERTS_PATH not set. Workers might fail to connect to services via mTLS.")
 
             container = self.client.containers.run(
                 image_name,

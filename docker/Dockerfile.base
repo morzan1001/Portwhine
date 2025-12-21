@@ -2,7 +2,7 @@
 FROM python:3.12-alpine
 
 # Metadata
-LABEL maintainer="Morzan <morzan1001@gmail.com>"
+LABEL maintainer="Matthias Duve <morzan1001@gmail.com>"
 LABEL version="1.0"
 LABEL description="Base Dockerfile for Portwhine modules"
 
@@ -20,14 +20,15 @@ WORKDIR /src
 # Ensure the CA certificates directory exists
 RUN mkdir -p /usr/local/share/ca-certificates
 # Copy the CA certificate to the trusted certificates directory
-COPY /certs/selfsigned-ca.crt /usr/local/share/ca-certificates/
-RUN chmod 644 /usr/local/share/ca-certificates/selfsigned-ca.crt
+COPY /certs/ca.crt /usr/local/share/ca-certificates/
+RUN chmod 644 /usr/local/share/ca-certificates/ca.crt
 # Update the CA certificates
 RUN update-ca-certificates
 
 # Copy necessary files to the working directory
 COPY poetry.lock pyproject.toml README.md /src/
 COPY src/utils /src/utils
+COPY src/models /src/models
 
 # Install dependencies with Poetry
 RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-interaction --no-ansi --without dev

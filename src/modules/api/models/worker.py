@@ -9,7 +9,6 @@ from api.models.instance_health import InstanceHealth
 class WorkerConfig(BaseModel):
     _id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
     _status: str = PrivateAttr(default=NodeStatus.PAUSED)
-    children: Optional[List['WorkerConfig']] = None
     gridPosition: GridPosition = Field(default_factory=GridPosition)
     numberOfInstances: int = 0
     instanceHealth: Optional[List[InstanceHealth]] = None
@@ -28,7 +27,6 @@ class WorkerConfig(BaseModel):
             'status': self._status,
             'input': self.__class__.input,
             'output': self.__class__.output,
-            'children': [child.ser_model() for child in self.children] if self.children else None,
             'gridPosition': self.gridPosition.ser_model(),
             'instanceHealth': self.instanceHealth.ser_model() if self.instanceHealth else None,
         }
@@ -42,13 +40,6 @@ class WorkerConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_worker_hierarchy(cls, values):
-        children = values.children
-        if children:
-            parent_output_set: Set[InputOutputType] = set(values.output)
-            for child in children:
-                child_input_set: Set[InputOutputType] = set(child.input)
-                if not parent_output_set & child_input_set:
-                    raise ValueError(f"Worker {values._id} output does not match any child {child._id} input")
         return values
 
 class FFUFWorker(WorkerConfig):

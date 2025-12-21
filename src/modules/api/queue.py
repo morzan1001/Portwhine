@@ -3,7 +3,7 @@ import re
 import threading
 import time
 import json
-from api.models.types import NodeStatus
+from models.types import NodeStatus
 from utils.logger import LoggingModule
 from utils.redis import get_redis_connection
 from api.docker.manager import DockerManager

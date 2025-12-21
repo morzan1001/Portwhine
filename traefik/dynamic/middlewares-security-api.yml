@@ -1,0 +1,20 @@
+# Security Headers for API
+# API-specific headers - no browser rendering headers needed
+http:
+  middlewares:
+    sec-headers-api:
+      headers:
+        # Prevent MIME-type sniffing
+        contentTypeNosniff: true
+        # HSTS for HTTPS enforcement
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        # Prevent caching of API responses by default
+        customResponseHeaders:
+          Cache-Control: "no-store, no-cache, must-revalidate, proxy-revalidate"
+          Pragma: "no-cache"
+          X-Robots-Tag: "none"
+          # Remove server identification headers
+          server: ""
+          X-Powered-By: ""

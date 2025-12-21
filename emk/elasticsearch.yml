@@ -5,12 +5,13 @@ xpack.security.enabled: true
 
 # Server SSL Settings
 xpack.security.http.ssl.enabled: true
-xpack.security.http.ssl.key: /usr/share/elasticsearch/config/certs/selfsigned-server.key
-xpack.security.http.ssl.certificate: /usr/share/elasticsearch/config/certs/selfsigned-server.crt
-xpack.security.http.ssl.certificate_authorities: /usr/share/elasticsearch/config/certs/selfsigned-ca.crt
+xpack.security.http.ssl.client_authentication: required
+xpack.security.http.ssl.key: /usr/share/elasticsearch/config/certs/elasticsearch.key
+xpack.security.http.ssl.certificate: /usr/share/elasticsearch/config/certs/elasticsearch.crt
+xpack.security.http.ssl.certificate_authorities: /usr/share/elasticsearch/config/certs/ca.crt
 
 # Transport SSL Settings
 xpack.security.transport.ssl.enabled: true
-xpack.security.transport.ssl.key: /usr/share/elasticsearch/config/certs/selfsigned-server.key
-xpack.security.transport.ssl.certificate: /usr/share/elasticsearch/config/certs/selfsigned-server.crt
-xpack.security.transport.ssl.certificate_authorities: /usr/share/elasticsearch/config/certs/selfsigned-ca.crt
+xpack.security.transport.ssl.key: /usr/share/elasticsearch/config/certs/elasticsearch.key
+xpack.security.transport.ssl.certificate: /usr/share/elasticsearch/config/certs/elasticsearch.crt
+xpack.security.transport.ssl.certificate_authorities: /usr/share/elasticsearch/config/certs/ca.crt

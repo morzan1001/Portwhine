@@ -46,13 +46,29 @@ class Api {
     return PipelineModel.fromMap(result.body!);
   }
 
+  static Future<PipelineModel> updatePipeline(
+      Map<String, dynamic> pipeline) async {
+    final result = await service.updatePipeline(pipeline);
+    return PipelineModel.fromMap(result.body!);
+  }
+
   static Future<List<String>> getAllWorkers() async {
     final result = await service.getAllWorkers();
     return result.body!;
   }
 
+  static Future<Map<String, dynamic>> getWorkerConfig(String name) async {
+    final result = await service.getWorkerConfig(name);
+    return result.body!;
+  }
+
   static Future<List<String>> getAllTriggers() async {
     final result = await service.getAllTriggers();
+    return result.body!;
+  }
+
+  static Future<Map<String, dynamic>> getTriggerConfig(String name) async {
+    final result = await service.getTriggerConfig(name);
     return result.body!;
   }
 }

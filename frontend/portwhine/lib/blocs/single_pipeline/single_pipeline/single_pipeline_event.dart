@@ -12,3 +12,9 @@ class GetSinglePipeline extends SinglePipelineEvent {
 
   const GetSinglePipeline(this.id);
 }
+
+class UpdatePipeline extends SinglePipelineEvent {
+  final PipelineModel pipeline;
+
+  const UpdatePipeline(this.pipeline);
+}

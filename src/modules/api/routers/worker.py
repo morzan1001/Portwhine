@@ -3,7 +3,7 @@ from typing import List, Dict, Any
 from fastapi import APIRouter, HTTPException
 from utils.elasticsearch import get_elasticsearch_connection
 from utils.logger import LoggingModule
-from api.models.worker import FFUFWorker, HumbleWorker, ScreenshotWorker, TestSSLWorker, WebAppAnalyzerWorker, NmapWorker, ResolverWorker
+from models.worker import FFUFWorker, HumbleWorker, ScreenshotWorker, TestSSLWorker, WebAppAnalyzerWorker, NmapWorker, ResolverWorker
 from api.docs.worker_docs import worker_summaries, worker_descriptions
 from api.worker_handler import WorkerHandler
 
@@ -27,9 +27,9 @@ async def get_worker_config(name: str):
         if cls.__name__ == name:
             # Create example instance with predefined example values
             if cls == NmapWorker:
-                example_instance = cls(http_result=None, ssh_result=None)
+                example_instance = cls(ports="-p-", arguments="-A")
             elif cls == ResolverWorker:
-                example_instance = cls(ip_result=None)
+                example_instance = cls(use_internal=False)
             else:
                 example_instance = cls()
             # Clean up the docstring to remove leading/trailing whitespace and newlines

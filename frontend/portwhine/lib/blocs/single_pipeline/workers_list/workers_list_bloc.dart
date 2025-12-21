@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:portwhine/models/node_model.dart';
 import 'package:portwhine/repos/single_pipeline/single_pipeline.dart';
 
 part 'workers_list_event.dart';

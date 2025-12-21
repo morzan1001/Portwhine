@@ -16,7 +16,10 @@ def get_redis_connection(db: int = 0) -> Optional[redis.Redis]:
             username=os.getenv("REDIS_USER", None),
             password=os.getenv("REDIS_PASSWORD", None),
             db=db,
-            ssl=True
+            ssl=True,
+            ssl_ca_certs=os.getenv("CA_CERT_PATH", "/certs/ca.crt"),
+            ssl_certfile=os.getenv("CLIENT_CERT_PATH", "/certs/client.crt"),
+            ssl_keyfile=os.getenv("CLIENT_KEY_PATH", "/certs/client.key"),
         )
         # Test the connection
         if redis_client.ping():

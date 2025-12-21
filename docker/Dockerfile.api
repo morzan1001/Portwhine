@@ -15,8 +15,21 @@ EXPOSE 8000
 # Set the working directory
 WORKDIR /src
 
-# Install dependencies with Poetry
-RUN POETRY_VIRTUALENVS_CREATE=false poetry install --no-interaction --no-ansi --with api --without dev
+# Install dependencies with Poetry and su-exec for user switching
+RUN apk add --no-cache curl su-exec && POETRY_VIRTUALENVS_CREATE=false poetry install --no-interaction --no-ansi --with api --without dev
+
+# Create a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Copy entrypoint script
+COPY docker/entrypoint.api.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Change ownership of the application directory
+RUN chown -R appuser:appgroup /src
+
+# Entrypoint handles user switching
+ENTRYPOINT ["/entrypoint.sh"]
 
 # Start the API service with Uvicorn
-CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port 8000 --ssl-keyfile /certs/selfsigned-server.key --ssl-certfile /certs/selfsigned-server.crt"]
+CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port 8000 --ssl-keyfile /certs/api.key --ssl-certfile /certs/api.crt --ssl-ca-certs /certs/ca.crt --ssl-cert-reqs 2"]

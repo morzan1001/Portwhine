@@ -14,9 +14,10 @@ def get_minio_client() -> Optional[BaseClient]:
     try:
         s3_client = boto3.client(
             's3',
-            endpoint_url=os.getenv("MINIO_ENDPOINT", "http://minio:9000"),
-            aws_access_key_id=os.getenv("MINIO_ROOT_USER", "minioadmin"),
-            aws_secret_access_key=os.getenv("MINIO_ROOT_PASSWORD", "minioadmin"),
+            endpoint_url=os.getenv("MINIO_ENDPOINT", "https://minio:9000"),
+            aws_access_key_id=os.getenv("APP_MINIO_USER"),
+            aws_secret_access_key=os.getenv("APP_MINIO_PASSWORD"),
+            verify=os.getenv("CA_CERT_PATH", "/certs/ca.crt")
         )
         logger.info("MinIO client successfully created")
         return s3_client

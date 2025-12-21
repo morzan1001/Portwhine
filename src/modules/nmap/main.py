@@ -1,44 +1,110 @@
 #!/usr/bin/env python3
-import os
-import sys
-import json
 import subprocess
 import xmltodict
-from datetime import datetime
-from typing import Optional, Dict, List, Any
-import requests
+import shlex
+from typing import Optional, Dict, List, Tuple, Any
 
-from utils.elasticsearch import get_elasticsearch_connection
-from utils.logger import LoggingModule
+from utils.base_worker import BaseWorker
+from models.job_payload import JobPayload, HttpTarget, IpTarget
 
-# Logger initializing
-logger = LoggingModule.get_logger()
+class NmapWorker(BaseWorker):
+    FORBIDDEN_FLAGS = [
+        '--interactive', '--resume', '--stylesheet', 
+        '-oN', '-oG', '-oS', '-oA', '-iL'
+    ]
 
-class NmapScanner:
-    def __init__(self, pipeline_id: str, worker_id: str):
-        # Elasticsearch connection
-        self.es = get_elasticsearch_connection()
-        self.pipeline_id = pipeline_id
-        self.worker_id = worker_id
+    def _validate_custom_command(self, cmd: List[str]) -> bool:
+        """Validates the custom command for security risks"""
+        if not cmd or cmd[0] != 'nmap':
+            self.logger.error("Custom command must start with 'nmap'")
+            return False
+            
+        for arg in cmd:
+            if arg in self.FORBIDDEN_FLAGS:
+                self.logger.error(f"Forbidden flag detected: {arg}")
+                return False
+            # Check for file output flags with attached values (e.g. -oNfile)
+            for flag in self.FORBIDDEN_FLAGS:
+                if arg.startswith(flag) and len(arg) > len(flag):
+                     self.logger.error(f"Forbidden flag detected: {arg}")
+                     return False
+        
+        # Check for -oX with value other than -
+        try:
+            if '-oX' in cmd:
+                idx = cmd.index('-oX')
+                if idx + 1 < len(cmd) and cmd[idx+1] != '-':
+                    self.logger.error("Custom command must use '-oX -' for output")
+                    return False
+        except ValueError:
+            pass
+            
+        return True
 
-    def scan_ip(self, targets: str) -> Optional[Dict]:
+    def scan_ip(self, targets: List[str]) -> Optional[Dict]:
         """Scans an IP using nmap directly"""
         try:
-            target_str = ' '.join(targets)
-            result = subprocess.run(['nmap', '-A', '-p-', '-oX', '-', target_str], capture_output=True, text=True)
+            # Sanitize targets
+            safe_targets = []
+            for t in targets:
+                if t.startswith('-'):
+                    self.logger.warning(f"Skipping suspicious target: {t}")
+                    continue
+                safe_targets.append(t)
+            
+            if not safe_targets:
+                self.logger.warning("No valid targets to scan")
+                return None
+
+            target_str = ' '.join(safe_targets)
+            
+            # Get config
+            custom_command = self.config.get('custom_command')
+            
+            if custom_command:
+                # Use custom command
+                cmd_str = custom_command.replace("{{target}}", target_str)
+                cmd = shlex.split(cmd_str)
+                
+                # Ensure nmap is the command
+                if not cmd or cmd[0] != 'nmap':
+                    self.logger.error("Custom command must start with 'nmap'")
+                    return None
+
+                # Validate
+                if not self._validate_custom_command(cmd):
+                    return None
+
+                # Enforce -oX - if not present
+                if '-oX' not in cmd:
+                    cmd.extend(['-oX', '-'])
+            else:
+                # Standard construction
+                ports = self.config.get('ports', '-p-')
+                arguments = self.config.get('arguments', '-A')
+                
+                cmd = ['nmap']
+                if arguments:
+                    cmd.extend(arguments.split())
+                if ports:
+                    cmd.append(ports)
+                cmd.extend(['-oX', '-', target_str])
+            
+            self.logger.info(f"Running nmap command: {' '.join(cmd)}")
+            
+            result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode == 0:
                 return self.parse_nmap_output(result.stdout)
             else:
-                logger.error(f"Error scanning {targets}: {result.stderr}")
+                self.logger.error(f"Error scanning {targets}: {result.stderr}")
                 return None
         except Exception as e:
-            logger.error(f"Error scanning {targets}: {e}")
+            self.logger.error(f"Error scanning {targets}: {e}")
             return None
 
     def parse_nmap_output(self, output: str) -> Dict:
         """Parses and normalizes the nmap XML output"""
         try:
-            # Parse XML to dict
             parsed = xmltodict.parse(output)
             
             # Normalize script elements
@@ -65,15 +131,13 @@ class NmapScanner:
 
             return parsed
         except Exception as e:
-            logger.error(f"Error parsing nmap output: {e}")
+            self.logger.error(f"Error parsing nmap output: {e}")
             return {}
 
-    def organize_results_by_service(self, results: Dict) -> Dict:
+    def organize_results_by_service(self, results: Dict) -> Tuple[List[HttpTarget], List[IpTarget]]:
         """Organizes results by service type"""
-        organized = {
-            "http": [],
-            "ip": []
-        }
+        http_targets = []
+        ip_targets = []
         
         try:
             hosts = results.get('nmaprun', {}).get('host', [])
@@ -100,100 +164,40 @@ class NmapScanner:
                     port_id = port.get('@portid')
                     
                     if service and port_id:
-                        organized["http"].append({
-                            "protocol": service,
-                            "ip": ip,
-                            "port": port_id
-                        })
+                        # Check for http/https services
+                        if 'http' in service:
+                            protocol = service if service in ['http', 'https'] else 'http'
+                            target_url = f"{protocol}://{ip}:{port_id}"
+                            http_targets.append(HttpTarget(url=target_url, method="GET"))
                         
-                organized["ip"].append(ip)
+                ip_targets.append(IpTarget(ip=ip))
                 
-            organized["ip"] = list(set(organized["ip"]))
-            return organized
+            # Deduplicate IPs
+            # ip_targets = list(set(ip_targets)) # IpTarget is not hashable by default unless frozen=True
+            # Let's just keep them as is or dedupe by string
+            
+            return http_targets, ip_targets
             
         except Exception as e:
-            logger.error(f"Error organizing results: {e}")
-            return {"http": [], "ip": []}
+            self.logger.error(f"Error organizing results: {e}")
+            return [], []
 
-    def notify_handler(self, organized_results: Dict):
-        """Notifies the handler with organized results"""
-        try:
-            endpoint = f"/job/{self.pipeline_id}/{self.worker_id}"
-            url = f"http://api:8000/api/v1{endpoint}"
-            
-            payload = {
-                "services": organized_results["http"],
-                "ips": organized_results["ip"]
-            }
-            
-            headers = {'Content-Type': 'application/json'}
-            response = requests.post(url, json=payload, headers=headers)
-            
-            if response.status_code == 200:
-                logger.info(f"Successfully notified handler for pipeline {self.pipeline_id}")
-            else:
-                logger.error(f"Failed to notify handler: {response.status_code}")
-                
-        except Exception as e:
-            logger.error(f"Error notifying handler: {e}")
+    def execute(self, payload: JobPayload) -> Tuple[Optional[JobPayload], Dict[str, Any]]:
+        targets = [str(ip_target.ip) for ip_target in payload.ip]
+        if not targets:
+            self.logger.info("No IP targets found in payload.")
+            return None, {}
 
-    def save_results(self, organized_results: Dict, results: Dict) -> None:
-        """Saves sanitized results to Elasticsearch"""
-        try:
-            document = {
-                "metadata": {
-                    "scan_date": datetime.now().isoformat(),
-                    "category": "portscan",
-                    "tags": list(organized_results.keys())
-                },
-                "organized_results": organized_results,
-                "raw_results": self._sanitize_for_es(results)
-            }
-            
-            self.es.index(index=self.pipeline_id, document=document)
-            logger.info(f"Results saved to index {self.pipeline_id}")
-            
-        except Exception as e:
-            logger.error(f"Error saving to Elasticsearch: {e}")
-
-    def _sanitize_for_es(self, data: Any) -> Any:
-        """Sanitizes data for Elasticsearch storage"""
-        if isinstance(data, dict):
-            return {k: self._sanitize_for_es(v) for k, v in data.items()}
-        elif isinstance(data, list):
-            return [self._sanitize_for_es(v) for v in data]
-        elif isinstance(data, (str, int, float, bool)):
-            return data
+        self.logger.info(f"Scanning Targets: {targets}")
+        results = self.scan_ip(targets)
+        
+        if results:
+            http_targets, ip_targets = self.organize_results_by_service(results)
+            output_payload = JobPayload(http=http_targets, ip=ip_targets)
+            return output_payload, results
         else:
-            return str(data)
-
-def main():
-    payload = os.getenv('JOB_PAYLOAD')
-    if not payload:
-        logger.error("JOB_PAYLOAD environment variable not set")
-        sys.exit(1)
-    else:
-        payload = json.loads(payload)
-    
-    pipeline_id = os.getenv("PIPELINE_ID")
-    if not pipeline_id:
-        logger.error("PIPELINE_ID environment variable not set.")
-        return
-    
-    worker_id = os.getenv("WORKER_ID")
-    if not worker_id:
-        logger.error("WORKER_ID environment variable not set.")
-        return
-
-    scanner = NmapScanner(pipeline_id, worker_id)
-    logger.info(f"Scanning Target: {payload.get('ip')}")
-    results = scanner.scan_ip(payload.get('ip'))
-    if results:
-        logger.info(f"Results: {results}")
-        organized_results = scanner.organize_results_by_service(results)
-        scanner.save_results(organized_results, results)
-        scanner.notify_handler(organized_results)
-        logger.info(f"Results saved and sent for {payload.get('ip')}")
+            raise Exception("Scan failed or returned no results.")
 
 if __name__ == "__main__":
-    main()
+    worker = NmapWorker()
+    worker.run()

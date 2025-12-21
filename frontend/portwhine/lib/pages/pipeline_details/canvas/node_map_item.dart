@@ -48,19 +48,18 @@ class NodeMapItem extends StatelessWidget {
       },
       onPanUpdate: (details) {
         final canvas = BlocProvider.of<CanvasCubit>(context).state;
+
+        // Use delta for smoother movement relative to current position
+        // Adjust delta by zoom level
+        final dx = details.delta.dx / canvas.zoom;
+        final dy = details.delta.dy / canvas.zoom;
+
+        final newX = model.position!.x + dx;
+        final newY = model.position!.y + dy;
+
         BlocProvider.of<NodesCubit>(context).moveNode(
           model.id,
-          NodePosition(
-            x: (details.globalPosition.dx -
-                    canvas.position.x -
-                    (nodeWidth / 2)) /
-                canvas.zoom,
-            y: (details.globalPosition.dy -
-                    canvas.position.y -
-                    90 -
-                    (nodeHeight / 2)) /
-                canvas.zoom,
-          ),
+          NodePosition(x: newX, y: newY),
         );
 
         BlocProvider.of<LinesCubit>(context).updateLines(

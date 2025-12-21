@@ -9,12 +9,15 @@ from utils.logger import LoggingModule
 
 logger = LoggingModule.get_logger()
 
+from api.models.edge import Edge
+
 class Pipeline(BaseModel):
     _id: uuid.UUID = PrivateAttr(default_factory=uuid.uuid4)
     _status: str = PrivateAttr(default=NodeStatus.STOPPED)
     name: str
     trigger: Optional[SerializeAsAny[TriggerConfig]] = None
     worker: Optional[List[SerializeAsAny[WorkerConfig]]] = None
+    edges: List[Edge] = []
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -30,7 +33,8 @@ class Pipeline(BaseModel):
             "status": self._status,
             "name": self.name,
             "trigger": self.trigger.ser_model() if self.trigger else None,
-            "worker": [workers_data.ser_model() for workers_data in self.worker] if self.worker else []
+            "worker": [workers_data.ser_model() for workers_data in self.worker] if self.worker else [],
+            "edges": [edge.model_dump() for edge in self.edges]
         }
         return data
 
@@ -65,11 +69,7 @@ class Pipeline(BaseModel):
                     key = wcls.__name__
                     if key in worker_data:
                         worker_dict = worker_data[key].copy()
-                        children_data = worker_dict.pop('children', [])
                         worker_instance = wcls(**worker_dict)
-                        if children_data:
-                            worker_instance.children = [validate_worker(child) for child in children_data]
-
                         return worker_instance
                 raise ValueError("Invalid worker type")
 
@@ -81,6 +81,7 @@ class Pipeline(BaseModel):
     def validate_pipeline(cls, pipeline: 'Pipeline'):
         trigger_data = pipeline.trigger
         workers_data = pipeline.worker
+        edges_data = pipeline.edges
 
         # Check whether both trigger and worker do not exist
         if not trigger_data and not workers_data:
@@ -90,12 +91,27 @@ class Pipeline(BaseModel):
         if workers_data and not trigger_data:
             raise ValueError("Workers cannot exist without a trigger")
 
-        # Check whether the output of the trigger matches the input of the worker
-        if trigger_data:
-            trigger_output_set: Set[InputOutputType] = set(trigger_data.output)
-            for worker in workers_data:
-                worker_input_set: Set[InputOutputType] = set(worker.input)
-                if not trigger_output_set & worker_input_set:
-                    raise ValueError(f"Trigger {trigger_data._id} output does not match any worker {worker._id} input")
+        # Validate edges
+        if edges_data:
+            nodes = {worker._id: worker for worker in workers_data} if workers_data else {}
+            if trigger_data:
+                nodes[trigger_data._id] = trigger_data
+
+            for edge in edges_data:
+                source_node = nodes.get(edge.source)
+                target_node = nodes.get(edge.target)
+
+                if not source_node:
+                    raise ValueError(f"Source node {edge.source} not found in pipeline")
+                if not target_node:
+                    raise ValueError(f"Target node {edge.target} not found in pipeline")
+
+                source_output_set: Set[InputOutputType] = set(source_node.output)
+                target_input_set: Set[InputOutputType] = set(target_node.input)
+
+                if not source_output_set & target_input_set:
+                    raise ValueError(f"Node {source_node._id} output does not match node {target_node._id} input")
+        
+        return pipeline
 
         return pipeline

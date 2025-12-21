@@ -2,8 +2,9 @@
 import threading
 import time
 import re
+import requests
 import docker
-from api.models.types import NodeStatus
+from models.types import NodeStatus
 from utils.logger import LoggingModule
 from utils.redis import get_redis_connection
 from utils.elasticsearch import get_elasticsearch_connection
@@ -16,9 +17,40 @@ def get_container_health(container_name) -> NodeStatus:
     client = docker.client.from_env()
     try:
         container = client.containers.get(container_name)
-        logger.info(f"Container {container_name} found, ATTRS: {container.attrs}.")
-        health_status: NodeStatus = container.attrs.get("State", {}).get("Status")
-        return health_status
+        docker_status = container.attrs.get("State", {}).get("Status")
+        
+        if docker_status != "running":
+            return NodeStatus.STOPPED if docker_status == "exited" else NodeStatus.ERROR
+
+        # If running, check internal health endpoint
+        try:
+            networks = container.attrs.get("NetworkSettings", {}).get("Networks", {})
+            # Assume first network or look for specific one
+            ip_address = None
+            for net_name, net_info in networks.items():
+                if net_info.get("IPAddress"):
+                    ip_address = net_info.get("IPAddress")
+                    break
+            
+            if not ip_address:
+                logger.warning(f"Container {container_name} running but no IP found")
+                return NodeStatus.RUNNING # Fallback to Docker status
+
+            response = requests.get(f"http://{ip_address}:8000/health", timeout=2)
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("status", NodeStatus.RUNNING)
+            else:
+                logger.warning(f"Container {container_name} health check failed: {response.status_code}")
+                return NodeStatus.ERROR
+        except Exception as e:
+            logger.warning(f"Container {container_name} health check exception: {e}")
+            # If we can't reach the health endpoint but docker says running, 
+            # it might be starting up or really stuck.
+            # Let's return RUNNING for now to avoid false positives during startup,
+            # or maybe STARTING if we had that state.
+            return NodeStatus.RUNNING
+
     except docker.client.errors.NotFound:
         return "container not found"
     

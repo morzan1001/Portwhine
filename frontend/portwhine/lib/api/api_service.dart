@@ -38,22 +38,31 @@ abstract class ApiService extends ChopperService {
     @Path('pipeline_id') String pipelineId,
   );
 
-  @PUT(path: '/pipeline/{pipeline_id}')
+  @PATCH(path: '/pipeline')
   Future<Response<Map<String, dynamic>>> updatePipeline(
-    @Path('pipeline_id') String pipelineId,
     @Body() Map<String, dynamic> pipelineInput,
   );
 
   @GET(path: '/worker')
   Future<Response<List<String>>> getAllWorkers();
 
+  @GET(path: '/worker/{name}')
+  Future<Response<Map<String, dynamic>>> getWorkerConfig(
+    @Path('name') String name,
+  );
+
   @GET(path: '/trigger')
   Future<Response<List<String>>> getAllTriggers();
+
+  @GET(path: '/trigger/{name}')
+  Future<Response<Map<String, dynamic>>> getTriggerConfig(
+    @Path('name') String name,
+  );
 
   // chopper client
   static Future<ApiService> create() async {
     final client = ChopperClient(
-      baseUrl: Uri.parse('https://37.27.179.252:8000/api/v1/'),
+      baseUrl: Uri.parse('https://api.portwhine.local/api/v1/'),
       services: [_$ApiService()],
       interceptors: [],
       converter: const JsonConverter(),

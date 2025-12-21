@@ -12,7 +12,7 @@ class TriggersListInitial extends TriggersListState {}
 class TriggersListLoading extends TriggersListState {}
 
 class TriggersListLoaded extends TriggersListState {
-  final List<String> triggers;
+  final List<NodeModel> triggers;
 
   const TriggersListLoaded(this.triggers);
 }

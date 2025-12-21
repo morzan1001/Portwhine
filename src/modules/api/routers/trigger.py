@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from typing import List, Dict, Any
 from fastapi import APIRouter
-from api.models.trigger import IPAddressTrigger, CertstreamTrigger, TriggerConfig
+from models.trigger import IPAddressTrigger, CertstreamTrigger, TriggerConfig
 from utils.logger import LoggingModule
 from api.docs.trigger_docs import trigger_summaries, trigger_descriptions
 

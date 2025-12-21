@@ -10,8 +10,12 @@ LABEL description="Dockerfile for the ffuf module of Portwhine"
 COPY src/modules/ffuf /src/ffuf
 COPY src/utils /src/utils
 
-# Install ffuf
-RUN apk add --no-cache ffuf
+# Install ffuf and curl
+RUN apk add --no-cache ffuf curl
+
+# Download a wordlist
+RUN mkdir -p /usr/share/wordlists
+RUN curl -L -o /usr/share/wordlists/common.txt https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/Web-Content/common.txt
 
 # Set the working directory
 WORKDIR /src

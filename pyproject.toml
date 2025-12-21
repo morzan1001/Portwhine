@@ -4,13 +4,13 @@ version = "0.1.0"
 license = "MIT"
 description = "Portwhine is a customizable software for monitoring and automated checking of IT assets."
 repository = "https://github.com/morzan1001/Portwhine"
-authors = ["Morzan <morzan1001@gmail.com>"]
+authors = ["Matthias Duve <morzan1001@gmail.com>"]
 readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
-elasticsearch = "^8.16.0"
+elasticsearch = "^9.2.0"
 requests = "^2.32.4"
 
 [tool.poetry.group.api]

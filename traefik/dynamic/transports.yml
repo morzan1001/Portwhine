@@ -1,0 +1,29 @@
+# Backend Server Transports (mTLS)
+http:
+  serversTransports:
+    api-transport:
+      rootCAs:
+        - "/certs/ca.crt"
+      certificates:
+        - certFile: "/certs/{{ env "TRAEFIK_HOST" }}.crt"
+          keyFile: "/certs/{{ env "TRAEFIK_HOST" }}.key"
+      serverName: "{{ env "API_HOST" }}"
+      insecureSkipVerify: false
+
+    kibana-transport:
+      rootCAs:
+        - "/certs/ca.crt"
+      certificates:
+        - certFile: "/certs/{{ env "TRAEFIK_HOST" }}.crt"
+          keyFile: "/certs/{{ env "TRAEFIK_HOST" }}.key"
+      serverName: "{{ env "KIBANA_HOST" }}"
+      insecureSkipVerify: false
+
+    frontend-transport:
+      rootCAs:
+        - "/certs/ca.crt"
+      certificates:
+        - certFile: "/certs/{{ env "TRAEFIK_HOST" }}.crt"
+          keyFile: "/certs/{{ env "TRAEFIK_HOST" }}.key"
+      serverName: "{{ env "FRONTEND_HOST" }}"
+      insecureSkipVerify: false

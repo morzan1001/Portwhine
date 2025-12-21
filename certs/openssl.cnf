@@ -1,27 +1,19 @@
 [ req ]
 default_bits       = 2048
 distinguished_name = req_distinguished_name
-req_extensions     = req_ext
-x509_extensions    = v3_ca
+req_extensions     = v3_req
 prompt             = no
 
 [ req_distinguished_name ]
-countryName                 = DE
-stateOrProvinceName         = Some-State
-localityName                = Locality
-organizationName            = Portwhine
-commonName                  = localhost
+C  = DE
+ST = Berlin
+L  = Berlin
+O  = Portwhine
+OU = Infrastructure
+CN = ${ENV::COMMON_NAME}
 
-[ req_ext ]
-subjectAltName = @alt_names
-
-[ v3_ca ]
-subjectAltName = @alt_names
-
-[ alt_names ]
-DNS.1   = localhost
-DNS.2   = elasticsearch
-DNS.3   = kibana
-DNS.4   = redis
-DNS.5   = api
-IP.1    = 127.0.0.1
+[ v3_req ]
+basicConstraints = CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth, clientAuth
+subjectAltName = ${ENV::SAN}
