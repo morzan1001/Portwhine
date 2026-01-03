@@ -58,5 +58,63 @@ set_password "kibana_system" "$KIBANA_SYSTEM_PASSWORD"
 
 echo "User setup complete."
 
+# Create application indices if they don't exist
+echo "Creating application indices..."
+
+# Helper: Create index if not exists
+create_index_if_not_exists() {
+  local index="$1"
+  local mapping="$2"
+  
+  # Check if index exists
+  if curl -fsS $CERT $KEY $CA $AUTH -X HEAD "$ES_URL/$index" 2>/dev/null; then
+    echo "Index $index already exists"
+  else
+    echo "Creating index: $index"
+    curl -fsS $CERT $KEY $CA $AUTH -X PUT "$ES_URL/$index" \
+      -H 'Content-Type: application/json' \
+      -d "$mapping" >/dev/null
+    echo "Created index: $index"
+  fi
+}
+
+# Create pipelines index
+create_index_if_not_exists "pipelines" '{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "id": { "type": "keyword" },
+      "name": { "type": "text" },
+      "status": { "type": "keyword" },
+      "trigger": { "type": "object", "enabled": true },
+      "worker": { "type": "nested" },
+      "edges": { "type": "nested" }
+    }
+  }
+}'
+
+# Create pipeline_runs index
+create_index_if_not_exists "pipeline_runs" '{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "id": { "type": "keyword" },
+      "pipeline_id": { "type": "keyword" },
+      "status": { "type": "keyword" },
+      "started_at": { "type": "date" },
+      "finished_at": { "type": "date" },
+      "node_states": { "type": "object", "enabled": true }
+    }
+  }
+}'
+
+echo "Index setup complete."
+
 # Keep container running (wait for ES process)
 tail -f /dev/null --pid=$(cat /tmp/pid)

@@ -1,5 +1,9 @@
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  exclude:
+    - lib/api/generated/**
+
 linter:
   rules:
     prefer_null_aware_method_calls: true

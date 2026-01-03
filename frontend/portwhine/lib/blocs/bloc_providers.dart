@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:portwhine/blocs/nodes/node_definitions_cubit.dart';
+import 'package:portwhine/blocs/pipeline_status/pipeline_status_cubit.dart';
 import 'package:portwhine/blocs/pipelines/create_pipeline/create_pipeline_bloc.dart';
 import 'package:portwhine/blocs/pipelines/delete_pipeline/delete_pipeline_bloc.dart';
 import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_size_cubit.dart';
@@ -18,6 +20,16 @@ import 'package:portwhine/blocs/pipelines/pipeline_page/pipeline_page_cubit.dart
 
 class BlocProviders {
   static final List<BlocProvider> providers = [
+    // Node definitions (loaded once on app start)
+    BlocProvider<NodeDefinitionsCubit>(
+      create: (context) => NodeDefinitionsCubit()..loadNodeDefinitions(),
+    ),
+
+    // Pipeline live status (WebSocket)
+    BlocProvider<PipelineStatusCubit>(
+      create: (context) => PipelineStatusCubit(),
+    ),
+
     // pipelines
     BlocProvider<PipelinesListBloc>(
       create: (context) => PipelinesListBloc()..add(const GetAllPipelines()),

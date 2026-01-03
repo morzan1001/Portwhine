@@ -1,16 +1,177 @@
-[MASTER]
-ignore=tests
+# =============================================================================
+# PYLINT CONFIGURATION FOR PORTWHINE
+# =============================================================================
+# This configuration balances code quality with practical development needs.
+# Rules are only disabled when they genuinely don't apply to our architecture.
+# =============================================================================
 
+[MAIN]
+# Use multiple processes for faster linting
+jobs = 0
+
+# Minimum Python version
+py-version = 3.11
+
+# Add src to the Python path for proper module resolution
+init-hook = 'import sys; sys.path.append("src")'
+
+# Ignore test directories
+ignore = tests
+
+# =============================================================================
+# MESSAGES CONTROL
+# =============================================================================
 [MESSAGES CONTROL]
-disable=C0111,  # Missing docstring
-        C0304,  # Final newline missing
-        F0401   # Unable to import
 
+# Disable rules that don't make sense in our context:
+disable =
+    # --- Pydantic-specific false positives ---
+    # E0213: Pydantic @model_validator and @field_validator use 'cls' not 'self'
+    no-self-argument,
+
+    # --- Docstring rules (we use type hints instead) ---
+    # C0114: Missing module docstring - not needed for every module
+    missing-module-docstring,
+    # C0115: Missing class docstring - Pydantic models are self-documenting via Field()
+    missing-class-docstring,
+    # C0116: Missing function docstring - short helper functions don't need them
+    missing-function-docstring,
+
+    # --- Architectural patterns we use intentionally ---
+    # R0903: Too few public methods - Pydantic models and dataclasses are valid with few methods
+    too-few-public-methods,
+    # C0415: Import outside toplevel - we use this to prevent circular imports
+    import-outside-toplevel,
+    # W0212: Access to protected member - we expose _id and _status via properties intentionally
+    protected-access,
+
+    # --- Code duplication (base patterns for nodes) ---
+    # R0801: Similar code in multiple files - our node base pattern is intentionally similar
+    duplicate-code,
+
+    # --- Overly strict for our use case ---
+    # W0718: Catching too general exception - sometimes we need broad exception handling
+    broad-exception-caught,
+
+# =============================================================================
+# REPORTS
+# =============================================================================
 [REPORTS]
-output-format=colorized
 
+# Colorized output for better readability
+output-format = colorized
+
+# Include message IDs in output
+msg-template = {path}:{line}:{column}: {msg_id}: {msg} ({symbol})
+
+# =============================================================================
+# FORMAT
+# =============================================================================
 [FORMAT]
-max-line-length=120
 
+# Maximum line length (matches Black formatter)
+max-line-length = 120
+
+# Expected indentation (4 spaces)
+indent-string = '    '
+
+# =============================================================================
+# DESIGN
+# =============================================================================
+[DESIGN]
+
+# Maximum number of arguments for functions/methods
+# Slightly increased for complex validators and factory methods
+max-args = 8
+
+# Maximum number of local variables
+# Increased for complex validation functions
+max-locals = 20
+
+# Maximum number of return statements
+max-returns = 8
+
+# Maximum number of branches (if/elif/else/for/while/try/except)
+# Increased for complex validation logic
+max-branches = 18
+
+# Maximum number of statements in a function
+max-statements = 60
+
+# Maximum number of attributes for a class
+# Pydantic models can have many fields
+max-attributes = 15
+
+# Maximum number of public methods for a class
+max-public-methods = 25
+
+# =============================================================================
+# BASIC
+# =============================================================================
+[BASIC]
+
+# Good variable names that are too short but acceptable
+good-names = i, j, k, v, e, ex, id, db, ok, _
+
+# Regular expression for valid argument names
+argument-rgx = [a-z_][a-z0-9_]{0,30}$
+
+# Regular expression for valid variable names
+variable-rgx = [a-z_][a-z0-9_]{0,30}$
+
+# =============================================================================
+# IMPORTS
+# =============================================================================
+[IMPORTS]
+
+# Allow wildcard imports from these modules (none by default)
+allow-wildcard-with-all = no
+
+# =============================================================================
+# SIMILARITIES
+# =============================================================================
+[SIMILARITIES]
+
+# Minimum lines of similarity to trigger duplicate-code (if enabled)
+min-similarity-lines = 10
+
+# Ignore comments when checking for similarities
+ignore-comments = yes
+
+# Ignore docstrings when checking for similarities
+ignore-docstrings = yes
+
+# Ignore imports when checking for similarities
+ignore-imports = yes
+
+# =============================================================================
+# TYPECHECK
+# =============================================================================
+[TYPECHECK]
+
+# Ignore missing members for these modules (dynamic attributes)
+ignored-modules = pydantic
+
+# =============================================================================
+# EXCEPTIONS
+# =============================================================================
+[EXCEPTIONS]
+
+# Exceptions that will emit a warning when caught
+overgeneral-exceptions = builtins.BaseException
+
+# =============================================================================
+# LOGGING
+# =============================================================================
 [LOGGING]
-logging-format-style=new
+
+# The type of string formatting that logging methods use
+logging-format-style = new
+
+# =============================================================================
+# STRING
+# =============================================================================
+[STRING]
+
+# Don't check for implicit string concatenation (valid Python for long regex)
+check-str-concat-over-line-jumps = no

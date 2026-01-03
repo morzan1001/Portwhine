@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:portwhine/blocs/single_pipeline/canvas_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/nodes_connection_cubit.dart';
+import 'package:portwhine/global/colors.dart';
 import 'package:portwhine/models/canvas_model.dart';
 import 'package:portwhine/models/line_model.dart';
 import 'package:portwhine/models/node_model.dart';
@@ -18,7 +19,20 @@ class PipelineCanvas extends StatefulWidget {
 }
 
 class _PipelineCanvasState extends State<PipelineCanvas> {
+  final GlobalKey _interactiveViewerKey = GlobalKey();
   final GlobalKey _canvasKey = GlobalKey();
+
+  // Cache the grid painter to avoid recreation
+  static const _gridPainter = GridPainter();
+
+  @override
+  void initState() {
+    super.initState();
+    // Register the interactive viewer key after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CanvasCubit>().setCanvasKey(_interactiveViewerKey);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +41,7 @@ class _PipelineCanvasState extends State<PipelineCanvas> {
         final controller = state.controller;
 
         return InteractiveViewer(
+          key: _interactiveViewerKey,
           constrained: false,
           transformationController: controller,
           boundaryMargin: const EdgeInsets.all(double.infinity),
@@ -48,13 +63,31 @@ class _PipelineCanvasState extends State<PipelineCanvas> {
                   builder: (context, nodesState) {
                     return Stack(
                       key: _canvasKey,
+                      clipBehavior: Clip.none,
                       children: [
-                        // Grid background for better visualization
+                        // Grid background - static, cached painter
                         Positioned.fill(
-                          child: CustomPaint(
-                            painter: GridPainter(),
+                          child: RepaintBoundary(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: RadialGradient(
+                                  center: Alignment.center,
+                                  radius: 2,
+                                  colors: [
+                                    MyColors.lightGrey,
+                                    MyColors.lightGrey.withValues(alpha: 0.95),
+                                  ],
+                                ),
+                              ),
+                              child: CustomPaint(
+                                painter: _gridPainter,
+                                isComplex: true,
+                                willChange: false,
+                              ),
+                            ),
                           ),
                         ),
+                        // Connection lines
                         ...linesState.map(
                           (e) => Positioned(
                             left: 0,
@@ -62,38 +95,23 @@ class _PipelineCanvasState extends State<PipelineCanvas> {
                             child: LineMapItem(e),
                           ),
                         ),
-                        ...nodesState.map(
-                          (e) => Positioned(
-                            left: e.position?.x ?? 0,
-                            top: e.position?.y ?? 0,
-                            child: NodeMapItem(e),
-                          ),
-                        ),
-                        BlocBuilder<ConnectingLineCubit, LineModel?>(
-                          builder: (context, state) {
-                            if (state == null) {
-                              return Container();
-                            }
-                            return Positioned(
-                              left: 0,
-                              top: 0,
-                              child: LineMapItem(state),
-                            );
-                          },
-                        ),
+                        // Drop target for new nodes - below nodes in stack order
                         Positioned.fill(
                           child: DragTarget<NodeModel>(
                             builder: (context, candidateData, rejectedData) {
+                              // This container is just for visual feedback, doesn't block events
                               return Container(
-                                color: Colors.transparent,
+                                color: candidateData.isNotEmpty
+                                    ? const Color(0xFF6366F1)
+                                        .withValues(alpha: 0.05)
+                                    : Colors.transparent,
                               );
                             },
                             onWillAcceptWithDetails: (details) => true,
                             onAcceptWithDetails: (details) {
-                              final renderBox = _canvasKey.currentContext!
-                                  .findRenderObject() as RenderBox;
+                              final canvas = context.read<CanvasCubit>().state;
                               final localOffset =
-                                  renderBox.globalToLocal(details.offset);
+                                  canvas.globalToCanvas(details.offset);
 
                               final node = details.data.copyWith(
                                 position: NodePosition(
@@ -106,6 +124,29 @@ class _PipelineCanvasState extends State<PipelineCanvas> {
                                   .addNode(node);
                             },
                           ),
+                        ),
+                        // Nodes - use keys for efficient updates
+                        ...nodesState.map(
+                          (e) => Positioned(
+                            key: ValueKey(e.id),
+                            left: e.position?.x ?? 0,
+                            top: e.position?.y ?? 0,
+                            child: NodeMapItem(e),
+                          ),
+                        ),
+                        // Active connecting line
+                        BlocBuilder<ConnectingLineCubit, LineModel?>(
+                          builder: (context, lineState) {
+                            if (lineState == null) {
+                              return const SizedBox.shrink();
+                            }
+                            return Positioned.fill(
+                              child: IgnorePointer(
+                                child:
+                                    LineMapItem(lineState, isConnecting: true),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     );

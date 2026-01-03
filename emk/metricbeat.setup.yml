@@ -1,0 +1,39 @@
+metricbeat.modules:
+- module: docker
+  metricsets:
+    - "container"
+    - "cpu"
+    - "diskio"
+    - "event"
+    - "healthcheck"
+    - "info"
+    - "memory"
+    - "network"
+  hosts: ["unix:///var/run/docker.sock"]
+  period: 10s
+
+output.elasticsearch:
+  hosts: ["https://${ES_HOST}:9200"]
+  username: "${METRICBEAT_SETUP_USER}"
+  password: "${METRICBEAT_SETUP_PASSWORD}"
+  ssl:
+    enabled: true
+    certificate_authorities: ["/usr/share/metricbeat/certs/ca.crt"]
+    certificate: "/usr/share/metricbeat/certs/metricbeat.crt"
+    key: "/usr/share/metricbeat/certs/metricbeat.key"
+    verification_mode: full
+
+setup.ilm.enabled: true
+setup.template.enabled: true
+setup.dashboards.enabled: true
+
+setup.kibana:
+  host: "https://${KIBANA_HOST}:5601"
+  username: "${METRICBEAT_SETUP_USER}"
+  password: "${METRICBEAT_SETUP_PASSWORD}"
+  ssl:
+    enabled: true
+    certificate_authorities: ["/usr/share/metricbeat/certs/ca.crt"]
+    certificate: "/usr/share/metricbeat/certs/metricbeat.crt"
+    key: "/usr/share/metricbeat/certs/metricbeat.key"
+    verification_mode: full

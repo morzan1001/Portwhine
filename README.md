@@ -32,6 +32,11 @@ FRONTEND_HOST=frontend
 CLIENT_CERT_NAME=client
 TRAEFIK_HOST=traefik
 
+# TLS/CA handling
+# 0 = keep existing CA (dev-friendly; no CA rotation)
+# 1 = force regenerate CA (requires re-trusting certs/ca.crt on clients)
+REGENERATE_CA=0
+
 # Wichtig für Worker-Container (API startet Worker via Docker-Socket):
 # Muss ein HOST-Pfad zum lokalen certs-Ordner sein (z.B. Windows: C:\Users\...\Portwhine\certs)
 HOST_CERTS_PATH=/absolute/path/to/Portwhine/certs
@@ -92,6 +97,13 @@ The features of Portwhine are limitless. Joking aside, because Portwhine is only
 To develop new modules for portwhine, not many conditions need to be met. Modules are free to access the database or start other modules. however, to interact with the api, a certain format must be followed. This is defined in [job_payload](https://github.com/morzan1001/Portwhine/blob/main/src/modules/api/models/job_payload.py). Containers can write results to the database and then notify the api via an http call.
 
 To make changes to the API or other containers, for example, these must be rebuilt. To avoid having to constantly rebuild all containers during debugging, here are a few practical commands:
+
+### TLS / CA in Development
+
+The `cert-gen` service generates certificates into `./certs`. By default, the CA is kept stable to avoid re-importing it into your local trust store on every restart.
+
+- Default: `REGENERATE_CA=0` (reuse existing `certs/ca.crt` and `certs/ca.key`)
+- Force rotation: `REGENERATE_CA=1` (regenerates CA; you must re-trust `certs/ca.crt` on your machine)
 
 ```bash
 docker build --no-cache -f docker/Dockerfile.api -t api:1.0 .

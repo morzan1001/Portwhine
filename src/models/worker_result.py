@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from models.types import NodeStatus
 from models.job_payload import JobPayload
 
+
 class WorkerResult(BaseModel):
     run_id: uuid.UUID
     pipeline_id: uuid.UUID

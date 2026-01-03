@@ -52,7 +52,8 @@ class Button extends StatelessWidget {
             borderRadius: BorderRadius.circular(borderRadius),
           ),
           padding: EdgeInsets.symmetric(horizontal: padding),
-          color: !showLoading ? buttonColor : buttonColor.withOpacity(0.8),
+          color:
+              !showLoading ? buttonColor : buttonColor.withValues(alpha: 0.8),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

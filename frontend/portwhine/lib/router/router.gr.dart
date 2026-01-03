@@ -20,7 +20,7 @@ import 'package:portwhine/pages/test/pd_test.dart' as _i1;
 /// [_i1.PDTestPage]
 class PDTestRoute extends _i5.PageRouteInfo<void> {
   const PDTestRoute({List<_i5.PageRouteInfo>? children})
-      : super(PDTestRoute.name, initialChildren: children);
+    : super(PDTestRoute.name, initialChildren: children);
 
   static const String name = 'PDTestRoute';
 
@@ -40,11 +40,11 @@ class PipelineDetailsRoute extends _i5.PageRouteInfo<PipelineDetailsRouteArgs> {
     _i6.Key? key,
     List<_i5.PageRouteInfo>? children,
   }) : super(
-          PipelineDetailsRoute.name,
-          args: PipelineDetailsRouteArgs(id: id, key: key),
-          rawPathParams: {'id': id},
-          initialChildren: children,
-        );
+         PipelineDetailsRoute.name,
+         args: PipelineDetailsRouteArgs(id: id, key: key),
+         rawPathParams: {'id': id},
+         initialChildren: children,
+       );
 
   static const String name = 'PipelineDetailsRoute';
 
@@ -87,7 +87,7 @@ class PipelineDetailsRouteArgs {
 /// [_i3.PipelinesPage]
 class PipelinesRoute extends _i5.PageRouteInfo<void> {
   const PipelinesRoute({List<_i5.PageRouteInfo>? children})
-      : super(PipelinesRoute.name, initialChildren: children);
+    : super(PipelinesRoute.name, initialChildren: children);
 
   static const String name = 'PipelinesRoute';
 
@@ -103,7 +103,7 @@ class PipelinesRoute extends _i5.PageRouteInfo<void> {
 /// [_i4.ResultsPage]
 class ResultsRoute extends _i5.PageRouteInfo<void> {
   const ResultsRoute({List<_i5.PageRouteInfo>? children})
-      : super(ResultsRoute.name, initialChildren: children);
+    : super(ResultsRoute.name, initialChildren: children);
 
   static const String name = 'ResultsRoute';
 

@@ -11,7 +11,6 @@ metricbeat.modules:
     - "network"  
   hosts: ["unix:///var/run/docker.sock"]
   period: 10s
-  enabled: true
 
 output.elasticsearch:
   hosts: ["https://${ES_HOST}:9200"]
@@ -23,37 +22,8 @@ output.elasticsearch:
     certificate: "/usr/share/metricbeat/certs/metricbeat.crt"
     key: "/usr/share/metricbeat/certs/metricbeat.key"
     verification_mode: full 
-  bulk_max_size: 50
-  worker: 1
-  retry.enabled: true
-  retry.initial: 1s
-  retry.max: 60s
 
-# Setup uses a separate user with higher privileges for ILM/templates
-# Templates and ILM should be set up once using: metricbeat setup --e
-# This runs with the setup user credentials below
+# Runtime (Writer-User) darf keine Setup/ILM/Template/Dashboard Writes versuchen.
 setup.ilm.enabled: false
 setup.template.enabled: false
-setup.dashboards.enabled: true
-
-setup.elasticsearch:
-  hosts: ["https://${ES_HOST}:9200"]
-  username: "${METRICBEAT_SETUP_USER}"
-  password: "${METRICBEAT_SETUP_PASSWORD}"
-  ssl:
-    enabled: true
-    certificate_authorities: ["/usr/share/metricbeat/certs/ca.crt"]
-    certificate: "/usr/share/metricbeat/certs/metricbeat.crt"
-    key: "/usr/share/metricbeat/certs/metricbeat.key"
-    verification_mode: full
-
-setup.kibana:
-  host: "https://${KIBANA_HOST}:5601"
-  username: "${METRICBEAT_SETUP_USER}"
-  password: "${METRICBEAT_SETUP_PASSWORD}"
-  ssl:
-    enabled: true
-    certificate_authorities: ["/usr/share/metricbeat/certs/ca.crt"]
-    certificate: "/usr/share/metricbeat/certs/metricbeat.crt"
-    key: "/usr/share/metricbeat/certs/metricbeat.key"
-    verification_mode: full
+setup.dashboards.enabled: false

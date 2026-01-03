@@ -16,4 +16,28 @@ class MyColors {
 
   static const Color green = Color(0xFF04CC24);
   static const Color red = Color(0xFFFF0000);
+
+  // Theme colors (used throughout the app)
+  static const Color indigo = Color(0xFF6366F1);
+  static const Color purple = Color(0xFF8B5CF6);
+  static const Color emerald = Color(0xFF10B981);
+  static const Color amber = Color(0xFFF59E0B);
+  static const Color rose = Color(0xFFEF4444);
+
+  // Commonly used gradients
+  static const LinearGradient primaryGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [indigo, purple],
+  );
+
+  /// Creates a subtle gradient for headers/backgrounds
+  static LinearGradient subtleGradient(Color color) => LinearGradient(
+        colors: [
+          color.withValues(alpha: 0.1),
+          color.withValues(alpha: 0.05),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
 }

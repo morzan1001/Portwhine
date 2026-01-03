@@ -5,11 +5,13 @@ from typing import Dict, Optional
 from pydantic import BaseModel, Field
 from models.types import NodeStatus
 
+
 class NodeRunState(BaseModel):
     status: NodeStatus = NodeStatus.PENDING
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     error: Optional[str] = None
+
 
 class PipelineRun(BaseModel):
     id: uuid.UUID = Field(default_factory=uuid.uuid4)

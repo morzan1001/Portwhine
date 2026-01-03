@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.6.0
+  sdk: '>=3.8.0 <4.0.0'
 
 dependencies:
   auto_route: ^11.1.0
@@ -16,22 +16,28 @@ dependencies:
     sdk: flutter
   flutter_bloc: ^9.1.1
   flutter_svg: ^2.2.0
+  flutter_web_plugins:
+    sdk: flutter
   fluttertoast: ^9.0.0
   google_fonts: ^6.3.0
   intl: ^0.20.2
+  json_annotation: ^4.9.0
   shimmer: ^3.0.0
   url_launcher: ^6.3.2
+  web_socket_channel: ^3.0.2
 
 dev_dependencies:
   auto_route_generator: ^10.4.0
   build_runner: ^2.5.4
+  chopper_generator: ^8.3.0
   flutter_launcher_icons: ^0.14.4
   flutter_lints: ^6.0.0
   flutter_native_splash: ^2.4.6
   flutter_test:
     sdk: flutter
   import_sorter: ^4.6.0
-  chopper_generator: ^8.3.0
+  json_serializable: ^6.8.0
+  swagger_dart_code_generator: ^4.1.1
 
 flutter:
   uses-material-design: true

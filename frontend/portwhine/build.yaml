@@ -1,0 +1,18 @@
+targets:
+  $default:
+    builders:
+      # DISABLED: swagger_dart_code_generator generates "ListType" instead of "List<Type>"
+      # To regenerate API client from OpenAPI spec, run: .\fix_generated_models.ps1 -Regenerate
+      swagger_dart_code_generator:
+        enabled: false
+        options:
+          input_folder: 'lib/api/swagger/'
+          output_folder: 'lib/api/generated/'
+          with_base_url: false
+          use_required_attribute_for_headers: true
+          with_converter: true
+          enums_case_sensitive: false
+          separate_models: true
+          override_equals_and_hashcode: true
+          override_to_string: true
+          use_path_for_request_names: true

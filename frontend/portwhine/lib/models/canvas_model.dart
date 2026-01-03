@@ -7,6 +7,7 @@ class CanvasModel {
   TransformationController? controller;
   Animation<Matrix4>? positionAnimation;
   AnimationController? positionController;
+  GlobalKey? canvasKey;
 
   CanvasModel({
     this.position = Position.zero,
@@ -14,6 +15,7 @@ class CanvasModel {
     this.controller,
     this.positionAnimation,
     this.positionController,
+    this.canvasKey,
   });
 
   CanvasModel copyWith({
@@ -22,6 +24,7 @@ class CanvasModel {
     TransformationController? controller,
     Animation<Matrix4>? positionAnimation,
     AnimationController? positionController,
+    GlobalKey? canvasKey,
   }) {
     return CanvasModel(
       position: position ?? this.position,
@@ -29,6 +32,31 @@ class CanvasModel {
       controller: controller ?? this.controller,
       positionAnimation: positionAnimation ?? this.positionAnimation,
       positionController: positionController ?? this.positionController,
+      canvasKey: canvasKey ?? this.canvasKey,
     );
+  }
+
+  /// Get the current zoom level from the controller
+  double get currentZoom {
+    if (controller == null) return zoom;
+    return controller!.value.getMaxScaleOnAxis();
+  }
+
+  /// Convert global screen position to canvas-local coordinates
+  /// Converts global (screen) coordinates into the canvas "scene" coordinates
+  /// of the InteractiveViewer.
+  ///
+  /// This should be used for anything that must line up with the mouse
+  /// regardless of pan/zoom (node dragging, connection dragging, node drop).
+  Offset globalToCanvas(Offset globalPosition, {RenderBox? viewerRenderBox}) {
+    final transformationController = controller;
+    if (transformationController == null) return globalPosition;
+
+    final renderBox = viewerRenderBox ??
+        canvasKey?.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null) return globalPosition;
+
+    final viewportPoint = renderBox.globalToLocal(globalPosition);
+    return transformationController.toScene(viewportPoint);
   }
 }

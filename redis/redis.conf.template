@@ -14,10 +14,10 @@ tls-auth-clients yes
 user default off
 
 # Application user with minimal required permissions
-# - Access to keys matching app:* pattern only
+# - Access to keys matching specific patterns
 # - Read/Write operations, no admin commands
 # - Can SELECT databases, PING for health checks
-user ${REDIS_USER} on >${REDIS_PASSWORD} ~app:* ~pipeline:* ~job:* &* +@read +@write +@connection +@fast -@admin -@dangerous
+user ${REDIS_USER} on >${REDIS_PASSWORD} ~app:* ~pipeline:* ~job:* ~container_queue ~active_containers &* +@read +@write +@connection +@fast -@admin -@dangerous
 
 # =============================================================================
 # SECURITY HARDENING

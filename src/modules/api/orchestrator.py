@@ -12,6 +12,7 @@ from models.job_payload import JobPayload
 from models.worker_result import WorkerResult
 from utils.elasticsearch import get_elasticsearch_connection
 from utils.logger import LoggingModule
+from utils.helper import strip_runtime_fields
 
 class Orchestrator:
     def __init__(self):
@@ -23,7 +24,8 @@ class Orchestrator:
         try:
             # 1. Fetch Pipeline
             result = self.es_client.get(index="pipelines", id=pipeline_id)
-            pipeline = Pipeline(**result["_source"])
+            clean_data = strip_runtime_fields(result["_source"])
+            pipeline = Pipeline(**clean_data)
 
             if not pipeline.trigger:
                 raise HTTPException(status_code=400, detail="Pipeline has no trigger")
@@ -78,7 +80,8 @@ class Orchestrator:
             if result.status == NodeStatus.COMPLETED:
                 # Fetch Pipeline to find edges
                 pipeline_result = self.es_client.get(index="pipelines", id=str(run.pipeline_id))
-                pipeline = Pipeline(**pipeline_result["_source"])
+                clean_data = strip_runtime_fields(pipeline_result["_source"])
+                pipeline = Pipeline(**clean_data)
 
                 # Find next nodes
                 next_nodes = []

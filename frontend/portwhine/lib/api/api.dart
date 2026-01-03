@@ -1,74 +1,51 @@
-import 'dart:convert';
+/// Main API module - exports all API functionality.
+///
+/// This file serves as the single entry point for all API-related imports.
+/// Use `import 'package:portwhine/api/api.dart';` to access all API features.
+library;
 
-import 'package:portwhine/api/api_service.dart';
-import 'package:portwhine/global/constants.dart';
-import 'package:portwhine/models/pipeline_model.dart';
+import 'package:chopper/chopper.dart';
 
-class Api {
-  static late ApiService service;
+import 'package:portwhine/api/generated/portwhine.swagger.dart';
 
-  static init() async => service = await ApiService.create();
+// Export generated types and client
+export 'generated/portwhine.swagger.dart';
 
-  static Future<List<PipelineModel>> getAllPipelines({
-    int size = 10,
-    int page = 1,
-  }) async {
-    final result = await service.getAllPipelines(page: page, size: size);
-    return (result.body ?? []).map(PipelineModel.fromMap).toList();
-  }
+// Export WebSocket service
+export 'websocket_service.dart';
 
-  static Future<PipelineModel> createPipeline(String name) async {
-    final result = await service.createPipeline(
-      {'name': name, 'trigger': {}, 'worker': []},
-    );
-    return PipelineModel.fromMap(result.body!);
-  }
+/// The base URL for the API.
+const String apiBaseUrl = 'https://api.portwhine.local';
 
-  static Future<bool> deletePipeline(String id) async {
-    final result = await service.deletePipeline(id);
-    return result.body?['detail'] == kPipelineDeleted;
-  }
+/// Global API client instance.
+late Portwhine _apiClient;
 
-  static Future<Map<String, dynamic>> startPipeline(String id) async {
-    final result = await service.startPipeline(id);
-    if (result.error != null) return jsonDecode(result.error! as String);
-    return result.body ?? defaultErrorMap;
-  }
+/// Get the global API client instance.
+Portwhine get api => _apiClient;
 
-  static Future<Map<String, dynamic>> stopPipeline(String id) async {
-    final result = await service.stopPipeline(id);
-    if (result.error != null) return jsonDecode(result.error! as String);
-    return result.body ?? defaultErrorMap;
-  }
+/// Initialize the API client.
+///
+/// Call this once at app startup (e.g., in main.dart).
+Future<void> initApi() async {
+  _apiClient = Portwhine.create(
+    baseUrl: Uri.parse(apiBaseUrl),
+    converter: $JsonSerializableConverter(),
+  );
+}
 
-  static Future<PipelineModel> getPipeline(String id) async {
-    final result = await service.getPipeline(id);
-    return PipelineModel.fromMap(result.body!);
-  }
-
-  static Future<PipelineModel> updatePipeline(
-      Map<String, dynamic> pipeline) async {
-    final result = await service.updatePipeline(pipeline);
-    return PipelineModel.fromMap(result.body!);
-  }
-
-  static Future<List<String>> getAllWorkers() async {
-    final result = await service.getAllWorkers();
-    return result.body!;
-  }
-
-  static Future<Map<String, dynamic>> getWorkerConfig(String name) async {
-    final result = await service.getWorkerConfig(name);
-    return result.body!;
-  }
-
-  static Future<List<String>> getAllTriggers() async {
-    final result = await service.getAllTriggers();
-    return result.body!;
-  }
-
-  static Future<Map<String, dynamic>> getTriggerConfig(String name) async {
-    final result = await service.getTriggerConfig(name);
-    return result.body!;
-  }
+/// Create a new API client instance.
+///
+/// Use this when you need a separate client instance,
+/// e.g., for parallel requests or different configurations.
+Portwhine createApiClient({
+  Uri? baseUrl,
+  Authenticator? authenticator,
+  List<Interceptor>? interceptors,
+}) {
+  return Portwhine.create(
+    baseUrl: baseUrl ?? Uri.parse(apiBaseUrl),
+    authenticator: authenticator,
+    interceptors: interceptors,
+    converter: $JsonSerializableConverter(),
+  );
 }

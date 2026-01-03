@@ -1,6 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:portwhine/blocs/nodes/node_definitions_cubit.dart';
+import 'package:portwhine/blocs/pipeline_status/pipeline_status_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/canvas_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/node_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/show_nodes/show_nodes_cubit.dart';
@@ -16,17 +18,17 @@ import 'package:portwhine/pages/pipeline_details/canvas/nodes_list.dart';
 import 'package:portwhine/pages/pipeline_details/canvas/pipeline_canvas.dart';
 import 'package:portwhine/pages/pipeline_details/canvas/pipeline_controls.dart';
 import 'package:portwhine/pages/pipeline_details/canvas/pipeline_zoom_controls.dart';
+import 'package:portwhine/pages/pipeline_details/widgets/pipeline_info_drawer.dart';
 import 'package:portwhine/pages/pipeline_details/widgets/shadow_container.dart';
+import 'package:portwhine/utils/pipeline_error_parser.dart';
+import 'package:portwhine/widgets/toast/toast_service.dart';
 
 import 'package:portwhine/blocs/single_pipeline/nodes_connection_cubit.dart';
 import 'package:portwhine/blocs/single_pipeline/pipeline_cubit.dart';
 
 @RoutePage()
 class PipelineDetailsPage extends StatefulWidget {
-  const PipelineDetailsPage({
-    @PathParam('id') required this.id,
-    super.key,
-  });
+  const PipelineDetailsPage({@PathParam('id') required this.id, super.key});
 
   final String id;
 
@@ -36,35 +38,127 @@ class PipelineDetailsPage extends StatefulWidget {
 
 class _PipelineDetailsPageState extends State<PipelineDetailsPage>
     with SingleTickerProviderStateMixin {
+  PipelineStatusCubit? _pipelineStatusCubit;
+
   @override
   void initState() {
-    Future.delayed(
-      const Duration(milliseconds: 0),
-      () {
-        context.read<CanvasCubit>().setController(this);
-        context.read<SinglePipelineBloc>().add(GetSinglePipeline(widget.id));
-        context.read<WorkersListBloc>().add(GetWorkersList());
-        context.read<TriggersListBloc>().add(GetTriggersList());
-      },
-    );
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<CanvasCubit>().setController(this);
+      context.read<SinglePipelineBloc>().add(GetSinglePipeline(widget.id));
+      context.read<WorkersListBloc>().add(GetWorkersList());
+      context.read<TriggersListBloc>().add(GetTriggersList());
+
+      // Connect to WebSocket for live status updates
+      _pipelineStatusCubit?.connectToPipeline(widget.id);
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Cache cubit reference for safe use in dispose (no ancestor lookup then).
+    _pipelineStatusCubit ??= context.read<PipelineStatusCubit>();
+  }
+
+  @override
+  void dispose() {
+    // Disconnect WebSocket when leaving the page
+    _pipelineStatusCubit?.disconnect();
+    super.dispose();
+  }
+
+  /// Enrich nodes with definitions and live status info
+  List<NodeModel> _enrichNodes(
+    List<NodeModel> nodes,
+    NodeDefinitionsCubit definitionsCubit,
+    PipelineStatusCubit statusCubit,
+  ) {
+    return nodes.map((node) {
+      // Get definition for this node type
+      final definition = definitionsCubit.getNodeById(node.name);
+
+      // Get live status info
+      final statusInfo = statusCubit.getNodeStatus(node.id);
+
+      return node.copyWith(definition: definition, statusInfo: statusInfo);
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
+        endDrawer: const PipelineInfoDrawer(),
         body: MultiBlocListener(
           listeners: [
             BlocListener<SinglePipelineBloc, SinglePipelineState>(
               listener: (context, state) {
+                if (state is SinglePipelineFailed) {
+                  ToastService.error(context, state.error);
+
+                  // Parse errors and update nodes
+                  final nodesCubit = context.read<NodesCubit>();
+                  final currentNodes = nodesCubit.state;
+                  final nodeErrors = PipelineErrorParser.parseErrors(
+                    state.error,
+                    currentNodes,
+                  );
+
+                  if (nodeErrors.isNotEmpty) {
+                    final updatedNodes = currentNodes.map((node) {
+                      if (nodeErrors.containsKey(node.id)) {
+                        return node.copyWith(error: nodeErrors[node.id]);
+                      }
+                      // Keep existing error or clear it?
+                      // For now, let's assume a new save attempt clears old errors
+                      // unless they are re-detected.
+                      return node.copyWith(error: '');
+                    }).toList();
+                    nodesCubit.setNodes(updatedNodes);
+                  }
+                }
                 if (state is SinglePipelineLoaded) {
-                  context.read<PipelineCubit>().setPipeline(state.pipeline);
-                  context.read<NodesCubit>().setNodes(state.pipeline.nodes);
-                  // LinesCubit needs to be updated based on nodes, but it calculates lines from nodes.
-                  // We can trigger an update or set lines directly if we had setLines.
-                  // But LinesCubit.updateLines takes nodes and recalculates.
-                  context.read<LinesCubit>().updateLines(state.pipeline.nodes);
+                  // Enrich nodes with definitions
+                  final definitionsCubit = context.read<NodeDefinitionsCubit>();
+                  final statusCubit = context.read<PipelineStatusCubit>();
+                  final enrichedNodes = _enrichNodes(
+                    state.pipeline.nodes,
+                    definitionsCubit,
+                    statusCubit,
+                  );
+
+                  // Clear any previous errors on successful load/save
+                  final cleanNodes = enrichedNodes
+                      .map((n) => n.copyWith(error: ''))
+                      .toList();
+
+                  final enrichedPipeline = state.pipeline.copyWith(
+                    nodes: cleanNodes,
+                  );
+
+                  context.read<PipelineCubit>().setPipeline(enrichedPipeline);
+                  context.read<NodesCubit>().setNodes(cleanNodes);
+                  context.read<LinesCubit>().updateLines(cleanNodes);
+                }
+              },
+            ),
+            // Listen for live status updates and refresh nodes
+            BlocListener<PipelineStatusCubit, PipelineStatusState>(
+              listener: (context, state) {
+                if (state is PipelineStatusConnected) {
+                  // Update node status info when we receive WebSocket updates
+                  final currentNodes = context.read<NodesCubit>().state;
+                  final definitionsCubit = context.read<NodeDefinitionsCubit>();
+                  final statusCubit = context.read<PipelineStatusCubit>();
+                  final enrichedNodes = _enrichNodes(
+                    currentNodes,
+                    definitionsCubit,
+                    statusCubit,
+                  );
+                  context.read<NodesCubit>().setNodes(enrichedNodes);
                 }
               },
             ),
@@ -118,11 +212,13 @@ class _PipelineDetailsPageState extends State<PipelineDetailsPage>
                               left: 24,
                               child: ShadowContainer(
                                 onTap: () {
-                                  BlocProvider.of<ShowNodesCubit>(context)
-                                      .toggleNodes();
+                                  BlocProvider.of<ShowNodesCubit>(
+                                    context,
+                                  ).toggleNodes();
                                 },
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 18),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                ),
                                 child: Icon(
                                   state
                                       ? Icons.chevron_left

@@ -6,6 +6,6 @@ import 'package:portwhine/app.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   usePathUrlStrategy();
-  await Api.init();
+  await initApi();
   runApp(const PortWhineApp());
 }

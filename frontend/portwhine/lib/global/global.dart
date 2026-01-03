@@ -8,11 +8,12 @@ double height(BuildContext context) {
   return MediaQuery.of(context).size.height;
 }
 
-Future navigate(context, String to, {arguments}) {
+Future<dynamic> navigate(BuildContext context, String to, {Object? arguments}) {
   return Navigator.of(context).pushNamed(to, arguments: arguments);
 }
 
-Future navigateRemove(context, String to, {arguments}) {
+Future<dynamic> navigateRemove(BuildContext context, String to,
+    {Object? arguments}) {
   return Navigator.of(context).pushNamedAndRemoveUntil(
     to,
     (_) => false,
@@ -20,11 +21,11 @@ Future navigateRemove(context, String to, {arguments}) {
   );
 }
 
-void pop(context, [Object? value]) {
+void pop(BuildContext context, [Object? value]) {
   Navigator.of(context).pop(value);
 }
 
-Future nav(context, Widget to) async {
+Future<dynamic> nav(BuildContext context, Widget to) async {
   return await Navigator.of(context).push(
     MaterialPageRoute(builder: (_) => to),
   );

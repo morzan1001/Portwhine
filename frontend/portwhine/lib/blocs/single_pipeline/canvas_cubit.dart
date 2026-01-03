@@ -14,9 +14,14 @@ class CanvasCubit extends Cubit<CanvasModel> {
     emit(state.copyWith(zoom: zoom));
   }
 
+  void setCanvasKey(GlobalKey key) {
+    emit(state.copyWith(canvasKey: key));
+  }
+
   void setController(TickerProvider tickerProvider) {
     final controller = TransformationController();
-    controller.value.translate(-2000, -2000);
+    // ignore: deprecated_member_use
+    controller.value.translate(-2000.0, -2000.0, 0.0);
     final positionController = AnimationController(
       vsync: tickerProvider,
       duration: const Duration(milliseconds: 500),
@@ -40,10 +45,10 @@ class CanvasCubit extends Cubit<CanvasModel> {
     if (state.controller == null) return;
 
     final currentZoom = state.controller!.value.getMaxScaleOnAxis();
+    final newScale = (currentZoom + (zoom ? 0.1 : -0.1)) / currentZoom;
 
-    state.controller!.value.scale(
-      (currentZoom + (zoom ? 0.1 : -0.1)) / currentZoom,
-    );
+    // ignore: deprecated_member_use
+    state.controller!.value.scale(newScale, newScale, 1.0);
     emit(
       state.copyWith(
         controller: state.controller,
@@ -54,11 +59,9 @@ class CanvasCubit extends Cubit<CanvasModel> {
 
   void changePosition(Position position) {
     final Matrix4 currentMatrix = state.controller!.value;
-    final Matrix4 newMatrix = currentMatrix.clone()
-      ..translate(
-        position.x,
-        position.y,
-      );
+    final Matrix4 newMatrix = currentMatrix.clone();
+    // ignore: deprecated_member_use
+    newMatrix.translate(position.x, position.y, 0.0);
 
     final animatedMatrix = Matrix4Tween(
       begin: currentMatrix,

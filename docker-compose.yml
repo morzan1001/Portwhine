@@ -7,6 +7,7 @@ services:
       - ./certs/gen_certs.sh:/gen_certs.sh
     entrypoint: ["sh", "/gen_certs.sh"]
     environment:
+      REGENERATE_CA: ${REGENERATE_CA:-0}
       DOMAIN: ${DOMAIN:-portwhine.local}
       REDIS_HOST: ${REDIS_HOST:-redis}
       ES_HOST: ${ES_HOST:-elasticsearch}
@@ -135,10 +136,16 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./emk/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
-      - ./certs/${METRICBEAT_HOST}.crt:/usr/share/metricbeat/certs/metricbeat.crt:ro
-      - ./certs/${METRICBEAT_HOST}.key:/usr/share/metricbeat/certs/metricbeat.key:ro
+      - ./emk/metricbeat.setup.yml:/usr/share/metricbeat/metricbeat.setup.yml:ro
+      - ./certs/${METRICBEAT_HOST:-metricbeat}.crt:/usr/share/metricbeat/certs/metricbeat.crt:ro
+      - ./certs/${METRICBEAT_HOST:-metricbeat}.key:/usr/share/metricbeat/certs/metricbeat.key:ro
       - ./certs/ca.crt:/usr/share/metricbeat/certs/ca.crt:ro
-    command: ["-e", "--strict.perms=false"]
+    command: 
+      - sh
+      - -c
+      - |
+        metricbeat setup -e --strict.perms=false -c /usr/share/metricbeat/metricbeat.setup.yml && \
+        metricbeat -e --strict.perms=false -c /usr/share/metricbeat/metricbeat.yml
     environment:
       ES_HOST: ${ES_HOST:-elasticsearch}
       KIBANA_HOST: ${KIBANA_HOST:-kibana}

@@ -1,62 +1,66 @@
-import 'package:portwhine/api/api.dart';
+import 'dart:convert';
+
+import 'package:portwhine/api/api.dart' as gen;
+import 'package:portwhine/models/node_definition.dart';
 import 'package:portwhine/models/node_model.dart';
 import 'package:portwhine/models/pipeline_model.dart';
 
 class SinglePipelineRepo {
   static Future<PipelineModel> getPipeline(String id) async {
-    final result = await Api.getPipeline(id);
-    return result;
+    final response = await gen.api.apiV1PipelinePipelineIdGet(pipelineId: id);
+    if (!response.isSuccessful) {
+      throw Exception('Failed to load pipeline: ${response.statusCode}');
+    }
+    // PipelineOutput is empty (additionalProperties: true), so we parse the raw body
+    final json = jsonDecode(response.bodyString) as Map<String, dynamic>;
+    return PipelineModel.fromMap(json);
   }
 
   static Future<void> updatePipeline(PipelineModel pipeline) async {
-    await Api.updatePipeline(pipeline.toMap());
-  }
-
-  static Future<List<NodeModel>> getAllWorkers() async {
-    final names = await Api.getAllWorkers();
-    final List<NodeModel> workers = [];
-
-    for (final name in names) {
-      final config = await Api.getWorkerConfig(name);
-      final example = config['example'] as Map<String, dynamic>;
-
-      // Parse inputs/outputs from example
-      // example['input'] is List<String> e.g. ["ip"]
-      final inputsList = (example['input'] as List?)?.cast<String>() ?? [];
-      final outputsList = (example['output'] as List?)?.cast<String>() ?? [];
-
-      final inputs = {for (var i in inputsList) i: String};
-      final outputs = {for (var i in outputsList) i: String};
-
-      workers.add(NodeModel(
-        name: name,
-        inputs: inputs,
-        outputs: outputs,
-        config: example, // Store the full example as initial config
-      ));
+    final response = await gen.api.apiV1PipelinePatch(
+      body: pipeline.toPipelinePatch(),
+    );
+    if (!response.isSuccessful) {
+      throw Exception('Failed to update pipeline: ${response.statusCode}');
     }
-    return workers;
   }
 
+  /// Get all available node definitions (triggers and workers).
+  static Future<List<NodeDefinition>> getAllNodes() async {
+    final response = await gen.api.apiV1NodesGet();
+    if (!response.isSuccessful || response.body == null) {
+      throw Exception('Failed to load nodes: ${response.statusCode}');
+    }
+    return response.body!.map(NodeDefinition.fromGenerated).toList();
+  }
+
+  /// Get all trigger node definitions.
+  static Future<List<NodeDefinition>> getTriggerNodes() async {
+    final response = await gen.api.apiV1NodesTriggersGet();
+    if (!response.isSuccessful || response.body == null) {
+      throw Exception('Failed to load triggers: ${response.statusCode}');
+    }
+    return response.body!.map(NodeDefinition.fromGenerated).toList();
+  }
+
+  /// Get all triggers as NodeModel list (for TriggersListBloc).
   static Future<List<NodeModel>> getAllTriggers() async {
-    final names = await Api.getAllTriggers();
-    final List<NodeModel> triggers = [];
+    final definitions = await getTriggerNodes();
+    return definitions.map(NodeModel.fromNodeDefinition).toList();
+  }
 
-    for (final name in names) {
-      final config = await Api.getTriggerConfig(name);
-      final example = config['example'] as Map<String, dynamic>;
-
-      // Triggers usually have outputs but no inputs (except maybe from other triggers?)
-      final outputsList = (example['output'] as List?)?.cast<String>() ?? [];
-      final outputs = {for (var i in outputsList) i: String};
-
-      triggers.add(NodeModel(
-        name: name,
-        inputs: {},
-        outputs: outputs,
-        config: example,
-      ));
+  /// Get all worker node definitions.
+  static Future<List<NodeDefinition>> getWorkerNodes() async {
+    final response = await gen.api.apiV1NodesWorkersGet();
+    if (!response.isSuccessful || response.body == null) {
+      throw Exception('Failed to load workers: ${response.statusCode}');
     }
-    return triggers;
+    return response.body!.map(NodeDefinition.fromGenerated).toList();
+  }
+
+  /// Get all workers as NodeModel list (for WorkersListBloc).
+  static Future<List<NodeModel>> getAllWorkers() async {
+    final definitions = await getWorkerNodes();
+    return definitions.map(NodeModel.fromNodeDefinition).toList();
   }
 }

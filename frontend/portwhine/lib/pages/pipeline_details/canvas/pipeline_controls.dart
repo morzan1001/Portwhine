@@ -11,7 +11,6 @@ import 'package:portwhine/global/constants.dart';
 import 'package:portwhine/global/global.dart';
 import 'package:portwhine/global/text_style.dart';
 import 'package:portwhine/models/canvas_model.dart';
-import 'package:portwhine/pages/pipeline_details/results_page.dart';
 import 'package:portwhine/pages/pipeline_details/widgets/shadow_container.dart';
 import 'package:portwhine/widgets/spacer.dart';
 import 'package:portwhine/widgets/toast.dart';
@@ -21,9 +20,6 @@ class PipelineControls extends StatelessWidget {
   const PipelineControls({super.key});
 
   Future<void> _launchKibana(BuildContext context, String pipelineId) async {
-    // Kibana URL with a filter for the current pipeline ID
-    // We assume Kibana is running on localhost:5601 and using the default index pattern or one that covers pipeline_results
-    // The query uses KQL (Kibana Query Language)
     final kibanaUrl = Uri.parse(
       'https://kibana.portwhine.local/app/discover#/?_a=(query:(language:kuery,query:\'pipeline_id:"$pipelineId"\'))',
     );
@@ -49,34 +45,58 @@ class PipelineControls extends StatelessWidget {
 
         return Row(
           children: [
-            // back button
+            // Back button with icon
             ShadowContainer(
               onTap: () => pop(context),
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              child: const Icon(
-                Icons.arrow_back,
-                color: MyColors.black,
-                size: 20,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Color(0xFF6366F1),
+                    size: 20,
+                  ),
+                  const HorizontalSpacer(8),
+                  Text(
+                    'Back',
+                    style: style(
+                      color: MyColors.textDarkGrey,
+                      weight: FontWeight.w500,
+                      size: 13,
+                    ),
+                  ),
+                ],
               ),
             ),
 
             const Spacer(),
 
-            // buttons
+            // View Results button
             ShadowContainer(
               onTap: () => _launchKibana(context, state.id),
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Center(
-                child: Text(
-                  'View Results',
-                  style: style(
-                    color: MyColors.textDarkGrey,
-                    weight: FontWeight.w600,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.analytics_outlined,
+                    color: const Color(0xFF6366F1),
+                    size: 18,
                   ),
-                ),
+                  const HorizontalSpacer(8),
+                  Text(
+                    'Results',
+                    style: style(
+                      color: MyColors.textDarkGrey,
+                      weight: FontWeight.w600,
+                      size: 13,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const HorizontalSpacer(16),
+            const HorizontalSpacer(12),
+
+            // Save button
             ShadowContainer(
               onTap: () {
                 final pipeline = context.read<PipelineCubit>().state;
@@ -90,27 +110,52 @@ class PipelineControls extends StatelessWidget {
                     .read<SinglePipelineBloc>()
                     .add(UpdatePipeline(updatedPipeline));
               },
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Center(
-                child: Text(
-                  'Save',
-                  style: style(
-                    color: MyColors.textDarkGrey,
-                    weight: FontWeight.w600,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.save_outlined,
+                    color: Color(0xFF10B981),
+                    size: 18,
                   ),
-                ),
+                  const HorizontalSpacer(8),
+                  Text(
+                    'Save',
+                    style: style(
+                      color: MyColors.textDarkGrey,
+                      weight: FontWeight.w600,
+                      size: 13,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const HorizontalSpacer(16),
+            const HorizontalSpacer(12),
 
-            // controls
+            // Play/Pause controls
             BlocBuilder<CanvasCubit, CanvasModel>(
               builder: (context, canvasState) {
-                return ShadowContainer(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                return Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: MyColors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                        color: MyColors.black.withValues(alpha: 0.06),
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
                   child: Row(
                     children: [
-                      InkWell(
+                      _ControlButton(
+                        icon: Icons.stop_rounded,
+                        color: const Color(0xFFEF4444),
+                        isActive: isRunning,
                         onTap: isRunning
                             ? () {
                                 context
@@ -118,14 +163,13 @@ class PipelineControls extends StatelessWidget {
                                     .add(StopPipeline(state.id));
                               }
                             : null,
-                        child: Icon(
-                          Icons.pause_outlined,
-                          color: isRunning ? MyColors.red : MyColors.grey,
-                          size: 20,
-                        ),
+                        tooltip: 'Stop',
                       ),
-                      const HorizontalSpacer(20),
-                      InkWell(
+                      const HorizontalSpacer(4),
+                      _ControlButton(
+                        icon: Icons.play_arrow_rounded,
+                        color: const Color(0xFF10B981),
+                        isActive: !isRunning,
                         onTap: !isRunning
                             ? () {
                                 context
@@ -133,28 +177,23 @@ class PipelineControls extends StatelessWidget {
                                     .add(StartPipeline(state.id));
                               }
                             : null,
-                        child: Icon(
-                          Icons.play_arrow_outlined,
-                          color: !isRunning ? MyColors.green : MyColors.grey,
-                          size: 20,
-                        ),
+                        tooltip: 'Start',
                       ),
-                      const HorizontalSpacer(20),
+                      const HorizontalSpacer(8),
                       Container(
-                        height: 32,
+                        height: 24,
                         width: 1,
-                        color: MyColors.darkGrey,
+                        color: MyColors.darkGrey.withValues(alpha: 0.5),
                       ),
-                      const HorizontalSpacer(20),
-                      InkWell(
-                        child: const Icon(
-                          Icons.info_outline,
-                          color: MyColors.black,
-                          size: 20,
-                        ),
+                      const HorizontalSpacer(8),
+                      _ControlButton(
+                        icon: Icons.info_outline_rounded,
+                        color: const Color(0xFF6366F1),
+                        isActive: true,
                         onTap: () {
                           Scaffold.of(context).openEndDrawer();
                         },
+                        tooltip: 'Pipeline Info',
                       ),
                     ],
                   ),
@@ -164,6 +203,68 @@ class PipelineControls extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _ControlButton extends StatefulWidget {
+  const _ControlButton({
+    required this.icon,
+    required this.color,
+    required this.isActive,
+    required this.onTap,
+    this.tooltip,
+  });
+
+  final IconData icon;
+  final Color color;
+  final bool isActive;
+  final VoidCallback? onTap;
+  final String? tooltip;
+
+  @override
+  State<_ControlButton> createState() => _ControlButtonState();
+}
+
+class _ControlButtonState extends State<_ControlButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final canTap = widget.isActive && widget.onTap != null;
+
+    return Tooltip(
+      message: widget.tooltip ?? '',
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        cursor: canTap ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: _isHovered && canTap
+                  ? widget.color.withValues(alpha: 0.15)
+                  : Colors.transparent,
+            ),
+            child: Center(
+              child: Icon(
+                widget.icon,
+                color: canTap
+                    ? (_isHovered
+                        ? widget.color
+                        : widget.color.withValues(alpha: 0.7))
+                    : MyColors.darkGrey,
+                size: 22,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

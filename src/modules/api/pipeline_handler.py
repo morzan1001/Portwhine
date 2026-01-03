@@ -7,6 +7,7 @@ from models.pipeline import Pipeline
 from utils.elasticsearch import get_elasticsearch_connection
 from utils.logger import LoggingModule
 from utils.redis import get_redis_connection
+from utils.helper import strip_runtime_fields
 
 class PipelineHandler:
     def __init__(self):
@@ -36,7 +37,8 @@ class PipelineHandler:
         try:
             # Retrieve the pipeline structure from Elasticsearch
             result = self.es_client.get(index="pipelines", id=pipeline_id)
-            pipeline = Pipeline(**result["_source"])
+            clean_data = strip_runtime_fields(result["_source"])
+            pipeline = Pipeline(**clean_data)
 
             # Stop the trigger container
             if pipeline.trigger:

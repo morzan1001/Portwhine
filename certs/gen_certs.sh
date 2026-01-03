@@ -11,14 +11,30 @@ CA_CONFIG_FILE="/certs/ca.cnf"
 # Install envsubst and openssl
 apk add --no-cache gettext openssl
 
-# Cleanup existing certificates to ensure fresh generation on every start
-echo "Removing existing certificates..."
-rm -f /certs/*.crt /certs/*.key /certs/*.srl /certs/*.csr 2>/dev/null || true
+# Control whether the CA should be regenerated.
+# Default: keep existing CA so it can be trusted locally (dev-friendly).
+REGENERATE_CA="${REGENERATE_CA:-0}"
+
+# Cleanup existing certificates to ensure fresh generation on every start.
+# Keep CA files unless REGENERATE_CA=1.
+echo "Removing existing certificates (REGENERATE_CA=$REGENERATE_CA)..."
+for f in /certs/*.crt /certs/*.key /certs/*.srl /certs/*.csr; do
+    [ -e "$f" ] || continue
+    base="$(basename "$f")"
+    if [ "$REGENERATE_CA" != "1" ] && { [ "$base" = "ca.crt" ] || [ "$base" = "ca.key" ] || [ "$base" = "ca.srl" ]; }; then
+        continue
+    fi
+    rm -f "$f"
+done
 
 # CA
-echo "Generating CA..."
-openssl genrsa -out /certs/ca.key 4096
-openssl req -x509 -new -nodes -key /certs/ca.key -sha256 -days 3650 -out /certs/ca.crt -config $CA_CONFIG_FILE -extensions v3_ca
+if [ "$REGENERATE_CA" = "1" ] || [ ! -f /certs/ca.key ] || [ ! -f /certs/ca.crt ]; then
+    echo "Generating CA..."
+    openssl genrsa -out /certs/ca.key 4096
+    openssl req -x509 -new -nodes -key /certs/ca.key -sha256 -days 3650 -out /certs/ca.crt -config $CA_CONFIG_FILE -extensions v3_ca
+else
+    echo "Keeping existing CA (/certs/ca.crt)"
+fi
 
 # Function to generate certs
 generate_cert() {

@@ -98,18 +98,6 @@ class _PipelineVisualizationState extends State<PipelineVisualization> {
       }).toList(),
     );
   }
-
-  Widget _buildConnector({bool isVertical = false}) {
-    return Container(
-      width: isVertical ? 2 : 50,
-      height: isVertical ? 50 : 2,
-      color: Colors.grey,
-      margin: EdgeInsets.symmetric(
-        horizontal: isVertical ? 0 : 10,
-        vertical: isVertical ? 10 : 0,
-      ),
-    );
-  }
 }
 
 class PipelineNode extends StatelessWidget {

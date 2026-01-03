@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from typing import List, Dict, Any
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from models.trigger import IPAddressTrigger, CertstreamTrigger, TriggerConfig
+from models.responses import NodeConfigExampleResponse
 from utils.logger import LoggingModule
 from api.docs.trigger_docs import trigger_summaries, trigger_descriptions
 
@@ -18,7 +19,7 @@ async def get_triggers():
     return [cls.__name__ for cls in trigger_classes]
 
 @router.get("/trigger/{name}",
-    response_model=Dict[str, Any],
+    response_model=NodeConfigExampleResponse,
     summary=trigger_summaries["get_trigger_config"],
     description=trigger_descriptions["get_trigger_config"],
 )
@@ -34,8 +35,8 @@ async def get_trigger_config(name: str):
                 example_instance = cls()
             # Clean up the docstring to remove leading/trailing whitespace and newlines
             description = cls.__doc__.strip() if cls.__doc__ else "No description available"
-            return {
-                "description": description,
-                "example": example_instance.model_dump()
-            }
-    return {"error": "Trigger not found"}
+            return NodeConfigExampleResponse(
+                description=description,
+                example=example_instance.model_dump()
+            )
+    raise HTTPException(status_code=404, detail="Trigger not found")
