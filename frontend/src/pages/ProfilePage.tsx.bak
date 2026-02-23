@@ -1,0 +1,128 @@
+import { useState } from 'react'
+import { useUsers, useCreateUser, useDeleteUser } from '@/hooks/useUsers'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import { UserPlus, Trash } from 'lucide-react'
+
+const createUserSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  role: z.string().min(1, 'Role is required'),
+})
+
+type CreateUserForm = z.infer<typeof createUserSchema>
+
+export function UsersPage() {
+  const { data: users, isLoading } = useUsers()
+  const createMutation = useCreateUser()
+  const deleteMutation = useDeleteUser()
+
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<string | null>(null)
+
+  const form = useForm<CreateUserForm>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: { username: '', email: '', password: '', role: 'user' },
+  })
+
+  const onSubmit = (data: CreateUserForm) => {
+    createMutation.mutate(data, {
+      onSuccess: () => { setCreateDialogOpen(false); form.reset() },
+    })
+  }
+
+  const handleDelete = (userId: string) => {
+    deleteMutation.mutate(userId)
+    setUserToDelete(null)
+  }
+
+  return (
+    <div className="flex flex-col gap-6 p-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Users</h1>
+          <p className="text-muted-foreground">Manage user accounts and permissions</p>
+        </div>
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button><UserPlus className="h-4 w-4 mr-2" />Create User</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New User</DialogTitle>
+              <DialogDescription>Add a new user to the system</DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField control={form.control} name="username" render={({ field }) => (
+                  <FormItem><FormLabel>Username</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="email" render={({ field }) => (
+                  <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="password" render={({ field }) => (
+                  <FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="role" render={({ field }) => (
+                  <FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent><SelectItem value="user">User</SelectItem><SelectItem value="admin">Admin</SelectItem></SelectContent>
+                  </Select><FormMessage /></FormItem>
+                )} />
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+                  <Button type="submit" disabled={createMutation.isPending}>{createMutation.isPending ? 'Creating...' : 'Create'}</Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12"><p className="text-muted-foreground">Loading users...</p></div>
+      ) : users && users.length > 0 ? (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow><TableHead>Username</TableHead><TableHead>Email</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user: any) => (
+                <TableRow key={user.userId}>
+                  <TableCell className="font-medium">{user.username}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell><Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>{user.role}</Badge></TableCell>
+                  <TableCell>{user.isActive ? <Badge className="bg-green-500">Active</Badge> : <Badge variant="secondary">Inactive</Badge>}</TableCell>
+                  <TableCell className="text-right"><Button variant="ghost" size="sm" onClick={() => setUserToDelete(user.userId)}><Trash className="h-4 w-4 text-destructive" /></Button></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="text-center py-12"><p className="text-muted-foreground">No users found</p></div>
+      )}
+
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader><AlertDialogTitle>Delete User?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone. This will permanently delete the user account.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => userToDelete && handleDelete(userToDelete)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
