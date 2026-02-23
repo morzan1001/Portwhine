@@ -1,7 +1,0 @@
-# Compression Middleware
-http:
-  middlewares:
-    gzip:
-      compress:
-        excludedContentTypes:
-          - text/event-stream

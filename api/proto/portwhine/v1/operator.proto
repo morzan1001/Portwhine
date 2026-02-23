@@ -1,0 +1,742 @@
+syntax = "proto3";
+
+package portwhine.v1;
+
+option go_package = "github.com/portwhine/portwhine/gen/go/portwhine/v1;portwhinev1";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "portwhine/v1/common.proto";
+import "portwhine/v1/pipeline.proto";
+
+// OperatorService is the external API exposed by the operator.
+// Used by the CLI tool (pwctl), future frontend (via gRPC-Web), and integrations.
+service OperatorService {
+  // ---- Pipeline CRUD ----
+
+  rpc CreatePipeline(CreatePipelineRequest) returns (CreatePipelineResponse);
+  rpc GetPipeline(GetPipelineRequest) returns (GetPipelineResponse);
+  rpc UpdatePipeline(UpdatePipelineRequest) returns (UpdatePipelineResponse);
+  rpc ListPipelines(ListPipelinesRequest) returns (ListPipelinesResponse);
+  rpc DeletePipeline(DeletePipelineRequest) returns (DeletePipelineResponse);
+
+  // ---- Pipeline Execution ----
+
+  rpc StartPipeline(StartPipelineRequest) returns (StartPipelineResponse);
+  rpc StopPipelineRun(StopPipelineRunRequest) returns (StopPipelineRunResponse);
+  rpc PausePipelineRun(PausePipelineRunRequest) returns (PausePipelineRunResponse);
+  rpc ResumePipelineRun(ResumePipelineRunRequest) returns (ResumePipelineRunResponse);
+  rpc GetPipelineRunStatus(GetPipelineRunStatusRequest) returns (GetPipelineRunStatusResponse);
+  rpc ListPipelineRuns(ListPipelineRunsRequest) returns (ListPipelineRunsResponse);
+
+  // Stream live results from a running pipeline.
+  rpc StreamPipelineResults(StreamPipelineResultsRequest) returns (stream StreamPipelineResultsResponse);
+
+  // Stream container logs for a specific node in a pipeline run.
+  rpc GetNodeLogs(GetNodeLogsRequest) returns (stream GetNodeLogsResponse);
+
+  // ---- Data Items ----
+
+  rpc GetDataItem(GetDataItemRequest) returns (GetDataItemResponse);
+  rpc ListDataItems(ListDataItemsRequest) returns (ListDataItemsResponse);
+  rpc SearchDataItems(SearchDataItemsRequest) returns (SearchDataItemsResponse);
+
+  // Stream data items as JSON lines or CSV for bulk export.
+  rpc ExportDataItems(ExportDataItemsRequest) returns (stream ExportDataItemsResponse);
+
+  // ---- Worker Registry ----
+
+  rpc RegisterWorkerImage(RegisterWorkerImageRequest) returns (RegisterWorkerImageResponse);
+  rpc ListWorkerImages(ListWorkerImagesRequest) returns (ListWorkerImagesResponse);
+  rpc DeleteWorkerImage(DeleteWorkerImageRequest) returns (DeleteWorkerImageResponse);
+
+  // ---- Node Catalog ----
+
+  // Returns the catalog of all available trigger, worker, and output types
+  // that can be added to a pipeline.
+  rpc ListNodeCatalog(ListNodeCatalogRequest) returns (ListNodeCatalogResponse);
+
+  // ---- Dashboard ----
+
+  rpc GetDashboardStats(GetDashboardStatsRequest) returns (GetDashboardStatsResponse);
+
+  // ---- Authentication ----
+
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc CreateAPIKey(CreateAPIKeyRequest) returns (CreateAPIKeyResponse);
+  rpc ListAPIKeys(ListAPIKeysRequest) returns (ListAPIKeysResponse);
+  rpc RevokeAPIKey(RevokeAPIKeyRequest) returns (RevokeAPIKeyResponse);
+
+  // ---- User Management ----
+
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse);
+  rpc GetUser(GetUserRequest) returns (GetUserResponse);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
+
+  // ---- Team Management ----
+
+  rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse);
+  rpc GetTeam(GetTeamRequest) returns (GetTeamResponse);
+  rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse);
+  rpc UpdateTeam(UpdateTeamRequest) returns (UpdateTeamResponse);
+  rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse);
+  rpc AddTeamMember(AddTeamMemberRequest) returns (AddTeamMemberResponse);
+  rpc RemoveTeamMember(RemoveTeamMemberRequest) returns (RemoveTeamMemberResponse);
+  rpc ListTeamMembers(ListTeamMembersRequest) returns (ListTeamMembersResponse);
+  rpc UpdateTeamMemberRole(UpdateTeamMemberRoleRequest) returns (UpdateTeamMemberRoleResponse);
+
+  // ---- Permission Management ----
+
+  rpc GrantPermission(GrantPermissionRequest) returns (GrantPermissionResponse);
+  rpc RevokePermission(RevokePermissionRequest) returns (RevokePermissionResponse);
+  rpc ListPermissions(ListPermissionsRequest) returns (ListPermissionsResponse);
+  rpc ListMyPermissions(ListMyPermissionsRequest) returns (ListMyPermissionsResponse);
+
+  // ---- Role Management ----
+
+  rpc CreateRole(CreateRoleRequest) returns (CreateRoleResponse);
+  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse);
+  rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse);
+  rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse);
+}
+
+// ---- Pipeline Messages ----
+
+message CreatePipelineRequest {
+  PipelineDefinition definition = 1;
+}
+
+message CreatePipelineResponse {
+  string pipeline_id = 1;
+}
+
+message GetPipelineRequest {
+  string pipeline_id = 1;
+}
+
+message GetPipelineResponse {
+  string pipeline_id = 1;
+  PipelineDefinition definition = 2;
+  int32 version = 3;
+  string created_by = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message UpdatePipelineRequest {
+  string pipeline_id = 1;
+  PipelineDefinition definition = 2;
+}
+
+message UpdatePipelineResponse {
+  int32 version = 1;
+}
+
+message ListPipelinesRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListPipelinesResponse {
+  repeated PipelineSummary pipelines = 1;
+  string next_page_token = 2;
+}
+
+message PipelineSummary {
+  string pipeline_id = 1;
+  string name = 2;
+  string description = 3;
+  int32 version = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message DeletePipelineRequest {
+  string pipeline_id = 1;
+}
+
+message DeletePipelineResponse {}
+
+// ---- Execution Messages ----
+
+message StartPipelineRequest {
+  string pipeline_id = 1;
+}
+
+message StartPipelineResponse {
+  string run_id = 1;
+}
+
+message StopPipelineRunRequest {
+  string run_id = 1;
+}
+
+message StopPipelineRunResponse {}
+
+message PausePipelineRunRequest {
+  string run_id = 1;
+}
+
+message PausePipelineRunResponse {}
+
+message ResumePipelineRunRequest {
+  string run_id = 1;
+}
+
+message ResumePipelineRunResponse {}
+
+message GetPipelineRunStatusRequest {
+  string run_id = 1;
+}
+
+message GetPipelineRunStatusResponse {
+  PipelineRunStatus status = 1;
+}
+
+message ListPipelineRunsRequest {
+  string pipeline_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListPipelineRunsResponse {
+  repeated PipelineRunStatus runs = 1;
+  string next_page_token = 2;
+}
+
+message PipelineRunStatus {
+  string run_id = 1;
+  string pipeline_id = 2;
+  PipelineRunState state = 3;
+  google.protobuf.Timestamp started_at = 4;
+  google.protobuf.Timestamp finished_at = 5;
+  repeated NodeStatus nodes = 6;
+  string created_by = 7;
+  string pipeline_name = 8;
+}
+
+enum PipelineRunState {
+  PIPELINE_RUN_STATE_UNSPECIFIED = 0;
+  PIPELINE_RUN_STATE_PENDING = 1;
+  PIPELINE_RUN_STATE_RUNNING = 2;
+  PIPELINE_RUN_STATE_COMPLETED = 3;
+  PIPELINE_RUN_STATE_FAILED = 4;
+  PIPELINE_RUN_STATE_CANCELLED = 5;
+  PIPELINE_RUN_STATE_PAUSED = 6;
+}
+
+message NodeStatus {
+  string node_id = 1;
+  string worker_type = 2;
+  WorkerStatus worker_status = 3;
+  uint64 items_in = 4;
+  uint64 items_out = 5;
+  uint64 errors = 6;
+  string error_message = 7;
+
+  // Container-level health from Docker/Kubernetes.
+  string container_id = 8;
+  string container_status = 9;       // running, succeeded, failed, pending, unknown
+  int32 container_exit_code = 10;
+  google.protobuf.Timestamp container_started_at = 11;
+  google.protobuf.Timestamp container_finished_at = 12;
+  string container_message = 13;     // runtime-reported message (OOM, crash reason, etc.)
+}
+
+message StreamPipelineResultsRequest {
+  string run_id = 1;
+  // Optional: only stream items of these types.
+  repeated string type_filter = 2;
+}
+
+message StreamPipelineResultsResponse {
+  DataItem item = 1;
+}
+
+message GetNodeLogsRequest {
+  string run_id = 1;
+  string node_id = 2;
+  int32 tail = 3;      // last N lines, 0 = all
+  bool follow = 4;     // keep streaming new lines
+}
+
+message GetNodeLogsResponse {
+  string line = 1;
+}
+
+// ---- Data Item Messages ----
+
+message GetDataItemRequest {
+  string data_item_id = 1;
+}
+
+message GetDataItemResponse {
+  DataItemInfo item = 1;
+}
+
+message ListDataItemsRequest {
+  string run_id = 1;
+  string type_filter = 2;  // optional: only return items of this type
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListDataItemsResponse {
+  repeated DataItemInfo items = 1;
+  string next_page_token = 2;
+  int64 total_count = 3;
+}
+
+message DataItemInfo {
+  string id = 1;
+  string run_id = 2;
+  string type = 3;
+  google.protobuf.Struct data = 4;
+  map<string, string> metadata = 5;
+  repeated string parent_ids = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message SearchDataItemsRequest {
+  // Optional: restrict to a specific run. If empty, searches across all runs.
+  string run_id = 1;
+  // Free-text query matched against the JSONB data field (case-insensitive).
+  string query = 2;
+  // Optional: only return items matching any of these types.
+  repeated string types = 3;
+  // Optional: only return items created at or after this timestamp.
+  google.protobuf.Timestamp created_after = 4;
+  // Optional: only return items created at or before this timestamp.
+  google.protobuf.Timestamp created_before = 5;
+  int32 page_size = 6;
+  string page_token = 7;
+}
+
+message SearchDataItemsResponse {
+  repeated DataItemInfo items = 1;
+  string next_page_token = 2;
+  int64 total_count = 3;
+}
+
+message ExportDataItemsRequest {
+  string run_id = 1;
+  // Free-text query matched against the JSONB data field (case-insensitive).
+  string query = 2;
+  // Optional: only export items matching any of these types.
+  repeated string types = 3;
+  // Optional: only export items created at or after this timestamp.
+  google.protobuf.Timestamp created_after = 4;
+  // Optional: only export items created at or before this timestamp.
+  google.protobuf.Timestamp created_before = 5;
+  // Export format: "json" (default) or "csv".
+  string format = 6;
+}
+
+message ExportDataItemsResponse {
+  // One chunk of the exported data (a JSON line or CSV row).
+  bytes data = 1;
+}
+
+// ---- Worker Registry Messages ----
+
+message RegisterWorkerImageRequest {
+  string name = 1;
+  string image = 2;
+  string description = 3;
+}
+
+message RegisterWorkerImageResponse {
+  string worker_image_id = 1;
+}
+
+message ListWorkerImagesRequest {}
+
+message ListWorkerImagesResponse {
+  repeated WorkerImageInfo images = 1;
+}
+
+message WorkerImageInfo {
+  string id = 1;
+  string name = 2;
+  string image = 3;
+  string description = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message DeleteWorkerImageRequest {
+  string worker_image_id = 1;
+}
+
+message DeleteWorkerImageResponse {}
+
+// ---- Node Catalog Messages ----
+
+message ListNodeCatalogRequest {}
+
+message ListNodeCatalogResponse {
+  repeated NodeCatalogEntry entries = 1;
+}
+
+// NodeCatalogEntry describes a single trigger, worker, or output type
+// available for use in pipelines.
+message NodeCatalogEntry {
+  // Unique identifier (e.g., "nmap-worker", "certstream-trigger").
+  string id = 1;
+
+  // Human-readable display name (e.g., "Nmap Scanner").
+  string display_name = 2;
+
+  // Brief description of what this node does.
+  string description = 3;
+
+  // Node category: "trigger", "worker", or "output".
+  string node_type = 4;
+
+  // Category for grouping in the sidebar (e.g., "scanning", "enumeration").
+  string category = 5;
+
+  // Container image reference.
+  string image = 6;
+
+  // Version string.
+  string version = 7;
+
+  // DataItem types this node accepts as input (empty for triggers).
+  repeated string accepted_input_types = 8;
+
+  // DataItem types this node produces (empty for outputs).
+  repeated string output_types = 9;
+
+  // Configuration schema as a JSON Schema string.
+  string config_schema = 10;
+
+  // Icon name hint (lucide icon name).
+  string icon = 11;
+
+  // Color hint for the node (CSS color string, e.g., "#3B82F6").
+  string color = 12;
+}
+
+// ---- Auth Messages ----
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  google.protobuf.Timestamp expires_at = 3;
+  string user_id = 4;
+  string username = 5;
+  string email = 6;
+  string role = 7;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message CreateAPIKeyRequest {
+  string name = 1;
+  repeated string scopes = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message CreateAPIKeyResponse {
+  // The raw API key — shown only once.
+  string api_key = 1;
+  string key_prefix = 2;
+}
+
+message ListAPIKeysRequest {}
+
+message ListAPIKeysResponse {
+  repeated APIKeyInfo keys = 1;
+}
+
+message APIKeyInfo {
+  string id = 1;
+  string name = 2;
+  string key_prefix = 3;
+  repeated string scopes = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp expires_at = 6;
+  google.protobuf.Timestamp last_used = 7;
+  bool revoked = 8;
+}
+
+message RevokeAPIKeyRequest {
+  string api_key_id = 1;
+}
+
+message RevokeAPIKeyResponse {}
+
+// ---- User Management Messages ----
+
+message CreateUserRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+  string role = 4;
+}
+
+message CreateUserResponse {
+  string user_id = 1;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message GetUserResponse {
+  UserInfo user = 1;
+}
+
+message ListUsersRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListUsersResponse {
+  repeated UserInfo users = 1;
+  string next_page_token = 2;
+}
+
+message UserInfo {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string role = 4;
+  bool is_active = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message UpdateUserRequest {
+  string user_id = 1;
+  string email = 2;
+  string role = 3;
+  bool is_active = 4;
+}
+
+message UpdateUserResponse {}
+
+message DeleteUserRequest {
+  string user_id = 1;
+}
+
+message DeleteUserResponse {}
+
+// ---- Team Messages ----
+
+message CreateTeamRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message CreateTeamResponse {
+  string team_id = 1;
+}
+
+message GetTeamRequest {
+  string team_id = 1;
+}
+
+message GetTeamResponse {
+  TeamInfo team = 1;
+}
+
+message ListTeamsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListTeamsResponse {
+  repeated TeamInfo teams = 1;
+  string next_page_token = 2;
+}
+
+message TeamInfo {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string created_by = 4;
+  int32 member_count = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message UpdateTeamRequest {
+  string team_id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message UpdateTeamResponse {}
+
+message DeleteTeamRequest {
+  string team_id = 1;
+}
+
+message DeleteTeamResponse {}
+
+message AddTeamMemberRequest {
+  string team_id = 1;
+  string user_id = 2;
+  string role = 3; // "owner", "admin", "member"
+}
+
+message AddTeamMemberResponse {}
+
+message RemoveTeamMemberRequest {
+  string team_id = 1;
+  string user_id = 2;
+}
+
+message RemoveTeamMemberResponse {}
+
+message ListTeamMembersRequest {
+  string team_id = 1;
+}
+
+message ListTeamMembersResponse {
+  repeated TeamMemberInfo members = 1;
+}
+
+message TeamMemberInfo {
+  string user_id = 1;
+  string username = 2;
+  string email = 3;
+  string role = 4; // team-level role
+  google.protobuf.Timestamp joined_at = 5;
+}
+
+message UpdateTeamMemberRoleRequest {
+  string team_id = 1;
+  string user_id = 2;
+  string role = 3;
+}
+
+message UpdateTeamMemberRoleResponse {}
+
+// ---- Permission Messages ----
+
+message GrantPermissionRequest {
+  string subject_type = 1;  // "user" or "team"
+  string subject_id = 2;
+  string resource_type = 3; // "pipelines", "runs", "workers"
+  string resource_id = 4;
+  string action = 5;        // "read", "update", "delete", "execute", "*"
+  string effect = 6;        // "allow" or "deny"
+}
+
+message GrantPermissionResponse {
+  string permission_id = 1;
+}
+
+message RevokePermissionRequest {
+  string permission_id = 1;
+}
+
+message RevokePermissionResponse {}
+
+message ListPermissionsRequest {
+  string subject_type = 1; // optional filter
+  string subject_id = 2;   // optional filter
+  string resource_type = 3; // optional filter
+  string resource_id = 4;   // optional filter
+}
+
+message ListPermissionsResponse {
+  repeated PermissionInfo permissions = 1;
+}
+
+message ListMyPermissionsRequest {}
+
+message ListMyPermissionsResponse {
+  repeated PermissionInfo permissions = 1;
+}
+
+message PermissionInfo {
+  string id = 1;
+  string subject_type = 2;
+  string subject_id = 3;
+  string resource_type = 4;
+  string resource_id = 5;
+  string action = 6;
+  string effect = 7;
+  string granted_by = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+// ---- Role Messages ----
+
+message CreateRoleRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message CreateRoleResponse {
+  string role_id = 1;
+}
+
+message ListRolesRequest {}
+
+message ListRolesResponse {
+  repeated RoleInfo roles = 1;
+}
+
+message RoleInfo {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  bool is_system = 4;
+  bool is_custom = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message UpdateRoleRequest {
+  string role_id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message UpdateRoleResponse {}
+
+message DeleteRoleRequest {
+  string role_id = 1;
+}
+
+message DeleteRoleResponse {}
+
+// ---- Dashboard Messages ----
+
+message GetDashboardStatsRequest {}
+
+message GetDashboardStatsResponse {
+  int32 total_pipelines = 1;
+  int32 total_runs = 2;
+  int32 running_runs = 3;
+  int32 completed_runs = 4;
+  int32 failed_runs = 5;
+  repeated RecentRun recent_runs = 6;
+}
+
+message RecentRun {
+  string run_id = 1;
+  string pipeline_id = 2;
+  string pipeline_name = 3;
+  PipelineRunState state = 4;
+  google.protobuf.Timestamp started_at = 5;
+  google.protobuf.Timestamp finished_at = 6;
+}

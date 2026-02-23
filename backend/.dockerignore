@@ -1,0 +1,7 @@
+.git
+*.exe
+pwctl.exe
+deployments/
+configs/
+*.md
+.dockerignore

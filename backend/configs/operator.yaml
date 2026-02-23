@@ -1,0 +1,29 @@
+server:
+  grpc_addr: ":50051"
+  # Address workers use to connect back to the operator
+  operator_address: "portwhine-operator:50051"
+
+runtime:
+  # "docker" or "kubernetes"
+  type: docker
+  docker:
+    network: portwhine
+  kubernetes:
+    namespace: portwhine
+    worker_namespace: portwhine-workers
+
+database:
+  host: localhost
+  port: 5432
+  name: portwhine
+  user: portwhine
+  password: ""
+  sslmode: disable
+
+auth:
+  jwt_secret: ""
+  access_token_ttl: 15m
+  refresh_token_ttl: 168h
+
+log:
+  level: info

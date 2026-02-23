@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+package portwhine.v1;
+
+option go_package = "github.com/portwhine/portwhine/gen/go/portwhine/v1;portwhinev1";
+
+import "google/protobuf/struct.proto";
+
+// PipelineDefinition represents a pipeline as a directed acyclic graph.
+message PipelineDefinition {
+  string name = 1;
+  string description = 2;
+  map<string, string> labels = 3;
+  repeated PipelineNode nodes = 4;
+  repeated PipelineEdge edges = 5;
+
+  // Cron schedule expression (e.g. "0 */6 * * *" for every 6 hours).
+  // If empty, the pipeline must be triggered manually.
+  string schedule = 6;
+}
+
+// PipelineNode represents a single node in the pipeline graph.
+message PipelineNode {
+  // Unique node identifier within the pipeline.
+  string id = 1;
+
+  // Node type: trigger, worker, or output sink.
+  PipelineNodeType type = 2;
+
+  // Container image reference (e.g., "portwhine/dns-resolver:latest").
+  string image = 3;
+
+  // Node-specific configuration parameters.
+  google.protobuf.Struct config = 4;
+
+  // Visual editor position for the future UI.
+  NodePosition position = 5;
+
+  // Number of container replicas for horizontal scaling (workers only).
+  int32 replicas = 6;
+
+  // Optional filter to only accept specific DataItem types/conditions.
+  InputFilter input_filter = 7;
+
+  // Human-readable label for display.
+  string label = 8;
+
+  // Retry policy for this node. If not set, the node will not be retried on failure.
+  RetryPolicy retry_policy = 9;
+}
+
+// RetryPolicy configures automatic retry behavior for a pipeline node.
+message RetryPolicy {
+  // Maximum number of retry attempts (0 = no retries, default).
+  int32 max_retries = 1;
+
+  // Initial backoff duration in seconds before the first retry (default: 5).
+  int32 initial_backoff_seconds = 2;
+
+  // Maximum backoff duration in seconds (default: 300 = 5 minutes).
+  int32 max_backoff_seconds = 3;
+}
+
+// PipelineEdge represents a directed connection between two nodes.
+message PipelineEdge {
+  string id = 1;
+  string source_node_id = 2;
+  string target_node_id = 3;
+
+  // ReactFlow handle IDs for typed connections (e.g. "output-domain", "input-domain").
+  string source_handle = 4;
+  string target_handle = 5;
+}
+
+// NodePosition stores coordinates for visual editor rendering.
+message NodePosition {
+  double x = 1;
+  double y = 2;
+}
+
+// InputFilter controls which DataItems a node accepts.
+message InputFilter {
+  // Only accept DataItems of this type.
+  string type = 1;
+
+  // CEL expression for conditional filtering (e.g., "data.service in ['http', 'https']").
+  string condition = 2;
+}
+
+// PipelineNodeType identifies the role of a node in the pipeline.
+enum PipelineNodeType {
+  PIPELINE_NODE_TYPE_UNSPECIFIED = 0;
+  PIPELINE_NODE_TYPE_TRIGGER = 1;
+  PIPELINE_NODE_TYPE_WORKER = 2;
+  PIPELINE_NODE_TYPE_OUTPUT = 3;
+}

@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+package portwhine.v1;
+
+option go_package = "github.com/portwhine/portwhine/gen/go/portwhine/v1;portwhinev1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+// DataItem is the universal unit of data flowing through a pipeline.
+// Every worker receives DataItems and produces DataItems.
+message DataItem {
+  // Unique identifier for this data item.
+  string id = 1;
+
+  // ID of the pipeline run this item belongs to.
+  string pipeline_run_id = 2;
+
+  // Type tag declaring the kind of data (e.g., "domain", "ip", "port_result", "url", "http_response").
+  // Workers use this to decide whether they can process the item.
+  string type = 3;
+
+  // The primary data payload as a flexible key-value structure.
+  google.protobuf.Struct data = 4;
+
+  // Metadata that flows with the item through the pipeline.
+  DataItemMetadata metadata = 5;
+
+  // Optional raw bytes for binary payloads (screenshots, certificates, etc.).
+  bytes raw_payload = 6;
+
+  // Lineage: IDs of DataItem(s) that produced this one.
+  repeated string parent_ids = 7;
+}
+
+// DataItemMetadata carries provenance and routing information.
+message DataItemMetadata {
+  // Which worker or trigger produced this item.
+  string source = 1;
+
+  // When this item was created.
+  google.protobuf.Timestamp created_at = 2;
+
+  // Which node in the pipeline produced this item.
+  string node_id = 3;
+
+  // Arbitrary key-value labels for filtering and routing.
+  map<string, string> labels = 4;
+}
+
+// WorkerCapability describes what a worker can do.
+message WorkerCapability {
+  // Human-readable name of the worker.
+  string name = 1;
+
+  // Version string.
+  string version = 2;
+
+  // DataItem types this worker accepts as input.
+  repeated string accepted_input_types = 3;
+
+  // DataItem types this worker can produce as output.
+  repeated string output_types = 4;
+
+  // Configuration schema (JSON Schema) describing what parameters this worker accepts.
+  string config_schema = 5;
+}
+
+// TriggerCapability describes what a trigger can do.
+message TriggerCapability {
+  // Human-readable name of the trigger.
+  string name = 1;
+
+  // Version string.
+  string version = 2;
+
+  // DataItem types this trigger can produce.
+  repeated string output_types = 3;
+
+  // Configuration schema (JSON Schema) describing what parameters this trigger accepts.
+  string config_schema = 4;
+}
+
+// StageConfig is operator-provided configuration for a specific pipeline node.
+message StageConfig {
+  // Node ID within the pipeline.
+  string node_id = 1;
+
+  // Pipeline run ID.
+  string pipeline_run_id = 2;
+
+  // Configuration parameters for this node.
+  google.protobuf.Struct parameters = 3;
+
+  // Address the worker/trigger can use to reach the operator.
+  string operator_address = 4;
+}
+
+// WorkerStatus represents the current state of a worker.
+enum WorkerStatus {
+  WORKER_STATUS_UNSPECIFIED = 0;
+  WORKER_STATUS_INITIALIZING = 1;
+  WORKER_STATUS_READY = 2;
+  WORKER_STATUS_PROCESSING = 3;
+  WORKER_STATUS_DRAINING = 4;
+  WORKER_STATUS_ERROR = 5;
+  WORKER_STATUS_STOPPED = 6;
+}
+
+// WorkerHeartbeat is a periodic status update from a worker.
+message WorkerHeartbeat {
+  string worker_id = 1;
+  WorkerStatus status = 2;
+  uint64 items_processed = 3;
+  uint64 items_produced = 4;
+  uint64 errors_count = 5;
+  google.protobuf.Timestamp timestamp = 6;
+}

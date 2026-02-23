@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package portwhine.worker.v1;
+
+option go_package = "github.com/portwhine/portwhine/gen/go/portwhine/worker/v1;workerv1";
+
+import "portwhine/v1/common.proto";
+
+// WorkerService is the contract that every worker container must implement.
+// The operator acts as the client; the worker container is the server.
+service WorkerService {
+  // GetCapabilities returns what this worker can do.
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+
+  // Initialize prepares the worker for a specific pipeline stage.
+  rpc Initialize(InitializeRequest) returns (InitializeResponse);
+
+  // Process is the core RPC using bidirectional streaming.
+  // The operator streams DataItems in, the worker streams results out.
+  rpc Process(stream ProcessRequest) returns (stream ProcessResponse);
+
+  // Shutdown gracefully terminates the worker.
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+
+  // HealthCheck for liveness/readiness probing.
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message GetCapabilitiesRequest {}
+
+message GetCapabilitiesResponse {
+  portwhine.v1.WorkerCapability capability = 1;
+}
+
+message InitializeRequest {
+  portwhine.v1.StageConfig config = 1;
+}
+
+message InitializeResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+// ProcessRequest is sent from operator to worker on the bidirectional stream.
+message ProcessRequest {
+  oneof payload {
+    // A data item to process.
+    portwhine.v1.DataItem item = 1;
+    // Signal the worker to flush any buffered output.
+    FlushSignal flush = 2;
+    // Signal the worker to abort processing.
+    CancelSignal cancel = 3;
+  }
+}
+
+// ProcessResponse is sent from worker to operator on the bidirectional stream.
+message ProcessResponse {
+  oneof payload {
+    // A produced data item.
+    portwhine.v1.DataItem item = 1;
+    // Periodic status update.
+    portwhine.v1.WorkerHeartbeat heartbeat = 2;
+    // Non-fatal error on a specific item.
+    ProcessError error = 3;
+  }
+}
+
+message FlushSignal {}
+
+message CancelSignal {
+  string reason = 1;
+}
+
+message ProcessError {
+  // Which input item caused the error.
+  string source_item_id = 1;
+  string error_message = 2;
+  bool retryable = 3;
+}
+
+message ShutdownRequest {
+  // Timeout in seconds the worker has to finish.
+  uint32 timeout_seconds = 1;
+}
+
+message ShutdownResponse {
+  uint64 total_items_processed = 1;
+  uint64 total_items_produced = 2;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  portwhine.v1.WorkerStatus status = 1;
+}

@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package portwhine.trigger.v1;
+
+option go_package = "github.com/portwhine/portwhine/gen/go/portwhine/trigger/v1;triggerv1";
+
+import "portwhine/v1/common.proto";
+
+// TriggerService is the contract that every trigger container must implement.
+// The operator acts as the client; the trigger container is the server.
+service TriggerService {
+  // GetCapabilities returns what this trigger can do.
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+
+  // Initialize prepares the trigger with its configuration.
+  rpc Initialize(InitializeRequest) returns (InitializeResponse);
+
+  // Start begins event emission. The trigger streams DataItems to the operator
+  // as events occur (e.g., new CT log entries, webhook calls).
+  rpc Start(StartRequest) returns (stream StartResponse);
+
+  // Stop gracefully stops the trigger.
+  rpc Stop(StopRequest) returns (StopResponse);
+
+  // HealthCheck for liveness/readiness probing.
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+message GetCapabilitiesRequest {}
+
+message GetCapabilitiesResponse {
+  portwhine.v1.TriggerCapability capability = 1;
+}
+
+message InitializeRequest {
+  portwhine.v1.StageConfig config = 1;
+}
+
+message InitializeResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message StartRequest {
+  string pipeline_run_id = 1;
+}
+
+// StartResponse is streamed from trigger to operator.
+message StartResponse {
+  oneof payload {
+    // A produced data item from the trigger.
+    portwhine.v1.DataItem item = 1;
+    // Periodic heartbeat from the trigger.
+    TriggerHeartbeat heartbeat = 2;
+    // Error encountered by the trigger.
+    TriggerError error = 3;
+  }
+}
+
+message TriggerHeartbeat {
+  string trigger_id = 1;
+  uint64 events_emitted = 2;
+}
+
+message TriggerError {
+  string error_message = 1;
+  bool fatal = 2;
+}
+
+message StopRequest {
+  uint32 timeout_seconds = 1;
+}
+
+message StopResponse {
+  uint64 total_events_emitted = 1;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  bool healthy = 1;
+}

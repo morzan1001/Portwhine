@@ -1,0 +1,17 @@
+version: v2
+plugins:
+  # Go backend generation
+  - remote: buf.build/protocolbuffers/go
+    out: backend/gen/go
+    opt:
+      - paths=source_relative
+  - remote: buf.build/connectrpc/go
+    out: backend/gen/go
+    opt:
+      - paths=source_relative
+
+  # TypeScript frontend generation (Vite) - Connect-ES v2
+  - local: protoc-gen-es
+    out: frontend/src/gen
+    opt:
+      - target=ts
