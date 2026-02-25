@@ -3,29 +3,25 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
-	"os/signal"
 	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"time"
 
 	"connectrpc.com/connect"
 	certstream "github.com/CaliDog/certstream-go"
 	"github.com/google/uuid"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	portwhinev1 "github.com/portwhine/portwhine/gen/go/portwhine/v1"
 	triggerv1 "github.com/portwhine/portwhine/gen/go/portwhine/trigger/v1"
 	"github.com/portwhine/portwhine/gen/go/portwhine/trigger/v1/triggerv1connect"
+	"github.com/portwhine/portwhine/pkg/server"
 )
 
 // triggerHandler implements the TriggerServiceHandler interface.
@@ -56,26 +52,7 @@ func main() {
 	path, h := triggerv1connect.NewTriggerServiceHandler(handler)
 	mux.Handle(path, h)
 
-	srv := &http.Server{
-		Addr:              ":50051",
-		Handler:           h2c.NewHandler(mux, &http2.Server{}),
-		ReadHeaderTimeout: 10 * time.Second,
-	}
-
-	go func() {
-		slog.Info("certstream trigger listening", "addr", ":50051")
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server error: %v", err)
-		}
-	}()
-
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-	<-sigCh
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	_ = srv.Shutdown(ctx)
+	server.MustListenAndServe(mux)
 }
 
 func (h *triggerHandler) GetCapabilities(_ context.Context, _ *connect.Request[triggerv1.GetCapabilitiesRequest]) (*connect.Response[triggerv1.GetCapabilitiesResponse], error) {
