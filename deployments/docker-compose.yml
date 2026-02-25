@@ -33,7 +33,7 @@ services:
       PW_SERVER_OPERATOR_ADDRESS: "portwhine-operator:50051"
       PW_RUNTIME_TYPE: docker
       PW_RUNTIME_DOCKER_NETWORK: portwhine_portwhine
-      PW_DATABASE_HOST: portwhine-db
+      PW_DATABASE_HOST: db
       PW_DATABASE_PORT: "5432"
       PW_DATABASE_NAME: portwhine
       PW_DATABASE_USER: portwhine
