@@ -1,0 +1,47 @@
+name: Backend
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**"]
+  pull_request:
+    branches: [main]
+    paths: ["backend/**"]
+
+jobs:
+  test:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/**/go.sum
+
+      - name: Run tests
+        working-directory: backend
+        run: go test -race -count=1 ./...
+
+      - name: Build operator
+        working-directory: backend
+        run: go build ./...
+
+      - name: Build workers & triggers
+        working-directory: backend
+        run: |
+          for dir in workers/*/; do
+            echo "Building $dir..."
+            (cd "$dir" && go build .)
+          done
+          for dir in triggers/*/; do
+            echo "Building $dir..."
+            (cd "$dir" && go build .)
+          done
+
+      - name: Vet
+        working-directory: backend
+        run: go vet ./...
