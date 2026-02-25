@@ -159,18 +159,19 @@ func NewTriggerClientFactory(logger *slog.Logger) pipeline.TriggerClientFactory 
 // ConnectRPC-based trigger clients with mTLS. Certificates are provided per-call
 // because they are ephemeral and change per pipeline run.
 func NewTLSTriggerClientFactory(logger *slog.Logger) pipeline.TLSTriggerClientFactory {
-	return func(address string, caCert, cert, key []byte) (pipeline.TriggerClient, error) {
-		return NewTLSClient(address, caCert, cert, key, logger)
+	return func(address, serverName string, caCert, cert, key []byte) (pipeline.TriggerClient, error) {
+		return NewTLSClient(address, serverName, caCert, cert, key, logger)
 	}
 }
 
 // NewTLSClient creates a new trigger Client that connects using mTLS.
-func NewTLSClient(address string, caCert, clientCert, clientKey []byte, logger *slog.Logger) (*Client, error) {
+// serverName is the container's DNS name used for TLS certificate verification.
+func NewTLSClient(address, serverName string, caCert, clientCert, clientKey []byte, logger *slog.Logger) (*Client, error) {
 	if address == "" {
 		return nil, errors.New("trigger address must not be empty")
 	}
 
-	tlsCfg, err := buildMTLSClientConfig(caCert, clientCert, clientKey)
+	tlsCfg, err := buildMTLSClientConfig(caCert, clientCert, clientKey, serverName)
 	if err != nil {
 		return nil, fmt.Errorf("build mTLS config: %w", err)
 	}
@@ -192,7 +193,7 @@ func NewTLSClient(address string, caCert, clientCert, clientKey []byte, logger *
 	}, nil
 }
 
-func buildMTLSClientConfig(caCert, clientCert, clientKey []byte) (*tls.Config, error) {
+func buildMTLSClientConfig(caCert, clientCert, clientKey []byte, serverName string) (*tls.Config, error) {
 	cert, err := tls.X509KeyPair(clientCert, clientKey)
 	if err != nil {
 		return nil, fmt.Errorf("parse client key pair: %w", err)
@@ -206,6 +207,7 @@ func buildMTLSClientConfig(caCert, clientCert, clientKey []byte) (*tls.Config, e
 	return &tls.Config{
 		Certificates: []tls.Certificate{cert},
 		RootCAs:      caPool,
+		ServerName:   serverName,
 		MinVersion:   tls.VersionTLS13,
 	}, nil
 }

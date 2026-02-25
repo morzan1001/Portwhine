@@ -33,6 +33,7 @@ jobs:
       - name: Build workers & triggers
         working-directory: backend
         run: |
+          shopt -s nullglob
           for dir in workers/*/; do
             echo "Building $dir..."
             (cd "$dir" && go build .)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -48,10 +49,12 @@ type WorkerClientFactory func(address string) (WorkerClient, error)
 type TriggerClientFactory func(address string) (TriggerClient, error)
 
 // TLSWorkerClientFactory creates a mTLS-enabled WorkerClient using per-run certificates.
-type TLSWorkerClientFactory func(address string, caCert, cert, key []byte) (WorkerClient, error)
+// serverName is the container's DNS name used for TLS certificate verification.
+type TLSWorkerClientFactory func(address, serverName string, caCert, cert, key []byte) (WorkerClient, error)
 
 // TLSTriggerClientFactory creates a mTLS-enabled TriggerClient using per-run certificates.
-type TLSTriggerClientFactory func(address string, caCert, cert, key []byte) (TriggerClient, error)
+// serverName is the container's DNS name used for TLS certificate verification.
+type TLSTriggerClientFactory func(address, serverName string, caCert, cert, key []byte) (TriggerClient, error)
 
 // EngineMetrics is an optional interface for recording pipeline execution
 // metrics (e.g. Prometheus counters/histograms). The pipeline package does not
@@ -769,9 +772,10 @@ func (e *Engine) runTriggerStage(ctx context.Context, state *runState, nodeID st
 			return fmt.Errorf("resolve trigger container address: %w", err)
 		}
 		stageConfig := e.buildStageConfig(state.run.ID, nodeID, node)
+		serverName := fmt.Sprintf("portwhine-%s-%s", state.run.ID[:8], nodeID)
 
 		triggerClient, err := connectWithBackoff(ctx, nodeID, e.logger, func() (TriggerClient, error) {
-			return e.createTriggerClient(state, containerAddr)
+			return e.createTriggerClient(state, containerAddr, serverName)
 		}, func(c TriggerClient) error {
 			return c.Initialize(ctx, stageConfig)
 		})
@@ -841,10 +845,11 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 
 	stage := state.stages[nodeID]
 
+	var replicaErrors []error
+	var replicaErrMu sync.Mutex
+
 	if e.workerClientFactory != nil {
 		var replicaWg sync.WaitGroup
-		var replicaErrors []error
-		var replicaErrMu sync.Mutex
 
 		for r := 0; r < replicas; r++ {
 			replicaID := fmt.Sprintf("%s-r%d", nodeID, r)
@@ -867,8 +872,10 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 				state.mu.Unlock()
 			}
 
+			serverName := fmt.Sprintf("portwhine-%s-%s", state.run.ID[:8], containerName)
+
 			replicaWg.Add(1)
-			go func(replicaID string, containerID runtime.ContainerID) {
+			go func(replicaID, serverName string, containerID runtime.ContainerID) {
 				defer replicaWg.Done()
 				defer e.cleanupContainer(ctx, containerID, replicaID)
 
@@ -878,10 +885,9 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 				}
 				containerAddr, err := e.containerAddress(ctx, state.run.ID, addrNodeID, containerID)
 				if err != nil {
-					e.logger.Error("failed to resolve container address",
-						slog.String("replica_id", replicaID),
-						slog.Any("error", err),
-					)
+					replicaErrMu.Lock()
+					replicaErrors = append(replicaErrors, fmt.Errorf("resolve address for %s: %w", replicaID, err))
+					replicaErrMu.Unlock()
 					return
 				}
 
@@ -891,6 +897,7 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 					runID:         state.run.ID,
 					node:          node,
 					containerAddr: containerAddr,
+					serverName:    serverName,
 					stage:         stage,
 					state:         state,
 					inputCh:       inputCh,
@@ -900,7 +907,7 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 					replicaErrors = append(replicaErrors, err)
 					replicaErrMu.Unlock()
 				}
-			}(replicaID, containerID)
+			}(replicaID, serverName, containerID)
 		}
 
 		// Wait for all replicas to finish, then close the merged output channel.
@@ -930,6 +937,14 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 	}
 
 	e.persistStageMetrics(ctx, state, nodeID)
+
+	// Check for replica errors after all output is drained.
+	if len(replicaErrors) > 0 {
+		e.updateStageStatus(state, nodeID, "failed")
+		_ = e.updateStepResult(ctx, state.run.ID, nodeID, "failed")
+		return fmt.Errorf("worker stage %s failed: %w", nodeID, errors.Join(replicaErrors...))
+	}
+
 	e.updateStageStatus(state, nodeID, "completed")
 	return e.updateStepResult(ctx, state.run.ID, nodeID, "completed")
 }
@@ -944,6 +959,7 @@ type replicaParams struct {
 	runID         string
 	node          *portwhinev1.PipelineNode
 	containerAddr string
+	serverName    string // container DNS name for TLS verification
 	stage         *StageRunner
 	state         *runState
 	inputCh       <-chan *portwhinev1.DataItem
@@ -954,7 +970,7 @@ func (e *Engine) runWorkerReplica(ctx context.Context, p replicaParams) error {
 	stageConfig := e.buildStageConfig(p.runID, p.nodeID, p.node)
 
 	workerClient, err := connectWithBackoff(ctx, p.replicaID, e.logger, func() (WorkerClient, error) {
-		return e.createWorkerClient(p.state, p.containerAddr)
+		return e.createWorkerClient(p.state, p.containerAddr, p.serverName)
 	}, func(c WorkerClient) error {
 		return c.Initialize(ctx, stageConfig)
 	})
@@ -1039,15 +1055,17 @@ func (e *Engine) runOutputStage(ctx context.Context, state *runState, nodeID str
 		defer e.cleanupContainer(ctx, containerID, nodeID)
 
 		outputCh := make(chan *portwhinev1.DataItem, channelCapacity)
+		serverName := fmt.Sprintf("portwhine-%s-%s", state.run.ID[:8], nodeID)
 
+		// outputErr captures errors from the goroutine. It is written before
+		// outputCh is closed and read after outputCh is drained, so the
+		// channel close provides a happens-before guarantee.
+		var outputErr error
 		go func() {
 			defer close(outputCh)
 			containerAddr, err := e.containerAddress(ctx, state.run.ID, nodeID, containerID)
 			if err != nil {
-				e.logger.Error("failed to resolve output container address",
-					slog.String("node_id", nodeID),
-					slog.Any("error", err),
-				)
+				outputErr = fmt.Errorf("resolve output container address: %w", err)
 				return
 			}
 			if err := e.runWorkerReplica(ctx, replicaParams{
@@ -1056,15 +1074,13 @@ func (e *Engine) runOutputStage(ctx context.Context, state *runState, nodeID str
 				runID:         state.run.ID,
 				node:          node,
 				containerAddr: containerAddr,
+				serverName:    serverName,
 				stage:         stage,
 				state:         state,
 				inputCh:       inputCh,
 				outputCh:      outputCh,
 			}); err != nil {
-				e.logger.Error("output container failed",
-					slog.String("node_id", nodeID),
-					slog.Any("error", err),
-				)
+				outputErr = fmt.Errorf("output container failed: %w", err)
 			}
 		}()
 
@@ -1072,6 +1088,12 @@ func (e *Engine) runOutputStage(ctx context.Context, state *runState, nodeID str
 		for item := range outputCh {
 			stage.ItemsOut.Add(1)
 			e.persistAndPublish(ctx, state, nodeID, item)
+		}
+
+		if outputErr != nil {
+			e.updateStageStatus(state, nodeID, "failed")
+			_ = e.updateStepResult(ctx, state.run.ID, nodeID, "failed")
+			return outputErr
 		}
 	} else {
 		// Legacy drain-only behaviour for output nodes without an image.
@@ -1169,21 +1191,23 @@ func (e *Engine) startContainer(ctx context.Context, state *runState, nodeID str
 func (e *Engine) injectTLSCerts(state *runState, containerName string, env map[string]string) error {
 	state.mu.Lock()
 	// Lazily generate the run CA and operator client cert once per pipeline run.
+	// Write to local variables first and assign atomically so that a failure
+	// in GenerateNodeCert does not leave state half-initialized.
 	if state.tlsCACert == nil {
 		caCert, caKey, err := certs.GenerateRunCA(state.run.ID)
 		if err != nil {
 			state.mu.Unlock()
 			return fmt.Errorf("generate run CA: %w", err)
 		}
-		state.tlsCACert = caCert
-		state.tlsCAKey = caKey
 
-		// Generate an operator-side client cert for connecting to containers.
 		opCert, opKey, err := certs.GenerateNodeCert(caCert, caKey, "portwhine-operator")
 		if err != nil {
 			state.mu.Unlock()
 			return fmt.Errorf("generate operator cert: %w", err)
 		}
+
+		state.tlsCACert = caCert
+		state.tlsCAKey = caKey
 		state.tlsOperatorCert = opCert
 		state.tlsOperatorKey = opKey
 	}
@@ -1205,17 +1229,29 @@ func (e *Engine) injectTLSCerts(state *runState, containerName string, env map[s
 }
 
 // createWorkerClient creates a WorkerClient, using mTLS when the run has TLS certs.
-func (e *Engine) createWorkerClient(state *runState, address string) (WorkerClient, error) {
-	if state != nil && state.tlsCACert != nil && e.tlsWorkerClientFactory != nil {
-		return e.tlsWorkerClientFactory(address, state.tlsCACert, state.tlsOperatorCert, state.tlsOperatorKey)
+// serverName is the container's DNS name used for TLS certificate verification.
+func (e *Engine) createWorkerClient(state *runState, address, serverName string) (WorkerClient, error) {
+	if state != nil && state.tlsCACert != nil {
+		if e.tlsWorkerClientFactory == nil {
+			e.logger.Warn("TLS certs available but no TLS worker client factory configured, falling back to plaintext",
+				slog.String("address", address))
+		} else {
+			return e.tlsWorkerClientFactory(address, serverName, state.tlsCACert, state.tlsOperatorCert, state.tlsOperatorKey)
+		}
 	}
 	return e.workerClientFactory(address)
 }
 
 // createTriggerClient creates a TriggerClient, using mTLS when the run has TLS certs.
-func (e *Engine) createTriggerClient(state *runState, address string) (TriggerClient, error) {
-	if state != nil && state.tlsCACert != nil && e.tlsTriggerClientFactory != nil {
-		return e.tlsTriggerClientFactory(address, state.tlsCACert, state.tlsOperatorCert, state.tlsOperatorKey)
+// serverName is the container's DNS name used for TLS certificate verification.
+func (e *Engine) createTriggerClient(state *runState, address, serverName string) (TriggerClient, error) {
+	if state != nil && state.tlsCACert != nil {
+		if e.tlsTriggerClientFactory == nil {
+			e.logger.Warn("TLS certs available but no TLS trigger client factory configured, falling back to plaintext",
+				slog.String("address", address))
+		} else {
+			return e.tlsTriggerClientFactory(address, serverName, state.tlsCACert, state.tlsOperatorCert, state.tlsOperatorKey)
+		}
 	}
 	return e.triggerClientFactory(address)
 }
