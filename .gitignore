@@ -35,15 +35,15 @@ Thumbs.db
 dist/
 
 # Go built binaries in worker/trigger directories
-backend/workers/*/[a-z]*
-!backend/workers/*/main.go
+backend/workers/*/*
 !backend/workers/*/*.go
-!backend/workers/*/go.*
+!backend/workers/*/go.mod
+!backend/workers/*/go.sum
 !backend/workers/*/Dockerfile
-backend/triggers/*/[a-z]*
-!backend/triggers/*/main.go
+backend/triggers/*/*
 !backend/triggers/*/*.go
-!backend/triggers/*/go.*
+!backend/triggers/*/go.mod
+!backend/triggers/*/go.sum
 !backend/triggers/*/Dockerfile
 
 node_modules/
