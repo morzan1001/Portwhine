@@ -24,7 +24,14 @@ jobs:
 
       - name: Run tests
         working-directory: backend
-        run: go test -race -count=1 ./...
+        run: |
+          echo "Testing root module..."
+          go test -race -count=1 ./...
+          shopt -s nullglob
+          for dir in workers/*/ triggers/*/; do
+            echo "Testing $dir..."
+            (cd "$dir" && go test -race -count=1 ./...)
+          done
 
       - name: Build operator
         working-directory: backend
@@ -45,4 +52,11 @@ jobs:
 
       - name: Vet
         working-directory: backend
-        run: go vet ./...
+        run: |
+          echo "Vetting root module..."
+          go vet ./...
+          shopt -s nullglob
+          for dir in workers/*/ triggers/*/; do
+            echo "Vetting $dir..."
+            (cd "$dir" && go vet ./...)
+          done
