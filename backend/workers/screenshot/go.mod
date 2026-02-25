@@ -7,7 +7,7 @@ require (
 	github.com/chromedp/chromedp v0.13.6
 	github.com/google/uuid v1.6.0
 	github.com/portwhine/portwhine v0.0.0
-	golang.org/x/net v0.49.0
+	golang.org/x/net v0.50.0
 	google.golang.org/protobuf v1.36.11
 )
 
@@ -18,8 +18,8 @@ require (
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
-	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/text v0.33.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
 )
 
 replace github.com/portwhine/portwhine => ../..
