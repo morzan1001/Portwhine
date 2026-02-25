@@ -7,7 +7,7 @@ COPY backend/go.mod backend/go.sum ./
 COPY backend/gen/ ./gen/
 
 # Copy trigger module
-COPY backend/triggers/ipaddress/go.mod triggers/ipaddress/go.sum ./triggers/ipaddress/
+COPY backend/triggers/ipaddress/go.mod backend/triggers/ipaddress/go.sum ./triggers/ipaddress/
 
 WORKDIR /app/triggers/ipaddress
 RUN go mod download

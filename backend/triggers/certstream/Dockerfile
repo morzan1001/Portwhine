@@ -7,7 +7,7 @@ COPY backend/go.mod backend/go.sum ./
 COPY backend/gen/ ./gen/
 
 # Copy trigger module
-COPY backend/triggers/certstream/go.mod triggers/certstream/go.sum ./triggers/certstream/
+COPY backend/triggers/certstream/go.mod backend/triggers/certstream/go.sum ./triggers/certstream/
 
 WORKDIR /app/triggers/certstream
 RUN go mod download

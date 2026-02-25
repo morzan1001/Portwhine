@@ -7,7 +7,7 @@ COPY backend/go.mod backend/go.sum ./
 COPY backend/gen/ ./gen/
 
 # Copy worker module
-COPY backend/workers/webanalyzer/go.mod workers/webanalyzer/go.sum ./workers/webanalyzer/
+COPY backend/workers/webanalyzer/go.mod backend/workers/webanalyzer/go.sum ./workers/webanalyzer/
 
 WORKDIR /app/workers/webanalyzer
 RUN go mod download

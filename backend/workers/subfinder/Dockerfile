@@ -2,7 +2,7 @@ FROM golang:1.25-alpine AS builder
 WORKDIR /app
 COPY backend/go.mod backend/go.sum ./
 COPY backend/gen/ ./gen/
-COPY backend/workers/subfinder/go.mod workers/subfinder/go.sum ./workers/subfinder/
+COPY backend/workers/subfinder/go.mod backend/workers/subfinder/go.sum ./workers/subfinder/
 WORKDIR /app/workers/subfinder
 RUN go mod download
 COPY backend/workers/subfinder/ ./

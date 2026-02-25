@@ -2,7 +2,7 @@ FROM golang:1.25-alpine AS builder
 WORKDIR /app
 COPY backend/go.mod backend/go.sum ./
 COPY backend/gen/ ./gen/
-COPY backend/workers/nikto/go.mod workers/nikto/go.sum ./workers/nikto/
+COPY backend/workers/nikto/go.mod backend/workers/nikto/go.sum ./workers/nikto/
 WORKDIR /app/workers/nikto
 RUN go mod download
 COPY backend/workers/nikto/ ./

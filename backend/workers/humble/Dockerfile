@@ -7,7 +7,7 @@ COPY backend/go.mod backend/go.sum ./
 COPY backend/gen/ ./gen/
 
 # Copy worker module
-COPY backend/workers/humble/go.mod workers/humble/go.sum ./workers/humble/
+COPY backend/workers/humble/go.mod backend/workers/humble/go.sum ./workers/humble/
 
 WORKDIR /app/workers/humble
 RUN go mod download

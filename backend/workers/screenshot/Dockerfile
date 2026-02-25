@@ -8,7 +8,7 @@ COPY backend/gen/ ./gen/
 COPY backend/pkg/ ./pkg/
 
 # Copy worker module
-COPY backend/workers/screenshot/go.mod workers/screenshot/go.sum ./workers/screenshot/
+COPY backend/workers/screenshot/go.mod backend/workers/screenshot/go.sum ./workers/screenshot/
 
 WORKDIR /app/workers/screenshot
 RUN go mod download

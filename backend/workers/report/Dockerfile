@@ -7,7 +7,7 @@ COPY backend/go.mod backend/go.sum ./
 COPY backend/gen/ ./gen/
 
 # Copy worker module
-COPY backend/workers/report/go.mod workers/report/go.sum ./workers/report/
+COPY backend/workers/report/go.mod backend/workers/report/go.sum ./workers/report/
 
 WORKDIR /app/workers/report
 RUN go mod download

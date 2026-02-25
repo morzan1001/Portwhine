@@ -3,7 +3,7 @@ WORKDIR /app
 COPY backend/go.mod backend/go.sum ./
 COPY backend/gen/ ./gen/
 COPY backend/pkg/ ./pkg/
-COPY backend/workers/ssh-audit/go.mod workers/ssh-audit/go.sum ./workers/ssh-audit/
+COPY backend/workers/ssh-audit/go.mod backend/workers/ssh-audit/go.sum ./workers/ssh-audit/
 WORKDIR /app/workers/ssh-audit
 RUN go mod download
 COPY backend/workers/ssh-audit/ ./

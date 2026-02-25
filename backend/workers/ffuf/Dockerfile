@@ -3,7 +3,7 @@ WORKDIR /app
 COPY backend/go.mod backend/go.sum ./
 COPY backend/gen/ ./gen/
 COPY backend/pkg/ ./pkg/
-COPY backend/workers/ffuf/go.mod workers/ffuf/go.sum ./workers/ffuf/
+COPY backend/workers/ffuf/go.mod backend/workers/ffuf/go.sum ./workers/ffuf/
 WORKDIR /app/workers/ffuf
 RUN go mod download
 COPY backend/workers/ffuf/ ./

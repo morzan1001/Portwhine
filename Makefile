@@ -2,7 +2,7 @@
 
 # Proto generation
 proto:
-	buf generate
+	PATH="frontend/node_modules/.bin:$$PATH" buf generate
 
 # Lint proto files
 proto-lint:
