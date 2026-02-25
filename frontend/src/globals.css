@@ -78,3 +78,50 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* ReactFlow theme overrides */
+.react-flow__controls {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.react-flow__controls-button {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+  fill: hsl(var(--foreground));
+  color: hsl(var(--foreground));
+}
+
+.react-flow__controls-button:hover {
+  background: hsl(var(--accent));
+}
+
+.react-flow__minimap {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+  border-radius: var(--radius);
+}
+
+.react-flow__minimap-mask {
+  fill: hsl(var(--background));
+  opacity: 0.6;
+}
+
+.react-flow__minimap-node {
+  fill: hsl(var(--muted));
+  stroke: hsl(var(--border));
+}
+
+.react-flow__background {
+  background-color: hsl(var(--background));
+}
+
+.react-flow__attribution {
+  background: hsl(var(--card) / 0.7);
+}
+
+.react-flow__attribution a {
+  color: hsl(var(--muted-foreground));
+}
