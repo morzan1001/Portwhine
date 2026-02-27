@@ -123,6 +123,22 @@ type Config struct {
 // DockerConfig holds Docker-specific settings.
 type DockerConfig struct {
 	NetworkName string
+	Host        string          // Remote Docker daemon address (empty = local socket)
+	TLS         DockerTLSConfig // TLS settings for remote daemon connection
+}
+
+// DockerTLSConfig holds TLS certificate paths for connecting to a remote Docker daemon.
+type DockerTLSConfig struct {
+	CACert string // Path to CA certificate
+	Cert   string // Path to client certificate
+	Key    string // Path to client key
+}
+
+// RemoteAddressResolver is optionally implemented by runtimes that need
+// IP-based container addressing instead of DNS-based resolution.
+type RemoteAddressResolver interface {
+	ContainerAddress(ctx context.Context, id ContainerID) (string, error)
+	IsRemote() bool
 }
 
 // KubernetesConfig holds Kubernetes-specific settings.

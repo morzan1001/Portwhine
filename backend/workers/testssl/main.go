@@ -6,22 +6,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
-	"os/signal"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -29,6 +24,7 @@ import (
 	workerv1 "github.com/portwhine/portwhine/gen/go/portwhine/worker/v1"
 	"github.com/portwhine/portwhine/gen/go/portwhine/worker/v1/workerv1connect"
 	"github.com/portwhine/portwhine/pkg/dataitem"
+	"github.com/portwhine/portwhine/pkg/server"
 )
 
 // testsslFinding represents a single finding from testssl.sh JSON output.
@@ -78,26 +74,7 @@ func main() {
 	path, h := workerv1connect.NewWorkerServiceHandler(handler)
 	mux.Handle(path, h)
 
-	srv := &http.Server{
-		Addr:              ":50051",
-		Handler:           h2c.NewHandler(mux, &http2.Server{}),
-		ReadHeaderTimeout: 10 * time.Second,
-	}
-
-	go func() {
-		slog.Info("testssl worker listening", "addr", ":50051")
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server error: %v", err)
-		}
-	}()
-
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-	<-sigCh
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	_ = srv.Shutdown(ctx)
+	server.MustListenAndServe(mux)
 }
 
 func (h *workerHandler) GetCapabilities(_ context.Context, _ *connect.Request[workerv1.GetCapabilitiesRequest]) (*connect.Response[workerv1.GetCapabilitiesResponse], error) {

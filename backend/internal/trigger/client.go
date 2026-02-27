@@ -3,11 +3,13 @@ package trigger
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
+	"strings"
 
 	"golang.org/x/net/http2"
 
@@ -151,4 +153,61 @@ func NewTriggerClientFactory(logger *slog.Logger) pipeline.TriggerClientFactory 
 	return func(address string) (pipeline.TriggerClient, error) {
 		return NewClient(address, logger)
 	}
+}
+
+// NewTLSTriggerClientFactory returns a pipeline.TLSTriggerClientFactory that creates
+// ConnectRPC-based trigger clients with mTLS. Certificates are provided per-call
+// because they are ephemeral and change per pipeline run.
+func NewTLSTriggerClientFactory(logger *slog.Logger) pipeline.TLSTriggerClientFactory {
+	return func(address, serverName string, caCert, cert, key []byte) (pipeline.TriggerClient, error) {
+		return NewTLSClient(address, serverName, caCert, cert, key, logger)
+	}
+}
+
+// NewTLSClient creates a new trigger Client that connects using mTLS.
+// serverName is the container's DNS name used for TLS certificate verification.
+func NewTLSClient(address, serverName string, caCert, clientCert, clientKey []byte, logger *slog.Logger) (*Client, error) {
+	if address == "" {
+		return nil, errors.New("trigger address must not be empty")
+	}
+
+	tlsCfg, err := buildMTLSClientConfig(caCert, clientCert, clientKey, serverName)
+	if err != nil {
+		return nil, fmt.Errorf("build mTLS config: %w", err)
+	}
+
+	// Replace http:// with https:// for TLS.
+	address = strings.Replace(address, "http://", "https://", 1)
+
+	httpClient := &http.Client{
+		Transport: &http2.Transport{
+			TLSClientConfig: tlsCfg,
+		},
+	}
+
+	rpcClient := triggerv1connect.NewTriggerServiceClient(httpClient, address)
+
+	return &Client{
+		rpc:    rpcClient,
+		logger: logger,
+	}, nil
+}
+
+func buildMTLSClientConfig(caCert, clientCert, clientKey []byte, serverName string) (*tls.Config, error) {
+	cert, err := tls.X509KeyPair(clientCert, clientKey)
+	if err != nil {
+		return nil, fmt.Errorf("parse client key pair: %w", err)
+	}
+
+	caPool := x509.NewCertPool()
+	if !caPool.AppendCertsFromPEM(caCert) {
+		return nil, fmt.Errorf("failed to add CA cert to pool")
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		RootCAs:      caPool,
+		ServerName:   serverName,
+		MinVersion:   tls.VersionTLS13,
+	}, nil
 }
