@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   useTeams,
   useCreateTeam,
@@ -360,11 +360,13 @@ function TeamDetailPanel({
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null)
 
   // Reset when team changes
-  useEffect(() => {
+  const [trackedTeamId, setTrackedTeamId] = useState(team.id)
+  if (trackedTeamId !== team.id) {
+    setTrackedTeamId(team.id)
     setEditName(team.name)
     setEditDescription(team.description)
     setHasChanges(false)
-  }, [team.id, team.name, team.description])
+  }
 
   const handleSave = () => {
     updateMutation.mutate(

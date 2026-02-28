@@ -66,7 +66,7 @@ export function LoginPage() {
       toast.success('Login successful!')
       navigate('/dashboard')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Login failed. Please check your credentials.')
     },
   })

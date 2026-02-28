@@ -130,7 +130,7 @@ export function PipelineEditPage() {
       queryClient.invalidateQueries({ queryKey: ['pipelines'] })
       toast.success('Pipeline saved')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to save pipeline')
     },
   })

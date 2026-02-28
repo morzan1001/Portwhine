@@ -23,12 +23,14 @@ describe('timestampToDate', () => {
 
   it('converts a timestamp with bigint seconds', () => {
     const ts = { seconds: BigInt(1700000000), nanos: 0 }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = timestampToDate(ts as any)
     expect(result).toEqual(new Date(1700000000 * 1000))
   })
 
   it('converts a timestamp with number seconds', () => {
     const ts = { seconds: 1700000000, nanos: 500_000_000 }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = timestampToDate(ts as any)
     expect(result).toEqual(new Date(1700000000 * 1000 + 500))
   })

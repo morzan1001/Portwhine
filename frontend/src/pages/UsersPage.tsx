@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   useUsers,
   useCreateUser,
@@ -398,14 +398,16 @@ function UserDetailPanel({
   const [grantAction, setGrantAction] = useState('*')
 
   // Reset form when user changes
-  useEffect(() => {
+  const [trackedUserId, setTrackedUserId] = useState(user.id)
+  if (trackedUserId !== user.id) {
+    setTrackedUserId(user.id)
     setEditRole(user.role)
     setEditEmail(user.email)
     setEditActive(user.isActive)
     setHasChanges(false)
-  }, [user.id, user.role, user.email, user.isActive])
+  }
 
-  const handleFieldChange = (setter: (v: any) => void, value: any) => {
+  const handleFieldChange = <T,>(setter: (v: T) => void, value: T) => {
     setter(value)
     setHasChanges(true)
   }

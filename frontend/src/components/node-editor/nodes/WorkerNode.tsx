@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import React, { memo } from 'react'
 import { Handle, Position, type NodeProps } from 'reactflow'
 import type { ReactFlowNodeData } from '@/lib/node-editor/conversions'
 import { getNodeIcon } from '@/lib/node-editor/icons'
@@ -14,7 +14,6 @@ function handleTop(index: number) {
 }
 
 export const WorkerNode = memo(({ data, selected }: NodeProps<ReactFlowNodeData>) => {
-  const Icon = getNodeIcon(data.icon)
   const color = data.color || 'hsl(var(--secondary))'
   const inputs = data.acceptedInputTypes || []
   const outputs = data.outputTypes || []
@@ -41,7 +40,7 @@ export const WorkerNode = memo(({ data, selected }: NodeProps<ReactFlowNodeData>
           className="flex h-6 w-6 items-center justify-center rounded"
           style={{ backgroundColor: `${color}20`, color }}
         >
-          <Icon className="h-3.5 w-3.5" />
+          {React.createElement(getNodeIcon(data.icon), { className: "h-3.5 w-3.5" })}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">

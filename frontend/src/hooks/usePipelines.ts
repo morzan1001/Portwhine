@@ -35,7 +35,7 @@ export function useDeletePipeline() {
       queryClient.invalidateQueries({ queryKey: ['pipelines'] })
       toast.success('Pipeline deleted successfully')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to delete pipeline')
     },
   })

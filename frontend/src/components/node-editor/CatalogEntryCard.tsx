@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import React, { memo } from 'react'
 import type { NodeCatalogEntry } from '@/gen/portwhine/v1/operator_pb'
 import { getNodeIcon } from '@/lib/node-editor/icons'
 import { Badge } from '@/components/ui/badge'
@@ -8,8 +8,6 @@ interface CatalogEntryCardProps {
 }
 
 export const CatalogEntryCard = memo(({ entry }: CatalogEntryCardProps) => {
-  const Icon = getNodeIcon(entry.icon)
-
   const onDragStart = (event: React.DragEvent) => {
     event.dataTransfer.setData('application/portwhine-node', JSON.stringify(entry))
     event.dataTransfer.effectAllowed = 'move'
@@ -26,7 +24,7 @@ export const CatalogEntryCard = memo(({ entry }: CatalogEntryCardProps) => {
         className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
         style={{ backgroundColor: `${entry.color}20`, color: entry.color }}
       >
-        <Icon className="h-4 w-4" />
+        {React.createElement(getNodeIcon(entry.icon), { className: "h-4 w-4" })}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">

@@ -17,7 +17,7 @@ export function useStartPipeline() {
       queryClient.invalidateQueries({ queryKey: ['pipeline-runs'] })
       toast.success(`Pipeline started. Run ID: ${runId}`)
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to start pipeline')
     },
   })
@@ -36,7 +36,7 @@ export function useStopPipeline() {
       queryClient.invalidateQueries({ queryKey: ['pipeline-runs'] })
       toast.success('Pipeline stopped')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to stop pipeline')
     },
   })

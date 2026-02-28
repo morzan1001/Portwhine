@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 interface JsonSchemaProperty {
   type: string
   description?: string
-  default?: any
+  default?: unknown
   items?: { type: string }
 }
 
@@ -19,13 +19,13 @@ interface JsonSchema {
 
 interface JsonSchemaFormProps {
   schema: string
-  values: Record<string, any>
-  onChange: (values: Record<string, any>) => void
+  values: Record<string, unknown>
+  onChange: (values: Record<string, unknown>) => void
 }
 
 export function JsonSchemaForm({ schema, values, onChange }: JsonSchemaFormProps) {
   const handleChange = useCallback(
-    (key: string, value: any) => {
+    (key: string, value: unknown) => {
       onChange({ ...values, [key]: value })
     },
     [values, onChange]

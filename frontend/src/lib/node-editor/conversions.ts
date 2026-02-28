@@ -68,7 +68,7 @@ export function protoToReactFlow(definition: PipelineDefinition): {
   nodes: Node<ReactFlowNodeData>[]
   edges: Edge[]
 } {
-  const nodes: Node<ReactFlowNodeData>[] = (definition.nodes || []).map((node: any) => {
+  const nodes: Node<ReactFlowNodeData>[] = (definition.nodes || []).map((node) => {
     const nodeType =
       node.type === PipelineNodeType.TRIGGER
         ? 'trigger'
@@ -106,7 +106,7 @@ export function protoToReactFlow(definition: PipelineDefinition): {
     }
   })
 
-  const edges: Edge[] = (definition.edges || []).map((edge: any) => ({
+  const edges: Edge[] = (definition.edges || []).map((edge) => ({
     id: edge.id || `${edge.sourceNodeId}-${edge.targetNodeId}`,
     source: edge.sourceNodeId,
     target: edge.targetNodeId,
@@ -122,8 +122,8 @@ export function reactFlowToProto(
   nodes: Node<ReactFlowNodeData>[],
   edges: Edge[]
 ): PipelineDefinition {
-  const pipelineNodes: any[] = nodes.map((node) => {
-    const nodeData: any = {
+  const pipelineNodes = nodes.map((node) => {
+    const nodeData: Record<string, unknown> = {
       id: node.id,
       type: node.data.type,
       label: node.data.label,
@@ -154,7 +154,7 @@ export function reactFlowToProto(
     return create(PipelineNodeSchema, nodeData)
   })
 
-  const pipelineEdges: any[] = edges.map((edge) =>
+  const pipelineEdges = edges.map((edge) =>
     create(PipelineEdgeSchema, {
       id: edge.id,
       sourceNodeId: edge.source,

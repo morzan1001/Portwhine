@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -66,7 +66,7 @@ export function NodeConfigDialog({
   onDelete,
   runId,
 }: NodeConfigDialogProps) {
-  const [configValues, setConfigValues] = useState<Record<string, any>>({})
+  const [configValues, setConfigValues] = useState<Record<string, unknown>>({})
   const [rawConfig, setRawConfig] = useState('{}')
   const hasSchema = !!nodeData?.configSchema
   const hasLogs = !!runId && !!nodeData
@@ -90,26 +90,25 @@ export function NodeConfigDialog({
     },
   })
 
-  useEffect(() => {
-    if (nodeData) {
-      form.reset({
-        label: nodeData.label || '',
-        replicas: nodeData.replicas || 1,
-        inputFilterType: nodeData.inputFilter?.type || '',
-        inputFilterCondition: nodeData.inputFilter?.condition || '',
-        retryMaxRetries: nodeData.retryPolicy?.maxRetries || 3,
-        retryInitialBackoff: nodeData.retryPolicy?.initialBackoffSeconds || 1,
-        retryMaxBackoff: nodeData.retryPolicy?.maxBackoffSeconds || 60,
-      })
-
-      const cfg = (nodeData.config || {}) as Record<string, any>
-      setConfigValues(cfg)
-      setRawConfig(JSON.stringify(cfg, null, 2))
-    }
-  }, [nodeData, form])
+  const [prevNodeId, setPrevNodeId] = useState<string | null>(null)
+  if (nodeData && nodeData.id !== prevNodeId) {
+    setPrevNodeId(nodeData.id)
+    form.reset({
+      label: nodeData.label || '',
+      replicas: nodeData.replicas || 1,
+      inputFilterType: nodeData.inputFilter?.type || '',
+      inputFilterCondition: nodeData.inputFilter?.condition || '',
+      retryMaxRetries: nodeData.retryPolicy?.maxRetries || 3,
+      retryInitialBackoff: nodeData.retryPolicy?.initialBackoffSeconds || 1,
+      retryMaxBackoff: nodeData.retryPolicy?.maxBackoffSeconds || 60,
+    })
+    const cfg = (nodeData.config || {}) as Record<string, unknown>
+    setConfigValues(cfg)
+    setRawConfig(JSON.stringify(cfg, null, 2))
+  }
 
   const handleSubmit = (data: NodeConfigForm) => {
-    let config: Record<string, any>
+    let config: Record<string, unknown>
     if (hasSchema) {
       config = configValues
     } else {
@@ -148,7 +147,6 @@ export function NodeConfigDialog({
   if (!nodeData) return null
 
   const isWorkerNode = nodeData.type === PipelineNodeType.WORKER
-  const Icon = getNodeIcon(nodeData.icon)
   const tabCount = 2 + (isWorkerNode ? 1 : 0) + (hasLogs ? 1 : 0)
 
   return (
@@ -161,7 +159,7 @@ export function NodeConfigDialog({
                 className="flex h-6 w-6 items-center justify-center rounded"
                 style={{ backgroundColor: `${nodeData.color}20`, color: nodeData.color }}
               >
-                <Icon className="h-3.5 w-3.5" />
+                {React.createElement(getNodeIcon(nodeData.icon), { className: "h-3.5 w-3.5" })}
               </div>
             )}
             Configure {nodeData.label}

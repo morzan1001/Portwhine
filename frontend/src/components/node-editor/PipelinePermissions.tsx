@@ -66,7 +66,7 @@ export function PipelinePermissions({ pipelineId }: PipelinePermissionsProps) {
       setShowAdd(false)
       setSubjectId('')
       setAction('read')
-    } catch (error: any) {
+    } catch (error: Error) {
       toast.error(error.message || 'Failed to grant permission')
     }
   }
@@ -75,7 +75,7 @@ export function PipelinePermissions({ pipelineId }: PipelinePermissionsProps) {
     try {
       await revokePermission.mutateAsync(permissionId)
       toast.success('Permission revoked')
-    } catch (error: any) {
+    } catch (error: Error) {
       toast.error(error.message || 'Failed to revoke permission')
     }
   }

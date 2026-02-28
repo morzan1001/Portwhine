@@ -28,7 +28,7 @@ export function useCreateUser() {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('User created successfully')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to create user')
     },
   })
@@ -45,7 +45,7 @@ export function useDeleteUser() {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('User deleted')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to delete user')
     },
   })
@@ -67,7 +67,7 @@ export function useUpdateUser() {
       queryClient.invalidateQueries({ queryKey: ['users'] })
       toast.success('User updated')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to update user')
     },
   })
@@ -119,7 +119,7 @@ export function useUpdateTeam() {
       queryClient.invalidateQueries({ queryKey: ['teams'] })
       toast.success('Team updated')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to update team')
     },
   })
@@ -136,7 +136,7 @@ export function useDeleteTeam() {
       queryClient.invalidateQueries({ queryKey: ['teams'] })
       toast.success('Team deleted')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to delete team')
     },
   })
@@ -165,7 +165,7 @@ export function useAddTeamMember() {
       queryClient.invalidateQueries({ queryKey: ['teams'] })
       toast.success('Member added')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to add member')
     },
   })
@@ -183,7 +183,7 @@ export function useRemoveTeamMember() {
       queryClient.invalidateQueries({ queryKey: ['teams'] })
       toast.success('Member removed')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to remove member')
     },
   })
@@ -200,7 +200,7 @@ export function useUpdateTeamMemberRole() {
       queryClient.invalidateQueries({ queryKey: ['team-members', variables.teamId] })
       toast.success('Member role updated')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to update member role')
     },
   })
@@ -217,7 +217,7 @@ export function useCreateTeam() {
       queryClient.invalidateQueries({ queryKey: ['teams'] })
       toast.success('Team created successfully')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to create team')
     },
   })

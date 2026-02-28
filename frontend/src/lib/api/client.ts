@@ -13,9 +13,9 @@ const authInterceptor: Interceptor = (next) => async (req) => {
 
   try {
     return await next(req)
-  } catch (error: any) {
+  } catch (error: unknown) {
     // If we get an unauthenticated error, clear auth and rethrow
-    if (error.code === 'unauthenticated') {
+    if ((error as Record<string, unknown>).code === 'unauthenticated') {
       clearAuth()
     }
     throw error

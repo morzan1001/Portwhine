@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -38,12 +38,14 @@ export function PipelineMetadataDialog({
   const [localName, setLocalName] = useState(name)
   const [localDescription, setLocalDescription] = useState(description)
 
-  useEffect(() => {
-    if (open) {
-      setLocalName(name)
-      setLocalDescription(description)
-    }
-  }, [open, name, description])
+  const [prevOpen, setPrevOpen] = useState(false)
+  if (open && !prevOpen) {
+    setLocalName(name)
+    setLocalDescription(description)
+  }
+  if (open !== prevOpen) {
+    setPrevOpen(open)
+  }
 
   const handleSave = () => {
     if (!localName.trim()) return
