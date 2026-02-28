@@ -24,6 +24,13 @@ interface JsonSchemaFormProps {
 }
 
 export function JsonSchemaForm({ schema, values, onChange }: JsonSchemaFormProps) {
+  const handleChange = useCallback(
+    (key: string, value: any) => {
+      onChange({ ...values, [key]: value })
+    },
+    [values, onChange]
+  )
+
   let parsed: JsonSchema
   try {
     parsed = JSON.parse(schema)
@@ -41,13 +48,6 @@ export function JsonSchemaForm({ schema, values, onChange }: JsonSchemaFormProps
 
   const properties = parsed.properties
   const required = new Set(parsed.required || [])
-
-  const handleChange = useCallback(
-    (key: string, value: any) => {
-      onChange({ ...values, [key]: value })
-    },
-    [values, onChange]
-  )
 
   return (
     <div className="space-y-4">

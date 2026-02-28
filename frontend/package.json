@@ -6,6 +6,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
@@ -46,15 +47,21 @@
   },
   "devDependencies": {
     "@bufbuild/protoc-gen-es": "^2.11.0",
+    "@eslint/js": "^9.39.3",
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^25.2.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.4",
     "@vitest/coverage-v8": "^4.0.18",
+    "eslint": "^9.39.3",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.3.0",
     "tailwindcss": "^4.2.1",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
   }
