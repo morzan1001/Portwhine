@@ -48,3 +48,4 @@ backend/triggers/*/*
 
 node_modules/
 .claude/
+coverage/
