@@ -2,7 +2,9 @@ package pipeline
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -14,6 +16,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	portwhinev1 "github.com/portwhine/portwhine/gen/go/portwhine/v1"
+	"github.com/portwhine/portwhine/internal/certs"
 	"github.com/portwhine/portwhine/internal/runtime"
 	"github.com/portwhine/portwhine/internal/store"
 	"gorm.io/datatypes"
@@ -44,6 +47,14 @@ type WorkerClientFactory func(address string) (WorkerClient, error)
 
 // TriggerClientFactory creates a TriggerClient for a given operator address.
 type TriggerClientFactory func(address string) (TriggerClient, error)
+
+// TLSWorkerClientFactory creates a mTLS-enabled WorkerClient using per-run certificates.
+// serverName is the container's DNS name used for TLS certificate verification.
+type TLSWorkerClientFactory func(address, serverName string, caCert, cert, key []byte) (WorkerClient, error)
+
+// TLSTriggerClientFactory creates a mTLS-enabled TriggerClient using per-run certificates.
+// serverName is the container's DNS name used for TLS certificate verification.
+type TLSTriggerClientFactory func(address, serverName string, caCert, cert, key []byte) (TriggerClient, error)
 
 // EngineMetrics is an optional interface for recording pipeline execution
 // metrics (e.g. Prometheus counters/histograms). The pipeline package does not
@@ -106,6 +117,12 @@ type runState struct {
 	cancel       context.CancelFunc
 	done         chan struct{} // closed when the run completes
 
+	// Ephemeral mTLS CA for this run (generated once, reused for all containers).
+	tlsCACert      []byte
+	tlsCAKey       []byte
+	tlsOperatorCert []byte // Operator-side client cert for connecting to containers.
+	tlsOperatorKey  []byte
+
 	// Pause/resume support.
 	pauseCh  chan struct{} // nil = running, non-nil open channel = paused
 	pauseMu  sync.Mutex
@@ -150,13 +167,16 @@ func (s *runState) waitIfPaused(ctx context.Context) error {
 // Engine orchestrates pipeline runs. It manages container lifecycles, data
 // routing between stages, and persistence of run status and results.
 type Engine struct {
-	runtime              runtime.Runtime
-	store                *store.Store
-	logger               *slog.Logger
-	workerClientFactory  WorkerClientFactory
-	triggerClientFactory TriggerClientFactory
-	operatorAddress      string
-	metrics              EngineMetrics
+	runtime                 runtime.Runtime
+	store                   *store.Store
+	logger                  *slog.Logger
+	workerClientFactory     WorkerClientFactory
+	triggerClientFactory    TriggerClientFactory
+	tlsWorkerClientFactory  TLSWorkerClientFactory
+	tlsTriggerClientFactory TLSTriggerClientFactory
+	operatorAddress         string
+	metrics                 EngineMetrics
+	addressResolver         runtime.RemoteAddressResolver
 
 	mu   sync.Mutex
 	runs map[string]*runState
@@ -305,6 +325,24 @@ func (e *Engine) SetOperatorAddress(addr string) {
 // pipeline execution events for monitoring (e.g. Prometheus).
 func (e *Engine) SetMetrics(m EngineMetrics) {
 	e.metrics = m
+}
+
+// SetAddressResolver sets an optional resolver for container addresses.
+// When set, the engine uses it to resolve container addresses instead of
+// DNS-based resolution. This is needed for remote Docker hosts where
+// containers are reached via published ports on the host IP.
+func (e *Engine) SetAddressResolver(r runtime.RemoteAddressResolver) {
+	e.addressResolver = r
+}
+
+// SetTLSWorkerClientFactory sets the factory used to create mTLS-enabled worker clients.
+func (e *Engine) SetTLSWorkerClientFactory(f TLSWorkerClientFactory) {
+	e.tlsWorkerClientFactory = f
+}
+
+// SetTLSTriggerClientFactory sets the factory used to create mTLS-enabled trigger clients.
+func (e *Engine) SetTLSTriggerClientFactory(f TLSTriggerClientFactory) {
+	e.tlsTriggerClientFactory = f
 }
 
 // StartRun begins executing a pipeline run. It parses the pipeline definition
@@ -709,7 +747,7 @@ func (e *Engine) runTriggerStage(ctx context.Context, state *runState, nodeID st
 	}
 
 	// Start the container.
-	containerID, err := e.startContainer(ctx, state.run.ID, nodeID, node)
+	containerID, err := e.startContainer(ctx, state, nodeID, node)
 	if err != nil {
 		e.updateStageStatus(state, nodeID, "failed")
 		_ = e.updateStepResult(ctx, state.run.ID, nodeID, "failed")
@@ -727,11 +765,17 @@ func (e *Engine) runTriggerStage(ctx context.Context, state *runState, nodeID st
 	// The Initialize call is included in the backoff loop so that transient
 	// "connection refused" errors (container still starting) are retried.
 	if e.triggerClientFactory != nil {
-		containerAddr := e.containerAddress(state.run.ID, nodeID)
+		containerAddr, err := e.containerAddress(ctx, state.run.ID, nodeID, containerID)
+		if err != nil {
+			e.updateStageStatus(state, nodeID, "failed")
+			_ = e.updateStepResult(ctx, state.run.ID, nodeID, "failed")
+			return fmt.Errorf("resolve trigger container address: %w", err)
+		}
 		stageConfig := e.buildStageConfig(state.run.ID, nodeID, node)
+		serverName := fmt.Sprintf("portwhine-%s-%s", state.run.ID[:8], nodeID)
 
 		triggerClient, err := connectWithBackoff(ctx, nodeID, e.logger, func() (TriggerClient, error) {
-			return e.triggerClientFactory(containerAddr)
+			return e.createTriggerClient(state, containerAddr, serverName)
 		}, func(c TriggerClient) error {
 			return c.Initialize(ctx, stageConfig)
 		})
@@ -801,10 +845,11 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 
 	stage := state.stages[nodeID]
 
+	var replicaErrors []error
+	var replicaErrMu sync.Mutex
+
 	if e.workerClientFactory != nil {
 		var replicaWg sync.WaitGroup
-		var replicaErrors []error
-		var replicaErrMu sync.Mutex
 
 		for r := 0; r < replicas; r++ {
 			replicaID := fmt.Sprintf("%s-r%d", nodeID, r)
@@ -813,7 +858,7 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 				containerName = replicaID
 			}
 
-			containerID, err := e.startContainer(ctx, state.run.ID, containerName, node)
+			containerID, err := e.startContainer(ctx, state, containerName, node)
 			if err != nil {
 				e.updateStageStatus(state, nodeID, "failed")
 				_ = e.updateStepResult(ctx, state.run.ID, nodeID, "failed")
@@ -827,14 +872,23 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 				state.mu.Unlock()
 			}
 
+			serverName := fmt.Sprintf("portwhine-%s-%s", state.run.ID[:8], containerName)
+
 			replicaWg.Add(1)
-			go func(replicaID string, containerID runtime.ContainerID) {
+			go func(replicaID, serverName string, containerID runtime.ContainerID) {
 				defer replicaWg.Done()
 				defer e.cleanupContainer(ctx, containerID, replicaID)
 
-				containerAddr := e.containerAddress(state.run.ID, replicaID)
+				addrNodeID := replicaID
 				if replicas == 1 {
-					containerAddr = e.containerAddress(state.run.ID, nodeID)
+					addrNodeID = nodeID
+				}
+				containerAddr, err := e.containerAddress(ctx, state.run.ID, addrNodeID, containerID)
+				if err != nil {
+					replicaErrMu.Lock()
+					replicaErrors = append(replicaErrors, fmt.Errorf("resolve address for %s: %w", replicaID, err))
+					replicaErrMu.Unlock()
+					return
 				}
 
 				if err := e.runWorkerReplica(ctx, replicaParams{
@@ -843,7 +897,9 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 					runID:         state.run.ID,
 					node:          node,
 					containerAddr: containerAddr,
+					serverName:    serverName,
 					stage:         stage,
+					state:         state,
 					inputCh:       inputCh,
 					outputCh:      outputCh,
 				}); err != nil {
@@ -851,7 +907,7 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 					replicaErrors = append(replicaErrors, err)
 					replicaErrMu.Unlock()
 				}
-			}(replicaID, containerID)
+			}(replicaID, serverName, containerID)
 		}
 
 		// Wait for all replicas to finish, then close the merged output channel.
@@ -881,6 +937,14 @@ func (e *Engine) runWorkerStage(ctx context.Context, state *runState, nodeID str
 	}
 
 	e.persistStageMetrics(ctx, state, nodeID)
+
+	// Check for replica errors after all output is drained.
+	if len(replicaErrors) > 0 {
+		e.updateStageStatus(state, nodeID, "failed")
+		_ = e.updateStepResult(ctx, state.run.ID, nodeID, "failed")
+		return fmt.Errorf("worker stage %s failed: %w", nodeID, errors.Join(replicaErrors...))
+	}
+
 	e.updateStageStatus(state, nodeID, "completed")
 	return e.updateStepResult(ctx, state.run.ID, nodeID, "completed")
 }
@@ -895,7 +959,9 @@ type replicaParams struct {
 	runID         string
 	node          *portwhinev1.PipelineNode
 	containerAddr string
+	serverName    string // container DNS name for TLS verification
 	stage         *StageRunner
+	state         *runState
 	inputCh       <-chan *portwhinev1.DataItem
 	outputCh      chan<- *portwhinev1.DataItem
 }
@@ -904,7 +970,7 @@ func (e *Engine) runWorkerReplica(ctx context.Context, p replicaParams) error {
 	stageConfig := e.buildStageConfig(p.runID, p.nodeID, p.node)
 
 	workerClient, err := connectWithBackoff(ctx, p.replicaID, e.logger, func() (WorkerClient, error) {
-		return e.workerClientFactory(p.containerAddr)
+		return e.createWorkerClient(p.state, p.containerAddr, p.serverName)
 	}, func(c WorkerClient) error {
 		return c.Initialize(ctx, stageConfig)
 	})
@@ -975,7 +1041,7 @@ func (e *Engine) runOutputStage(ctx context.Context, state *runState, nodeID str
 
 	if node.GetImage() != "" && e.workerClientFactory != nil {
 		// Container-based output node: full worker lifecycle.
-		containerID, err := e.startContainer(ctx, state.run.ID, nodeID, node)
+		containerID, err := e.startContainer(ctx, state, nodeID, node)
 		if err != nil {
 			e.updateStageStatus(state, nodeID, "failed")
 			_ = e.updateStepResult(ctx, state.run.ID, nodeID, "failed")
@@ -989,24 +1055,32 @@ func (e *Engine) runOutputStage(ctx context.Context, state *runState, nodeID str
 		defer e.cleanupContainer(ctx, containerID, nodeID)
 
 		outputCh := make(chan *portwhinev1.DataItem, channelCapacity)
+		serverName := fmt.Sprintf("portwhine-%s-%s", state.run.ID[:8], nodeID)
 
+		// outputErr captures errors from the goroutine. It is written before
+		// outputCh is closed and read after outputCh is drained, so the
+		// channel close provides a happens-before guarantee.
+		var outputErr error
 		go func() {
 			defer close(outputCh)
-			containerAddr := e.containerAddress(state.run.ID, nodeID)
+			containerAddr, err := e.containerAddress(ctx, state.run.ID, nodeID, containerID)
+			if err != nil {
+				outputErr = fmt.Errorf("resolve output container address: %w", err)
+				return
+			}
 			if err := e.runWorkerReplica(ctx, replicaParams{
 				replicaID:     nodeID,
 				nodeID:        nodeID,
 				runID:         state.run.ID,
 				node:          node,
 				containerAddr: containerAddr,
+				serverName:    serverName,
 				stage:         stage,
+				state:         state,
 				inputCh:       inputCh,
 				outputCh:      outputCh,
 			}); err != nil {
-				e.logger.Error("output container failed",
-					slog.String("node_id", nodeID),
-					slog.Any("error", err),
-				)
+				outputErr = fmt.Errorf("output container failed: %w", err)
 			}
 		}()
 
@@ -1014,6 +1088,12 @@ func (e *Engine) runOutputStage(ctx context.Context, state *runState, nodeID str
 		for item := range outputCh {
 			stage.ItemsOut.Add(1)
 			e.persistAndPublish(ctx, state, nodeID, item)
+		}
+
+		if outputErr != nil {
+			e.updateStageStatus(state, nodeID, "failed")
+			_ = e.updateStepResult(ctx, state.run.ID, nodeID, "failed")
+			return outputErr
 		}
 	} else {
 		// Legacy drain-only behaviour for output nodes without an image.
@@ -1043,8 +1123,11 @@ func (e *Engine) resolveImage(ctx context.Context, imageName string) (string, er
 	return wi.Image, nil
 }
 
-// startContainer starts a container for the given pipeline node.
-func (e *Engine) startContainer(ctx context.Context, runID, nodeID string, node *portwhinev1.PipelineNode) (runtime.ContainerID, error) {
+// startContainer starts a container for the given pipeline node. When mTLS is
+// enabled (addressResolver is set), it generates ephemeral certificates and
+// injects them as environment variables.
+func (e *Engine) startContainer(ctx context.Context, state *runState, nodeID string, node *portwhinev1.PipelineNode) (runtime.ContainerID, error) {
+	runID := state.run.ID
 	containerName := fmt.Sprintf("portwhine-%s-%s", runID[:8], nodeID)
 
 	// Resolve the image name to a full Docker image reference.
@@ -1057,8 +1140,8 @@ func (e *Engine) startContainer(ctx context.Context, runID, nodeID string, node 
 		Image: dockerImage,
 		Name:  containerName,
 		Env: map[string]string{
-			"OPERATOR_ADDRESS": e.operatorAddress,
-			"PORTWHINE_RUN_ID": runID,
+			"OPERATOR_ADDRESS":  e.operatorAddress,
+			"PORTWHINE_RUN_ID":  runID,
 			"PORTWHINE_NODE_ID": nodeID,
 		},
 		Labels: map[string]string{
@@ -1069,6 +1152,13 @@ func (e *Engine) startContainer(ctx context.Context, runID, nodeID string, node 
 		Network: runtime.NetworkConfig{
 			OperatorAddress: e.operatorAddress,
 		},
+	}
+
+	// Inject mTLS certificates when running with a remote address resolver.
+	if e.addressResolver != nil && e.addressResolver.IsRemote() {
+		if err := e.injectTLSCerts(state, containerName, spec.Env); err != nil {
+			return "", fmt.Errorf("inject TLS certs for %q: %w", nodeID, err)
+		}
 	}
 
 	// Add NET_ADMIN capability for workers that need raw socket access (nmap, etc.)
@@ -1094,6 +1184,76 @@ func (e *Engine) startContainer(ctx context.Context, runID, nodeID string, node 
 	)
 
 	return id, nil
+}
+
+// injectTLSCerts generates ephemeral mTLS certificates and adds them as
+// base64-encoded environment variables to the container's env map.
+func (e *Engine) injectTLSCerts(state *runState, containerName string, env map[string]string) error {
+	state.mu.Lock()
+	// Lazily generate the run CA and operator client cert once per pipeline run.
+	// Write to local variables first and assign atomically so that a failure
+	// in GenerateNodeCert does not leave state half-initialized.
+	if state.tlsCACert == nil {
+		caCert, caKey, err := certs.GenerateRunCA(state.run.ID)
+		if err != nil {
+			state.mu.Unlock()
+			return fmt.Errorf("generate run CA: %w", err)
+		}
+
+		opCert, opKey, err := certs.GenerateNodeCert(caCert, caKey, "portwhine-operator")
+		if err != nil {
+			state.mu.Unlock()
+			return fmt.Errorf("generate operator cert: %w", err)
+		}
+
+		state.tlsCACert = caCert
+		state.tlsCAKey = caKey
+		state.tlsOperatorCert = opCert
+		state.tlsOperatorKey = opKey
+	}
+	caCert := state.tlsCACert
+	caKey := state.tlsCAKey
+	state.mu.Unlock()
+
+	certPEM, keyPEM, err := certs.GenerateNodeCert(caCert, caKey, containerName)
+	if err != nil {
+		return fmt.Errorf("generate node cert: %w", err)
+	}
+
+	env["PORTWHINE_TLS_ENABLED"] = "true"
+	env["PORTWHINE_TLS_CA_CERT"] = base64.StdEncoding.EncodeToString(caCert)
+	env["PORTWHINE_TLS_CERT"] = base64.StdEncoding.EncodeToString(certPEM)
+	env["PORTWHINE_TLS_KEY"] = base64.StdEncoding.EncodeToString(keyPEM)
+
+	return nil
+}
+
+// createWorkerClient creates a WorkerClient, using mTLS when the run has TLS certs.
+// serverName is the container's DNS name used for TLS certificate verification.
+func (e *Engine) createWorkerClient(state *runState, address, serverName string) (WorkerClient, error) {
+	if state != nil && state.tlsCACert != nil {
+		if e.tlsWorkerClientFactory == nil {
+			e.logger.Warn("TLS certs available but no TLS worker client factory configured, falling back to plaintext",
+				slog.String("address", address))
+		} else {
+			return e.tlsWorkerClientFactory(address, serverName, state.tlsCACert, state.tlsOperatorCert, state.tlsOperatorKey)
+		}
+	}
+	return e.workerClientFactory(address)
+}
+
+// createTriggerClient creates a TriggerClient, using mTLS when the run has TLS certs.
+// serverName is the container's DNS name used for TLS certificate verification.
+func (e *Engine) createTriggerClient(state *runState, address, serverName string) (TriggerClient, error) {
+	if state != nil && state.tlsCACert != nil {
+		if e.tlsTriggerClientFactory == nil {
+			e.logger.Warn("TLS certs available but no TLS trigger client factory configured, falling back to plaintext",
+				slog.String("address", address))
+		} else {
+			return e.tlsTriggerClientFactory(address, serverName, state.tlsCACert, state.tlsOperatorCert, state.tlsOperatorKey)
+		}
+	}
+	return e.triggerClientFactory(address)
 }
 
 // cleanupContainer stops and removes a container, logging any errors.
@@ -1207,12 +1367,15 @@ func isTransientError(err error) bool {
 		strings.Contains(msg, "connection reset")
 }
 
-// containerAddress returns the gRPC address for a container running within the
-// same Docker network. Containers are named portwhine-<runID[:8]>-<nodeID> and
-// listen on port 50051.
-func (e *Engine) containerAddress(runID, nodeID string) string {
+// containerAddress returns the gRPC address for a container. In local mode it
+// uses Docker-DNS / K8s-DNS. In remote mode it uses the address resolver to
+// look up the published port on the remote host.
+func (e *Engine) containerAddress(ctx context.Context, runID, nodeID string, containerID runtime.ContainerID) (string, error) {
+	if e.addressResolver != nil && e.addressResolver.IsRemote() {
+		return e.addressResolver.ContainerAddress(ctx, containerID)
+	}
 	containerName := fmt.Sprintf("portwhine-%s-%s", runID[:8], nodeID)
-	return fmt.Sprintf("http://%s:50051", containerName)
+	return fmt.Sprintf("http://%s:50051", containerName), nil
 }
 
 // buildStageConfig creates a StageConfig protobuf message for a pipeline node.

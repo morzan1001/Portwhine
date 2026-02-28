@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -13,6 +15,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/go-connections/nat"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 )
@@ -21,10 +24,16 @@ import (
 type DockerRuntime struct {
 	client      *client.Client
 	networkName string
+	remoteHost  string // IP/hostname of the remote Docker daemon (empty = local)
+	isRemote    bool
 }
 
 // NewDockerRuntime creates a new Docker-based runtime.
 func NewDockerRuntime(cfg DockerConfig) (*DockerRuntime, error) {
+	if cfg.Host != "" {
+		return newRemoteDockerRuntime(cfg)
+	}
+	// Local mode: connect via Unix socket / DOCKER_HOST env as before.
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, fmt.Errorf("create docker client: %w", err)
@@ -33,6 +42,90 @@ func NewDockerRuntime(cfg DockerConfig) (*DockerRuntime, error) {
 		client:      cli,
 		networkName: cfg.NetworkName,
 	}, nil
+}
+
+// newRemoteDockerRuntime creates a Docker client that connects to a remote
+// daemon over TCP+TLS. Plaintext TCP is never allowed.
+func newRemoteDockerRuntime(cfg DockerConfig) (*DockerRuntime, error) {
+	if err := validateRemoteTLSConfig(cfg.TLS); err != nil {
+		return nil, fmt.Errorf("remote docker TLS config: %w", err)
+	}
+
+	hostIP, err := parseHostIP(cfg.Host)
+	if err != nil {
+		return nil, fmt.Errorf("parse docker host: %w", err)
+	}
+
+	cli, err := client.NewClientWithOpts(
+		client.WithHost(cfg.Host),
+		client.WithTLSClientConfig(cfg.TLS.CACert, cfg.TLS.Cert, cfg.TLS.Key),
+		client.WithAPIVersionNegotiation(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create remote docker client: %w", err)
+	}
+
+	return &DockerRuntime{
+		client:      cli,
+		networkName: cfg.NetworkName,
+		remoteHost:  hostIP,
+		isRemote:    true,
+	}, nil
+}
+
+// validateRemoteTLSConfig ensures all TLS certificate paths are provided and
+// the files exist. This prevents accidentally connecting to a remote Docker
+// daemon over plaintext TCP.
+func validateRemoteTLSConfig(cfg DockerTLSConfig) error {
+	if cfg.CACert == "" || cfg.Cert == "" || cfg.Key == "" {
+		return fmt.Errorf("remote Docker host requires TLS: ca_cert, cert, and key must all be set")
+	}
+	for _, path := range []string{cfg.CACert, cfg.Cert, cfg.Key} {
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("TLS file %q: %w", path, err)
+		}
+		// Warn-level check: key file should not be world-readable.
+		if path == cfg.Key && info.Mode().Perm()&0o004 != 0 {
+			return fmt.Errorf("TLS key %q is world-readable (mode %o); tighten permissions to 0600", path, info.Mode().Perm())
+		}
+	}
+	return nil
+}
+
+// parseHostIP extracts the hostname/IP from a Docker host URL
+// (e.g. "tcp://192.168.1.100:2376" → "192.168.1.100").
+func parseHostIP(host string) (string, error) {
+	u, err := url.Parse(host)
+	if err != nil {
+		return "", fmt.Errorf("invalid host URL %q: %w", host, err)
+	}
+	hostname := u.Hostname()
+	if hostname == "" {
+		return "", fmt.Errorf("no hostname in Docker host URL %q", host)
+	}
+	return hostname, nil
+}
+
+// ContainerAddress returns the gRPC address for a container running on a
+// remote Docker host, using the published port.
+func (d *DockerRuntime) ContainerAddress(ctx context.Context, id ContainerID) (string, error) {
+	info, err := d.client.ContainerInspect(ctx, string(id))
+	if err != nil {
+		return "", fmt.Errorf("inspect container for address: %w", err)
+	}
+
+	bindings, ok := info.NetworkSettings.Ports["50051/tcp"]
+	if !ok || len(bindings) == 0 {
+		return "", fmt.Errorf("container %s has no published port 50051", id)
+	}
+
+	return fmt.Sprintf("http://%s:%s", d.remoteHost, bindings[0].HostPort), nil
+}
+
+// IsRemote returns true when connected to a remote Docker daemon.
+func (d *DockerRuntime) IsRemote() bool {
+	return d.isRemote
 }
 
 func (d *DockerRuntime) Start(ctx context.Context, spec ContainerSpec) (ContainerID, error) {
@@ -76,6 +169,17 @@ func (d *DockerRuntime) Start(ctx context.Context, spec ContainerSpec) (Containe
 	}
 	if len(spec.Capabilities) > 0 {
 		hostCfg.CapAdd = spec.Capabilities
+	}
+
+	// In remote mode, publish port 50051 so the operator can reach the
+	// container's gRPC server via the Docker host's IP.
+	if d.isRemote {
+		containerCfg.ExposedPorts = nat.PortSet{
+			"50051/tcp": struct{}{},
+		}
+		hostCfg.PortBindings = nat.PortMap{
+			"50051/tcp": []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: ""}},
+		}
 	}
 
 	networkingCfg := &network.NetworkingConfig{}

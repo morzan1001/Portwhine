@@ -96,6 +96,12 @@ func New(cfg *Config, logger *slog.Logger) (*Operator, error) {
 		Type: runtime.RuntimeType(cfg.Runtime.Type),
 		Docker: runtime.DockerConfig{
 			NetworkName: cfg.Runtime.Docker.Network,
+			Host:        cfg.Runtime.Docker.Host,
+			TLS: runtime.DockerTLSConfig{
+				CACert: cfg.Runtime.Docker.TLS.CACert,
+				Cert:   cfg.Runtime.Docker.TLS.Cert,
+				Key:    cfg.Runtime.Docker.TLS.Key,
+			},
 		},
 		Kubernetes: runtime.KubernetesConfig{
 			Namespace:       cfg.Runtime.Kubernetes.Namespace,
@@ -115,6 +121,13 @@ func New(cfg *Config, logger *slog.Logger) (*Operator, error) {
 	engine.SetWorkerClientFactory(worker.NewWorkerClientFactory(logger))
 	engine.SetTriggerClientFactory(trigger.NewTriggerClientFactory(logger))
 	engine.SetMetrics(metrics)
+
+	// If the runtime supports remote address resolution, wire it and TLS factories into the engine.
+	if resolver, ok := rt.(runtime.RemoteAddressResolver); ok && resolver.IsRemote() {
+		engine.SetAddressResolver(resolver)
+		engine.SetTLSWorkerClientFactory(worker.NewTLSWorkerClientFactory(logger))
+		engine.SetTLSTriggerClientFactory(trigger.NewTLSTriggerClientFactory(logger))
+	}
 
 	// Initialize cron scheduler for pipeline schedules.
 	scheduler := NewScheduler(s, engine, logger)

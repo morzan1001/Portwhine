@@ -29,7 +29,15 @@ type RuntimeConfig struct {
 }
 
 type DockerConfig struct {
-	Network string `mapstructure:"network"`
+	Network string          `mapstructure:"network"`
+	Host    string          `mapstructure:"host"` // Remote Docker daemon URL (e.g. "tcp://192.168.1.100:2376"), empty for local socket
+	TLS     DockerTLSConfig `mapstructure:"tls"`
+}
+
+type DockerTLSConfig struct {
+	CACert string `mapstructure:"ca_cert"` // Path to CA certificate
+	Cert   string `mapstructure:"cert"`    // Path to client certificate
+	Key    string `mapstructure:"key"`     // Path to client key
 }
 
 type KubernetesConfig struct {
@@ -112,6 +120,10 @@ func LoadConfig(configPath string) (*Config, error) {
 		"server.operator_address",
 		"runtime.type",
 		"runtime.docker.network",
+		"runtime.docker.host",
+		"runtime.docker.tls.ca_cert",
+		"runtime.docker.tls.cert",
+		"runtime.docker.tls.key",
 		"runtime.kubernetes.namespace",
 		"runtime.kubernetes.worker_namespace",
 		"database.host",
