@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -557,7 +558,7 @@ func cmdRunLogs(args []string) error {
 			if i+1 < len(args) {
 				i++
 				n, err := strconv.Atoi(args[i])
-				if err == nil {
+				if err == nil && n > 0 && n <= math.MaxInt32 {
 					tail = int32(n)
 				}
 			}
