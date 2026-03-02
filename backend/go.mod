@@ -7,6 +7,7 @@ require (
 	github.com/casbin/casbin/v3 v3.10.0
 	github.com/casbin/gorm-adapter/v3 v3.41.0
 	github.com/docker/docker v28.5.2+incompatible
+	github.com/docker/go-connections v0.6.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/cel-go v0.27.0
 	github.com/lib/pq v1.10.9
@@ -20,7 +21,7 @@ require (
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
 	k8s.io/api v0.35.1
-	k8s.io/apimachinery v0.35.1
+	k8s.io/apimachinery v0.35.2
 	k8s.io/client-go v0.35.0
 )
 
@@ -38,7 +39,6 @@ require (
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/go-connections v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
