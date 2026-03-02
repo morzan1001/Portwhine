@@ -7,10 +7,12 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/portwhine/portwhine v0.0.0
 	github.com/projectdiscovery/wappalyzergo v0.2.69
-	golang.org/x/net v0.50.0
 	google.golang.org/protobuf v1.36.11
 )
 
-require golang.org/x/text v0.34.0 // indirect
+require (
+	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
+)
 
 replace github.com/portwhine/portwhine => ../..
