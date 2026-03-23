@@ -1,25 +1,25 @@
 module github.com/portwhine/portwhine/workers/screenshot
 
-go 1.25.0
+go 1.26
 
 require (
 	connectrpc.com/connect v1.19.1
-	github.com/chromedp/chromedp v0.14.2
+	github.com/chromedp/chromedp v0.15.0
 	github.com/google/uuid v1.6.0
 	github.com/portwhine/portwhine v0.0.0
 	google.golang.org/protobuf v1.36.11
 )
 
 require (
-	github.com/chromedp/cdproto v0.0.0-20250724212937-08a3db8b4327 // indirect
+	github.com/chromedp/cdproto v0.0.0-20260320225252-cf654f46fc63 // indirect
 	github.com/chromedp/sysutil v1.1.0 // indirect
-	github.com/go-json-experiment/json v0.0.0-20250725192818-e39067aee2d2 // indirect
+	github.com/go-json-experiment/json v0.0.0-20260214004413-d219187c3433 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
-	golang.org/x/net v0.51.0 // indirect
-	golang.org/x/sys v0.41.0 // indirect
-	golang.org/x/text v0.34.0 // indirect
+	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/sys v0.42.0 // indirect
+	golang.org/x/text v0.35.0 // indirect
 )
 
 replace github.com/portwhine/portwhine => ../..
