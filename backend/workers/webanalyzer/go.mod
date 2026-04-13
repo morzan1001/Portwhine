@@ -6,7 +6,7 @@ require (
 	connectrpc.com/connect v1.19.1
 	github.com/google/uuid v1.6.0
 	github.com/portwhine/portwhine v0.0.0
-	github.com/projectdiscovery/wappalyzergo v0.2.75
+	github.com/projectdiscovery/wappalyzergo v0.2.76
 	google.golang.org/protobuf v1.36.11
 )
 
