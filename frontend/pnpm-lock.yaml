@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@bufbuild/protobuf':
-        specifier: ^2.11.0
-        version: 2.11.0
+        specifier: ^2.12.0
+        version: 2.12.0
       '@connectrpc/connect':
         specifier: ^2.1.1
-        version: 2.1.1(@bufbuild/protobuf@2.11.0)
+        version: 2.1.1(@bufbuild/protobuf@2.12.0)
       '@connectrpc/connect-web':
         specifier: ^2.1.1
-        version: 2.1.1(@bufbuild/protobuf@2.11.0)(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.11.0))
+        version: 2.1.1(@bufbuild/protobuf@2.12.0)(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.12.0))
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.72.1(react@19.2.5))
@@ -109,8 +109,8 @@ importers:
         version: 5.0.12(@types/react@19.2.14)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5))
     devDependencies:
       '@bufbuild/protoc-gen-es':
-        specifier: ^2.11.0
-        version: 2.11.0(@bufbuild/protobuf@2.11.0)
+        specifier: ^2.12.0
+        version: 2.12.0(@bufbuild/protobuf@2.12.0)
       '@eslint/js':
         specifier: ^9.39.4
         version: 9.39.4
@@ -236,21 +236,21 @@ packages:
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
 
-  '@bufbuild/protobuf@2.11.0':
-    resolution: {integrity: sha512-sBXGT13cpmPR5BMgHE6UEEfEaShh5Ror6rfN3yEK5si7QVrtZg8LEPQb0VVhiLRUslD2yLnXtnRzG035J/mZXQ==}
+  '@bufbuild/protobuf@2.12.0':
+    resolution: {integrity: sha512-B/XlCaFIP8LOwzo+bz5uFzATYokcwCKQcghqnlfwSmM5eX/qTkvDBnDPs+gXtX/RyjxJ4DRikECcPJbyALA8FA==}
 
-  '@bufbuild/protoc-gen-es@2.11.0':
-    resolution: {integrity: sha512-VzQuwEQDXipbZ1soWUuAWm1Z0C3B/IDWGeysnbX6ogJ6As91C2mdvAND/ekQ4YIWgen4d5nqLfIBOWLqCCjYUA==}
+  '@bufbuild/protoc-gen-es@2.12.0':
+    resolution: {integrity: sha512-d9htF6jEkSwPbp9d/vSmZOBF7eeG18AvTMKmVg4I23afnrQOxL2w3WOXa9TaufMCyu24QakEUb4vux8apI5e7A==}
     engines: {node: '>=20'}
     hasBin: true
     peerDependencies:
-      '@bufbuild/protobuf': 2.11.0
+      '@bufbuild/protobuf': 2.12.0
     peerDependenciesMeta:
       '@bufbuild/protobuf':
         optional: true
 
-  '@bufbuild/protoplugin@2.11.0':
-    resolution: {integrity: sha512-lyZVNFUHArIOt4W0+dwYBe5GBwbKzbOy8ObaloEqsw9Mmiwv2O48TwddDoHN4itylC+BaEGqFdI1W8WQt2vWJQ==}
+  '@bufbuild/protoplugin@2.12.0':
+    resolution: {integrity: sha512-ORlDITp8AFUXzIhLRoMCG+ud+D3MPKWb5HQXBoskMMnjeyEjE1H1qLonVNPyOr8lkx3xSfYUo8a0dvOZJVAzow==}
 
   '@connectrpc/connect-web@2.1.1':
     resolution: {integrity: sha512-J8317Q2MaFRCT1jzVR1o06bZhDIBmU0UAzWx6xOIXzOq8+k71/+k7MUF7AwcBUX+34WIvbm5syRgC5HXQA8fOg==}
@@ -1594,8 +1594,8 @@ packages:
     resolution: {integrity: sha512-f1WO2Lx8a9t8DARmcWAUPJbu0G20bJlj8L4z72K00TMeJAoyLr/tHhI/pzYBLrR4dXWkcxO1cWYZEOX8DKHTqA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@typescript/vfs@1.6.2':
-    resolution: {integrity: sha512-hoBwJwcbKHmvd2QVebiytN1aELvpk9B74B4L1mFm/XT1Q/VOYAWl2vQ9AWRFtQq8zmz6enTpfTV8WRc4ATjW/g==}
+  '@typescript/vfs@1.6.4':
+    resolution: {integrity: sha512-PJFXFS4ZJKiJ9Qiuix6Dz/OwEIqHD7Dme1UwZhTK11vR+5dqW2ACbdndWQexBzCx+CPuMe5WBYQWCsFyGlQLlQ==}
     peerDependencies:
       typescript: '*'
 
@@ -2740,32 +2740,32 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@bufbuild/protobuf@2.11.0': {}
+  '@bufbuild/protobuf@2.12.0': {}
 
-  '@bufbuild/protoc-gen-es@2.11.0(@bufbuild/protobuf@2.11.0)':
+  '@bufbuild/protoc-gen-es@2.12.0(@bufbuild/protobuf@2.12.0)':
     dependencies:
-      '@bufbuild/protoplugin': 2.11.0
+      '@bufbuild/protoplugin': 2.12.0
     optionalDependencies:
-      '@bufbuild/protobuf': 2.11.0
+      '@bufbuild/protobuf': 2.12.0
     transitivePeerDependencies:
       - supports-color
 
-  '@bufbuild/protoplugin@2.11.0':
+  '@bufbuild/protoplugin@2.12.0':
     dependencies:
-      '@bufbuild/protobuf': 2.11.0
-      '@typescript/vfs': 1.6.2(typescript@5.4.5)
+      '@bufbuild/protobuf': 2.12.0
+      '@typescript/vfs': 1.6.4(typescript@5.4.5)
       typescript: 5.4.5
     transitivePeerDependencies:
       - supports-color
 
-  '@connectrpc/connect-web@2.1.1(@bufbuild/protobuf@2.11.0)(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.11.0))':
+  '@connectrpc/connect-web@2.1.1(@bufbuild/protobuf@2.12.0)(@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.12.0))':
     dependencies:
-      '@bufbuild/protobuf': 2.11.0
-      '@connectrpc/connect': 2.1.1(@bufbuild/protobuf@2.11.0)
+      '@bufbuild/protobuf': 2.12.0
+      '@connectrpc/connect': 2.1.1(@bufbuild/protobuf@2.12.0)
 
-  '@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.11.0)':
+  '@connectrpc/connect@2.1.1(@bufbuild/protobuf@2.12.0)':
     dependencies:
-      '@bufbuild/protobuf': 2.11.0
+      '@bufbuild/protobuf': 2.12.0
 
   '@emnapi/core@1.9.2':
     dependencies:
@@ -4026,7 +4026,7 @@ snapshots:
       '@typescript-eslint/types': 8.58.2
       eslint-visitor-keys: 5.0.1
 
-  '@typescript/vfs@1.6.2(typescript@5.4.5)':
+  '@typescript/vfs@1.6.4(typescript@5.4.5)':
     dependencies:
       debug: 4.4.3
       typescript: 5.4.5
