@@ -3,7 +3,7 @@ module github.com/portwhine/portwhine/workers/screenshot
 go 1.26
 
 require (
-	connectrpc.com/connect v1.19.1
+	connectrpc.com/connect v1.19.2
 	github.com/chromedp/chromedp v0.15.1
 	github.com/google/uuid v1.6.0
 	github.com/portwhine/portwhine v0.0.0
@@ -17,9 +17,9 @@ require (
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
-	golang.org/x/net v0.52.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 )
 
 replace github.com/portwhine/portwhine => ../..
