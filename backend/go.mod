@@ -15,7 +15,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/viper v1.21.0
 	golang.org/x/crypto v0.51.0
-	golang.org/x/net v0.53.0
+	golang.org/x/net v0.54.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	gorm.io/datatypes v1.2.7
 	gorm.io/driver/postgres v1.6.0
