@@ -90,8 +90,8 @@ importers:
         specifier: ^7.76.0
         version: 7.76.0(react@19.2.6)
       react-router-dom:
-        specifier: ^7.14.2
-        version: 7.14.2(react-dom@19.2.5(react@19.2.6))(react@19.2.6)
+        specifier: ^7.15.1
+        version: 7.15.1(react-dom@19.2.5(react@19.2.6))(react@19.2.6)
       reactflow:
         specifier: ^11.11.4
         version: 11.11.4(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.6))(react@19.2.6)
@@ -2197,15 +2197,15 @@ packages:
       '@types/react':
         optional: true
 
-  react-router-dom@7.14.2:
-    resolution: {integrity: sha512-YZcM5ES8jJSM+KrJ9BdvHHqlnGTg5tH3sC5ChFRj4inosKctdyzBDhOyyHdGk597q2OT6NTrCA1OvB/YDwfekQ==}
+  react-router-dom@7.15.1:
+    resolution: {integrity: sha512-AzF62gjY6U9rkMq4RfP/r2EVtQ7DMfNMjyOp/flLTCrtRylLiK4wT4pSq6O8rOXZ2eXdZYJPEYe+ifomiv+Igg==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: '>=18'
       react-dom: '>=18'
 
-  react-router@7.14.2:
-    resolution: {integrity: sha512-yCqNne6I8IB6rVCH7XUvlBK7/QKyqypBFGv+8dj4QBFJiiRX+FG7/nkdAvGElyvVZ/HQP5N19wzteuTARXi5Gw==}
+  react-router@7.15.1:
+    resolution: {integrity: sha512-R8rl9HhgikFYoPJymnUtPXWbnDb3oget6lQnfIoupbt61aT9aOhRkDsY2XRhZRyX1Z/8a5sL74fXmFNm3NRK5A==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: '>=18'
@@ -4526,13 +4526,13 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
-  react-router-dom@7.14.2(react-dom@19.2.5(react@19.2.6))(react@19.2.6):
+  react-router-dom@7.15.1(react-dom@19.2.5(react@19.2.6))(react@19.2.6):
     dependencies:
       react: 19.2.6
       react-dom: 19.2.5(react@19.2.6)
-      react-router: 7.14.2(react-dom@19.2.5(react@19.2.6))(react@19.2.6)
+      react-router: 7.15.1(react-dom@19.2.5(react@19.2.6))(react@19.2.6)
 
-  react-router@7.14.2(react-dom@19.2.5(react@19.2.6))(react@19.2.6):
+  react-router@7.15.1(react-dom@19.2.5(react@19.2.6))(react@19.2.6):
     dependencies:
       cookie: 1.1.1
       react: 19.2.6
