@@ -3,7 +3,7 @@ module github.com/portwhine/portwhine
 go 1.26.0
 
 require (
-	connectrpc.com/connect v1.19.2
+	connectrpc.com/connect v1.20.0
 	github.com/casbin/casbin/v3 v3.10.0
 	github.com/casbin/gorm-adapter/v3 v3.41.0
 	github.com/docker/docker v28.5.2+incompatible
