@@ -3,7 +3,7 @@ module github.com/portwhine/portwhine/workers/webanalyzer
 go 1.26.0
 
 require (
-	connectrpc.com/connect v1.19.2
+	connectrpc.com/connect v1.20.0
 	github.com/google/uuid v1.6.0
 	github.com/portwhine/portwhine v0.0.0
 	github.com/projectdiscovery/wappalyzergo v0.2.81
